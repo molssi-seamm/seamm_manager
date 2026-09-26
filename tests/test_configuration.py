@@ -304,3 +304,14 @@ def test_empty_prolog():
     """Test what happens when ther is no prolog."""
     conf = seamm_manager.Configuration()
     assert conf.get_prolog() == ""
+
+
+def test_empty_configuration_to_string():
+    """An empty configuration (a plug-in's .ini that does not exist yet) must
+    serialize, not raise."""
+    import seamm_manager
+
+    conf = seamm_manager.Configuration()
+    assert conf.to_string() == "\n"
+    conf.from_string("")
+    assert conf.to_string() == "\n"

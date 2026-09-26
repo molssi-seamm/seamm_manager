@@ -265,11 +265,11 @@ class Configuration(object):
             result = []
             if "PROLOG" in self._data:
                 result.extend(self._data["PROLOG"])
-                if result[-1] != "":
+                if result and result[-1] != "":
                     result.append("")
             for section in self.sections():
                 result.extend(self._data[section])
-                if result[-1] != "":
+                if result and result[-1] != "":
                     result.append("")
         else:
             result = self._data[section.lower()]
