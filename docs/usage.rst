@@ -42,7 +42,10 @@ every dependency that resolved together -- are published nightly to Zenodo by
 ``seamm_packaging``. ``install`` and ``update`` pass that lock to ``uv`` as
 constraints, so what you get is the tested set, and two installations made the same
 day are identical. ``--no-constraints`` opts out and takes the newest releases that
-resolve. After every change the manager writes ``<root>/environments/<timestamp>_*.txt``
+resolve. The one exception is the manager itself: since the list is refreshed
+nightly, after an install or update the manager makes sure the environment holds
+the same release it is running, so the plug-ins' installers never run on an older
+one. After every change the manager writes ``<root>/environments/<timestamp>_*.txt``
 with the full ``pip freeze`` of the environment as a record.
 
 Where things are

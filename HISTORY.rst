@@ -1,7 +1,7 @@
 =======
 History
 =======
-(unreleased)
+2026.9.26.4 -- The environment keeps the manager's own release; manual codes
     * After installing or updating, the manager puts its own release into the
       environment if the package list still names an older one. The list is refreshed
       nightly, so for up to a day after a manager release the environment -- and with it
