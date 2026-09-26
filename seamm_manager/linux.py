@@ -294,7 +294,7 @@ class ServiceManager:
         wd_path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
         # Create the command with arguments
-        cmd = exe_path
+        cmd = str(exe_path)  # a Path from Uv.which(), a str from callers
         if len(program_arguments) > 0:
             cmd += " "
             cmd += " ".join(program_arguments)
