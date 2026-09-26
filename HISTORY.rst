@@ -5,6 +5,10 @@ History
     * ``update --all`` upgrades the manager itself with a forced, index-refreshing
       reinstall; ``uv tool upgrade`` could report "Nothing to upgrade" minutes after a
       release because uv reused its cached view of PyPI.
+    * The datastore version check ran ``alembic`` from the PATH, which the
+      manager's own tool environment does not have; it now runs the environment's
+      alembic, like the migration itself. On ChemAI this made a fresh install end
+      in "updated to version unknown, but it should be None".
 
 2026.9.26.2 -- Bugfixes from a first installation on a brand-new Mac
     * On a fresh Mac ``uv tool install seamm-manager`` built the manager on the
