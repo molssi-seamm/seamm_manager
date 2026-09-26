@@ -106,3 +106,12 @@ def test_real_environment(tmp_path):
     assert "six" not in u.list()
     u.remove()
     assert not Path(u.path).exists()
+
+
+def test_tool_upgrade_refreshes(uv):
+    assert uv.tool_upgrade("seamm-manager")
+    cmd = uv.calls[-1]
+    assert cmd[1:3] == ["tool", "install"]
+    assert "--force" in cmd and "--refresh" in cmd
+    assert cmd[cmd.index("--python") + 1] == "3.12"
+    assert cmd[-1] == "seamm-manager"

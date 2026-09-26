@@ -1,6 +1,11 @@
 =======
 History
 =======
+(unreleased)
+    * ``update --all`` upgrades the manager itself with a forced, index-refreshing
+      reinstall; ``uv tool upgrade`` could report "Nothing to upgrade" minutes after a
+      release because uv reused its cached view of PyPI.
+
 2026.9.26.2 -- Bugfixes from a first installation on a brand-new Mac
     * On a fresh Mac ``uv tool install seamm-manager`` built the manager on the
       system Python 3.9, because nothing declared a minimum version. The package now
