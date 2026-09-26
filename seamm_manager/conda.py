@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import shutil
 import logging
 import os
 from pathlib import Path
@@ -9,6 +10,52 @@ import sys
 import warnings
 
 logger = logging.getLogger(__name__)
+
+
+# Where conda is usually installed when it is not on the PATH, e.g. for an
+# app launched from the Dock or a service, whose PATH is minimal.
+_CONDA_LOCATIONS = (
+    "~/miniforge3",
+    "~/mambaforge",
+    "~/miniconda3",
+    "~/anaconda3",
+    "~/opt/miniconda3",
+    "~/opt/anaconda3",
+    "/opt/homebrew/Caskroom/miniforge/base",
+    "/opt/miniforge3",
+    "/opt/miniconda3",
+    "/opt/anaconda3",
+    "/opt/conda",
+    "/usr/local/miniforge3",
+    "/usr/local/miniconda3",
+    "/usr/local/anaconda3",
+)
+
+
+def find_conda():
+    """The path to the conda executable, or None.
+
+    Tries, in order: ``$CONDA_EXE`` (set by an activated conda shell), the
+    PATH, then the usual installation directories. When found somewhere
+    other than the PATH, its directory is added to the PATH so that
+    sub-processes (``conda run``, the plug-in installers) find it too.
+    """
+    conda = os.environ.get("CONDA_EXE")
+    if conda and Path(conda).exists():
+        return conda
+    conda = shutil.which("conda")
+    if conda is not None:
+        return conda
+    for location in _CONDA_LOCATIONS:
+        base = Path(location).expanduser()
+        for sub in ("condabin", "bin"):
+            candidate = base / sub / "conda"
+            if candidate.exists():
+                os.environ["PATH"] = f"{candidate.parent}{os.pathsep}" + os.environ.get(
+                    "PATH", ""
+                )
+                return str(candidate)
+    return None
 
 
 class Conda(object):
@@ -119,7 +166,13 @@ class Conda(object):
 
     def _initialize(self):
         """Get the information about the current Conda installation."""
-        command = "conda info --json"
+        self.conda_exe = find_conda()
+        if self.conda_exe is None:
+            self.logger.info("Cannot find conda: not on the PATH nor in a usual place")
+            self._is_installed = False
+            self._data = None
+            return
+        command = f"'{self.conda_exe}' info --json"
         args = shlex.split(command)
         try:
             result = subprocess.check_output(
@@ -171,9 +224,16 @@ class Conda(object):
         #         break
 
         # self.root_path = root
-        self.root_path = Path(self._data["active_prefix"]).parent
-        if self.root_path.name == "envs":
-            self.root_path = self.root_path.parent
+        # root_prefix is the base installation whether or not an environment is
+        # active (active_prefix is null when nothing is activated, e.g. for an
+        # app launched from the Dock or a service).
+        root = self._data.get("root_prefix") or self._data.get("conda_prefix")
+        if root:
+            self.root_path = Path(root)
+        else:
+            self.root_path = Path(self._data["active_prefix"]).parent
+            if self.root_path.name == "envs":
+                self.root_path = self.root_path.parent
 
         tmp = "\n\t".join(self.environments)
         self.logger.info(f"environments:\n\t{tmp}")
@@ -196,7 +256,7 @@ class Conda(object):
         else:
             path = environment_file
 
-        command = f"conda env create --file '{path}'"
+        command = f"'{self.conda_exe}' env create --file '{path}'"
         if force:
             command += " --force"
         if name is not None:
@@ -224,7 +284,7 @@ class Conda(object):
         # Using the name leads to odd paths, so be explicit.
         path = self._resolve_environment_path(name)
 
-        command = f"conda env remove --yes  --prefix '{str(path)}'"
+        command = f"'{self.conda_exe}' env remove --yes  --prefix '{str(path)}'"
 
         self.logger.debug(f"command = {command}")
         try:
@@ -262,7 +322,7 @@ class Conda(object):
             An optional filename to export to
         """
         environment_path = self._resolve_environment_path(environment)
-        command = f"conda env export --prefix '{environment_path}'"
+        command = f"'{self.conda_exe}' env export --prefix '{environment_path}'"
         if path is not None:
             command += f" --file '{path}'"
         try:
@@ -301,7 +361,7 @@ class Conda(object):
         update : None or method
             Method to call to e.g. update a progress bar
         """
-        command = "conda install --yes "
+        command = f"'{self.conda_exe}' install --yes "
         if environment is not None:
             # Using the name leads to odd paths, so be explicit.
             # command += f" --name '{environment}'"
@@ -353,9 +413,9 @@ class Conda(object):
             A dictionary keyed by the package names.
         """
         if explicit:
-            command = "conda list --explicit"
+            command = f"'{self.conda_exe}' list --explicit"
         else:
-            command = "conda list --json"
+            command = f"'{self.conda_exe}' list --json"
         if environment is not None:
             path = self._resolve_environment_path(environment)
             command += f" --prefix '{path}'"
@@ -421,7 +481,7 @@ class Conda(object):
             The name of the environment to remove.
         """
         path = self._resolve_environment_path(environment)
-        command = f"conda env remove --prefix '{path}' --yes --json"
+        command = f"'{self.conda_exe}' env remove --prefix '{path}' --yes --json"
         try:
             self._execute(command)
         except subprocess.CalledProcessError as e:
@@ -463,7 +523,7 @@ class Conda(object):
         dict
             A dictionary of packages, with versions for each.
         """
-        command = "conda search --json"
+        command = f"'{self.conda_exe}' search --json"
         if override_channels:
             command += " --override-channels"
         if channels is None:
@@ -547,7 +607,7 @@ class Conda(object):
         update : None or method
             Method to call to e.g. update a progress bar
         """
-        command = "conda update --yes "
+        command = f"'{self.conda_exe}' update --yes "
         if environment is not None:
             # Using the name leads to odd paths, so be explicit.
             # command += f" --name '{environment}'"
@@ -604,7 +664,7 @@ class Conda(object):
         update : None or method
             Method to call to e.g. update a progress bar
         """
-        command = "conda uninstall --yes "
+        command = f"'{self.conda_exe}' uninstall --yes "
         if environment is not None:
             path = self._resolve_environment_path(environment)
             command += f" --prefix '{path}'"
@@ -640,7 +700,7 @@ class Conda(object):
         else:
             path = environment_file
 
-        command = f"conda env update --file '{path}'"
+        command = f"'{self.conda_exe}' env update --file '{path}'"
         if name is not None:
             # Using the name leads to odd paths, so be explicit.
             # command += f" --name '{name}'"
