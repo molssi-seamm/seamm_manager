@@ -1,0 +1,8 @@
+packaging
+platformdirs
+pmw
+requests
+seamm-util
+seamm-widgets
+tabulate
+

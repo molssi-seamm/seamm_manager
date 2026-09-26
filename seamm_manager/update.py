@@ -1,0 +1,202 @@
+# -*- coding: utf-8 -*-
+
+"""Update requested components of SEAMM."""
+
+import os
+import platform
+import sys
+
+from packaging.version import Version
+
+from .datastore import update as update_datastore
+from .metadata import development_packages
+from . import my
+from .util import (
+    constraints,
+    find_packages,
+    get_metadata,
+    package_info,
+    run_plugin_installer,
+    write_environment_snapshot,
+)
+
+system = platform.system()
+if system in ("Darwin",):
+    from .mac import ServiceManager
+
+    mgr = ServiceManager(prefix="org.molssi.seamm")
+elif system in ("Linux",):
+    from .linux import ServiceManager
+
+    mgr = ServiceManager(prefix="org.molssi.seamm")
+else:
+    raise NotImplementedError(f"SEAMM does not support services on {system} yet.")
+
+
+def setup(parser):
+    """Define the command-line interface for updating SEAMM components.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        The main parser for the application.
+    """
+    subparser = parser.add_parser("update")
+    subparser.set_defaults(func=update)
+
+    subparser.add_argument(
+        "--all",
+        action="store_true",
+        help="Fully update the SEAMM installation",
+    )
+    subparser.add_argument(
+        "--gui-only",
+        action="store_true",
+        help="Update only packages necessary for the GUI",
+    )
+    subparser.add_argument(
+        "--no-constraints",
+        action="store_true",
+        help=(
+            "Do not constrain versions to the published lock file; take the "
+            "newest releases pip can resolve."
+        ),
+    )
+    subparser.add_argument(
+        "modules",
+        nargs="*",
+        default=None,
+        help="Specific modules and plug-ins to update.",
+    )
+
+
+def update():
+    """Update the requested SEAMM components and plug-ins."""
+    if not my.uv.exists:
+        print(f"There is no SEAMM environment at {my.uv.path}; nothing to update.")
+        print("Install SEAMM first with 'seamm-manager install --all'.")
+        return 1
+
+    # The manager itself, if installed as a uv tool: keep it current first.
+    if my.options.all and not os.environ.get("SEAMM_MANAGER_UPGRADED"):
+        if my.uv.tool_upgrade("seamm-manager"):
+            os.environ["SEAMM_MANAGER_UPGRADED"] = "1"
+            print("Re-running with the updated manager.")
+            os.execv(sys.executable, [sys.executable, *sys.argv])
+
+    # Need to track packages that require services to be restarted.
+    service_packages = ("seamm-datastore", "seamm-jobserver")
+    initial_version = {p: package_info(p)[0] for p in service_packages}
+
+    if my.options.all:
+        update_packages("all", gui_only=my.options.gui_only)
+    else:
+        update_packages(my.options.modules, gui_only=my.options.gui_only)
+
+    if my.development:
+        update_development_environment()
+
+    final_version = {p: package_info(p)[0] for p in service_packages}
+    # And restart any services that need it
+    service_name = "dev_jobserver" if my.development else "jobserver"
+    if (
+        initial_version["seamm-datastore"] is not None
+        and final_version["seamm-datastore"] is not None
+        and Version(final_version["seamm-datastore"])
+        > Version(initial_version["seamm-datastore"])
+    ):
+        if mgr.is_installed(service_name):
+            mgr.stop(service_name)
+            update_datastore()
+            mgr.start(service_name)
+            print(f"Restarted the {service_name} because the datastore was updated.")
+    elif (
+        initial_version["seamm-jobserver"] is not None
+        and final_version["seamm-jobserver"] is not None
+        and Version(final_version["seamm-jobserver"])
+        > Version(initial_version["seamm-jobserver"])
+    ):
+        if mgr.is_installed(service_name):
+            mgr.restart(service_name)
+            print(f"Restarted the {service_name} because it was updated.")
+    return 0
+
+
+def update_packages(to_update, gui_only=False, progress=None, update_text=None):
+    """Update SEAMM components and plug-ins."""
+    metadata = get_metadata()
+
+    if progress is not None:
+        progress()
+
+    # Find all the packages
+    packages = find_packages(progress=True)
+
+    if progress is not None:
+        progress()
+
+    if to_update == "all":
+        to_update = [*packages.keys()]
+
+    # What is installed now
+    info = my.uv.list()
+
+    if progress is not None:
+        progress()
+
+    specs = []
+    for package in to_update:
+        if package not in packages:
+            print(f"'{package}' is not a SEAMM package; skipping it.")
+            continue
+        available = Version(packages[package]["version"])
+
+        # Skip packages that aren't installed.
+        if package not in info:
+            continue
+
+        installed_version = Version(info[package]["version"])
+        pinned = "pinned" in packages[package] and packages[package]["pinned"]
+        spec = f"{package}=={available}" if pinned else package
+
+        ptype = packages[package]["type"]
+        if installed_version < available:
+            print(
+                f"Updating {ptype.lower()} {package} from version {installed_version} "
+                f"to {available}"
+            )
+            specs.append(spec)
+
+    if progress is not None:
+        progress()
+
+    if len(specs) > 0:
+        lock = constraints()
+        if lock is None:
+            print("Updating with uv (no constraints).")
+        else:
+            print(f"Updating with uv, constrained to the published lock {lock.name}.")
+        my.uv.install(specs, constraints=lock, upgrade=True)
+        path = write_environment_snapshot("update")
+        print(f"done; the environment is recorded in {path.name}")
+    else:
+        print("Everything is up to date.")
+
+    # See if any packages have an installer
+    if not metadata["gui-only"] and not gui_only:
+        for package in to_update:
+            # Skip packages that aren't installed.
+            if package in info:
+                if progress is not None:
+                    progress()
+                if update_text is not None:
+                    print(f"Updating background codes for {package}")
+                    update_text(f"Updating background codes for {package}")
+                run_plugin_installer(package, "update")
+
+
+def update_development_environment():
+    """Update packages needed for development."""
+    packages = my.package_metadata.get("development packages", development_packages)
+    print(f"Updating development packages {' '.join(packages)}")
+    my.uv.install(list(packages), upgrade=True)
