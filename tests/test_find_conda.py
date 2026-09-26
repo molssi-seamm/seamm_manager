@@ -16,7 +16,8 @@ def test_conda_exe_env_wins(monkeypatch, tmp_path):
 
 def test_found_in_standard_location_and_added_to_path(monkeypatch, tmp_path):
     monkeypatch.delenv("CONDA_EXE", raising=False)
-    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    # A PATH with no conda on it: the GitHub runners have /usr/bin/conda.
+    monkeypatch.setenv("PATH", "/nonexistent")
     base = tmp_path / "miniforge3"
     (base / "condabin").mkdir(parents=True)
     (base / "condabin" / "conda").write_text("")
