@@ -1,6 +1,11 @@
 =======
 History
 =======
+2026.9.26.2 -- Bugfix: require Python 3.12 so `uv tool install` picks it
+    * On a fresh Mac ``uv tool install seamm-manager`` built the manager on the
+      system Python 3.9, because nothing declared a minimum version. The package now
+      requires Python 3.12 or later, so uv installs one if needed.
+
 2026.9.26.1 -- Bugfixes from the first real migration
     * Conda could not be found by a manager or plug-in installer launched from the
       Dock or as a service, whose PATH is minimal, so the GUI showed a traceback in
