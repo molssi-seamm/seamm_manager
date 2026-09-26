@@ -13,6 +13,7 @@ from . import my
 from .util import (
     constraints,
     find_packages,
+    retire_installer,
     get_metadata,
     run_plugin_installer,
     set_metadata,
@@ -212,6 +213,7 @@ def install_packages(
         progress()
 
     if len(specs) > 0:
+        retire_installer(specs, info)
         lock = constraints()
         if lock is None:
             print("Installing with uv (no constraints).")

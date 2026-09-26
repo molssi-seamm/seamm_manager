@@ -14,6 +14,7 @@ from . import my
 from .util import (
     constraints,
     find_packages,
+    retire_installer,
     get_metadata,
     package_info,
     run_plugin_installer,
@@ -171,6 +172,7 @@ def update_packages(to_update, gui_only=False, progress=None, update_text=None):
         progress()
 
     if len(specs) > 0:
+        retire_installer(specs, info)
         lock = constraints()
         if lock is None:
             print("Updating with uv (no constraints).")

@@ -100,6 +100,25 @@ def find_packages(progress=True, update=None, update_cache=False, cache_valid=1)
     return package_db["packages"]
 
 
+def retire_installer(specs, installed):
+    """Remove ``seamm-installer`` from the environment before ``seamm-manager``
+    goes in.
+
+    Both provide the ``seamm_installer`` module (the manager ships it as a
+    compatibility shim for the plug-ins' installers), so they cannot coexist
+    in one environment. Returns True if it was removed.
+    """
+    wants_manager = any(
+        spec.split("==")[0].strip().lower() in ("seamm-manager", "seamm_manager")
+        for spec in specs
+    )
+    if wants_manager and "seamm-installer" in installed:
+        print("Removing seamm-installer, which seamm-manager replaces.")
+        my.uv.uninstall("seamm-installer")
+        return True
+    return False
+
+
 def constraints():
     """The lock file to pass to uv, or None if the user opted out or it is
     missing."""
