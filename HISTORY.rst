@@ -1,7 +1,7 @@
 =======
 History
 =======
-(unreleased)
+2026.9.26.3 -- Bugfixes from the first Linux migration (ChemAI)
     * ``update --all`` upgrades the manager itself with a forced, index-refreshing
       reinstall; ``uv tool upgrade`` could report "Nothing to upgrade" minutes after a
       release because uv reused its cached view of PyPI.
