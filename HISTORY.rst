@@ -5,6 +5,9 @@ History
     * On a fresh Mac ``uv tool install seamm-manager`` built the manager on the
       system Python 3.9, because nothing declared a minimum version. The package now
       requires Python 3.12 or later, so uv installs one if needed.
+    * A plug-in's own installer that fails (for instance because conda is not
+      installed) now reports what went wrong, instead of leaving the code silently
+      uninstalled.
 
 2026.9.26.1 -- Bugfixes from the first real migration
     * Conda could not be found by a manager or plug-in installer launched from the
