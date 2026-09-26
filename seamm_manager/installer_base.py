@@ -562,12 +562,24 @@ class InstallerBase(object):
             return None
 
     def install(self):
-        """Install using a Conda environment."""
+        """Install using a Conda environment.
+
+        A plug-in whose code cannot be installed this way (ORCA, Gaussian,
+        VASP, ... are licensed manual installations) has no
+        ``environment_file``; say so instead of failing.
+        """
+        environment_file = getattr(self, "environment_file", None)
+        if environment_file is None or self.environment is None:
+            print(
+                "    This code is not installed automatically; install it yourself "
+                f"and give its location in {self.exe_config.path}."
+            )
+            return
         print(
             f"    Installing Conda environment '{self.environment}'. This "
             "may take a minute or two."
         )
-        self.conda.create_environment(self.environment_file, name=self.environment)
+        self.conda.create_environment(environment_file, name=self.environment)
 
         # Update the configuration file.
         self.check_exe_configuration_file()
