@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.26.2 documentation</title>
+    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=646b312e"></script>
+    <script src="../../_static/documentation_options.js?v=c013b537"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
@@ -82,14 +82,24 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_alembic</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The environment's alembic executable, or None.</span>
+
+<span class="sd">    The manager may run from a different interpreter (the uv tool</span>
+<span class="sd">    environment), which has no alembic; the datastore's is in the venv.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"alembic"</span><span class="p">)</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="latest_version">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.datastore.latest_version">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">latest_version</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">"""Show information about the datastore."""</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">_find_path</span><span class="p">()</span>
+    <span class="n">alembic</span> <span class="o">=</span> <span class="n">_alembic</span><span class="p">()</span>
     <span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">=</span> <span class="s2">"alembic heads"</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">alembic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">alembic</span><span class="si">}</span><span class="s1">" heads'</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
             <span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
@@ -111,10 +121,11 @@
         <span class="n">version</span> <span class="o">=</span> <span class="s2">"not installed"</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">_find_path</span><span class="p">()</span>
+        <span class="n">alembic</span> <span class="o">=</span> <span class="n">_alembic</span><span class="p">()</span>
         <span class="n">version</span> <span class="o">=</span> <span class="s2">"unknown"</span>
-        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">alembic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"sqlite:///</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">db_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'alembic -x uri="</span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s1">" current'</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">alembic</span><span class="si">}</span><span class="s1">" -x uri="</span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s1">" current'</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
                 <span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
@@ -219,7 +230,7 @@
             <span class="s2">"Is it installed?"</span>
         <span class="p">)</span>
     <span class="n">uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"sqlite:///</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">db_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
-    <span class="n">alembic</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"alembic"</span><span class="p">)</span>
+    <span class="n">alembic</span> <span class="o">=</span> <span class="n">_alembic</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">alembic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Cannot find 'alembic' in the SEAMM environment </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">"</span>
@@ -309,7 +320,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.2 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=646b312e"></script>
+    <script src="../_static/documentation_options.js?v=c013b537"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -1808,8 +1808,11 @@ report nothing to do.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.tool_upgrade">
 <span class="sig-name descname"><span class="pre">tool_upgrade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'seamm-manager'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.tool_upgrade"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.tool_upgrade" title="Link to this definition">¶</a></dt>
-<dd><p>Upgrade a uv tool (the manager’s own installation). Returns True if
-uv reports the tool is installed and the upgrade succeeded.</p>
+<dd><p>Upgrade a uv tool (the manager’s own installation) to the newest
+release. Returns True if it succeeded.</p>
+<p>Not <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">upgrade</span></code>: that reuses uv’s cached view of the index and
+can report “Nothing to upgrade” minutes after a release. A forced
+reinstall with <code class="docutils literal notranslate"><span class="pre">--refresh</span></code> always consults PyPI.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2190,7 +2193,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

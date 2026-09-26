@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.26.2 documentation</title>
+    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=646b312e"></script>
+    <script src="../../_static/documentation_options.js?v=c013b537"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>
@@ -306,9 +306,23 @@
 <div class="viewcode-block" id="Uv.tool_upgrade">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.Uv.tool_upgrade">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">tool_upgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="s2">"seamm-manager"</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Upgrade a uv tool (the manager's own installation). Returns True if</span>
-<span class="sd">        uv reports the tool is installed and the upgrade succeeded."""</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">,</span> <span class="s2">"upgrade"</span><span class="p">,</span> <span class="n">tool</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Upgrade a uv tool (the manager's own installation) to the newest</span>
+<span class="sd">        release. Returns True if it succeeded.</span>
+
+<span class="sd">        Not ``uv tool upgrade``: that reuses uv's cached view of the index and</span>
+<span class="sd">        can report "Nothing to upgrade" minutes after a release. A forced</span>
+<span class="sd">        reinstall with ``--refresh`` always consults PyPI.</span>
+<span class="sd">        """</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="s2">"tool"</span><span class="p">,</span>
+            <span class="s2">"install"</span><span class="p">,</span>
+            <span class="s2">"--force"</span><span class="p">,</span>
+            <span class="s2">"--refresh"</span><span class="p">,</span>
+            <span class="s2">"--python"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span><span class="p">,</span>
+            <span class="n">tool</span><span class="p">,</span>
+            <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span></div>
 </div>
 
@@ -343,7 +357,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.26.2 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=646b312e"></script>
+    <script src="_static/documentation_options.js?v=c013b537"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="authors.html" title="Credits"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,19 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.26.3 – Bugfixes from the first Linux migration (ChemAI)</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> upgrades the manager itself with a forced, index-refreshing
+reinstall; <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">upgrade</span></code> could report “Nothing to upgrade” minutes after a
+release because uv reused its cached view of PyPI.</p></li>
+<li><p>The datastore version check ran <code class="docutils literal notranslate"><span class="pre">alembic</span></code> from the PATH, which the
+manager’s own tool environment does not have; it now runs the environment’s
+alembic, like the migration itself. On ChemAI this made a fresh install end
+in “updated to version unknown, but it should be None”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span></code> on Linux crashed after deleting the old unit and before
+writing the new one (the executable path is now a <code class="docutils literal notranslate"><span class="pre">Path</span></code>), leaving no
+service. Found on ChemAI; the unit was restored by hand.</p></li>
+</ul>
+</dd>
 <dt>2026.9.26.2 – Bugfixes from a first installation on a brand-new Mac</dt><dd><ul class="simple">
 <li><p>On a fresh Mac <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">install</span> <span class="pre">seamm-manager</span></code> built the manager on the
 system Python 3.9, because nothing declared a minimum version. The package now
@@ -137,7 +150,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="authors.html" title="Credits"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
