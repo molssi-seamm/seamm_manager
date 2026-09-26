@@ -15,7 +15,10 @@ Command                               What it does
                                       environment if needed); ``--third-party`` adds those;
                                       ``install <names>`` installs specific packages;
                                       ``install seamm-webui`` sets up the web interface's
-                                      own environment; ``install development`` adds tooling.
+                                      own environment; ``install development`` adds tooling;
+                                      ``--rerun-installers`` redoes the per-package steps
+                                      (datastore update, the codes' installers) after an
+                                      interrupted install.
 ``update --all`` / ``update <names>`` Update the manager, then the packages, to the versions in
                                       the published lock; restarts the JobServer when needed.
 ``show``                              List the SEAMM packages with installed and available

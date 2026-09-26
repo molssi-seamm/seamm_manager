@@ -8,7 +8,7 @@ The installer/updater for SEAMM.
 # Bring up the classes so that they appear to be directly in
 # the seamm_manager package.
 
-from seamm_manager.conda import Conda  # noqa: F401
+from seamm_manager.conda import Conda, find_conda  # noqa: F401
 from seamm_manager.configuration import Configuration  # noqa: F401
 from seamm_manager.installer_base import InstallerBase  # noqa: F401
 from . import my  # noqa: F401

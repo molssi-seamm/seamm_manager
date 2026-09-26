@@ -79,6 +79,15 @@ def setup(parser):
         help="Python version if the environment has to be created (default 3.12)",
     )
     subparser.add_argument(
+        "--rerun-installers",
+        action="store_true",
+        help=(
+            "Run the per-package steps (datastore update, the plug-ins' own "
+            "installers for their codes) for every requested package, not just "
+            "those installed now. Use after an interrupted install."
+        ),
+    )
+    subparser.add_argument(
         "modules",
         nargs="*",
         default=None,
@@ -225,14 +234,19 @@ def install_packages(
     else:
         print("Nothing to install.")
 
-    # Restart services and run custom installer
+    # Restart services and run the plug-ins' own installers. Normally only for
+    # the packages this run installed or updated; --rerun-installers does it
+    # for every requested package, which is how to recover if an earlier run
+    # was interrupted part way through this loop (re-running 'install' alone
+    # finds nothing to install and would otherwise skip all of this).
+    changed = {spec.split("==")[0] for spec in specs}
+    rerun = getattr(my.options, "rerun_installers", False)
     for package in to_install:
         if progress is not None:
             progress()
-        if not update and package in info:
-            continue
-
         if package == "development":
+            continue
+        if package not in changed and not rerun:
             continue
 
         if package == "seamm-datastore":

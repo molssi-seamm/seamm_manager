@@ -299,7 +299,7 @@ class InstallerBase(object):
                             self.exe_config.set_value(
                                 "local", "conda-environment", conda_environment
                             )
-                            conda_exe = shutil.which("conda")
+                            conda_exe = seamm_manager.find_conda()
                             if conda_exe is None:
                                 print(
                                     "    Cannot find the path to the conda executable! "
@@ -334,7 +334,7 @@ class InstallerBase(object):
                 if self.have_executables(conda_path):
                     # All is good!
                     conda_environment = initial_conda_environment
-                    conda_exe = shutil.which("conda")
+                    conda_exe = seamm_manager.find_conda()
                     if conda_exe is None:
                         print(
                             "    Cannot find the path to the conda executable! "
@@ -574,7 +574,7 @@ class InstallerBase(object):
 
         # Update the executable configuration file.
         self.exe_config.set_value("local", "installation", "conda")
-        conda_exe = shutil.which("conda")
+        conda_exe = seamm_manager.find_conda()
         if conda_exe is not None:
             self.exe_config.set_value("local", "conda", conda_exe)
         self.exe_config.set_value("local", "conda-environment", self.environment)
@@ -746,7 +746,7 @@ class InstallerBase(object):
             self.conda.update_environment(self.environment_file, name=environment)
             # Update the configuration file, just in case.
             self.exe_config.set_value("local", "installation", "conda")
-            conda_exe = shutil.which("conda")
+            conda_exe = seamm_manager.find_conda()
             if conda_exe is not None:
                 self.exe_config.set_value("local", "conda", conda_exe)
             self.exe_config.set_value("local", "conda-environment", environment)

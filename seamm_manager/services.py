@@ -169,9 +169,8 @@ def create():
                 exe_path = None
             if exe_path is None or not Path(exe_path).is_file():
                 print(
-                    "Could not find seamm-webui in the 'seamm-webui' Conda "
-                    "environment. Run 'seamm-manager install seamm-webui' "
-                    "first."
+                    "Could not find seamm-webui in the venv-webui environment. "
+                    "Run 'seamm-manager install seamm-webui' first."
                 )
                 print()
                 continue
@@ -184,13 +183,13 @@ def create():
                 print()
                 continue
 
-        # my.options.root already defaults to ~/SEAMM_DEV or ~/SEAMM based on
+        # str(my.root) already defaults to ~/SEAMM_DEV or ~/SEAMM based on
         # development mode (see __main__.py) but also respects an explicit
         # --root override -- use it directly rather than re-deriving a
         # hardcoded value here, which silently ignored --root entirely.
-        root = my.options.root
-        stderr_path = Path(f"{my.options.root}/logs/{service}.out").expanduser()
-        stdout_path = Path(f"{my.options.root}/logs/{service}.out").expanduser()
+        root = str(my.root)
+        stderr_path = my.root / "logs" / f"{service}.out"
+        stdout_path = my.root / "logs" / f"{service}.out"
 
         if service == "dashboard":
             mgr.create(
