@@ -82,18 +82,51 @@ def db_version():
     return version
 
 
+def ensure(default_project="default"):
+    """Create the datastore if it does not exist, using the environment's own
+    seamm_datastore, so that the JobServer and the web interface can start in
+    any order. Returns True if it was created.
+
+    The first version of the manager left this to the web interface's first
+    start; a JobServer created before it crash-looped on the missing database.
+    """
+    db_path = my.root / "Jobs" / "seamm.db"
+    if db_path.exists():
+        return False
+    if not my.uv.exists or my.uv.which("python") is None:
+        return False
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Creating the datastore {db_path}")
+    code = (
+        "import seamm_datastore\n"
+        f"seamm_datastore.connect(database_uri='sqlite:///{db_path}', "
+        f"datastore_location='{db_path.parent}', initialize=True, "
+        f"default_project='{default_project}')\n"
+    )
+    result = subprocess.run(
+        [str(my.uv.python), "-c", code], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print("   ...could not create the datastore:")
+        print("\n".join("      " + line for line in result.stderr.splitlines()[-6:]))
+        return False
+    print("   done; the administrator account is 'admin' (password 'admin').")
+    return True
+
+
 def update():
     """Update the database to the latest version."""
     db_path = my.root / "Jobs" / "seamm.db"
     if not db_path.expanduser().exists():
-        print(f"The database file '{db_path}' does not exist.")
+        if not ensure():
+            print(f"The database file '{db_path}' does not exist.")
     else:
         version = db_version()
         latest = latest_version()
         if version == latest:
             print(f"The database at '{db_path}' is already up-to-date.")
         else:
-            service_name = "dev_dashboard" if my.development else "dashboard"
+            service_name = "dev_jobserver" if my.development else "jobserver"
             restart = mgr.is_running(service_name)
             if restart:
                 print(f"Stopping the service {service_name}")
