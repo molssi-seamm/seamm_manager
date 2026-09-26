@@ -1,6 +1,22 @@
 =======
 History
 =======
+2026.9.26.1 -- Bugfixes from the first real migration
+    * Conda could not be found by a manager or plug-in installer launched from the
+      Dock or as a service, whose PATH is minimal, so the GUI showed a traceback in
+      each plug-in's description. Conda is now found through ``$CONDA_EXE``, the PATH,
+      or the usual installation directories, and its directory is passed on to
+      sub-processes. With no conda environment active the base installation is taken
+      from ``root_prefix`` rather than the (empty) active prefix.
+    * The services and datastore commands used the raw ``--root`` option, which is
+      empty when the default root applies; the post-install step crashed. They now
+      use the resolved root.
+    * A plug-in installer writing a fresh ``<code>.ini`` crashed serializing an empty
+      configuration.
+    * The manager's desktop app is ``SEAMM-Manager``, running ``seamm-manager``.
+    * ``install`` runs the per-package steps (datastore update, the plug-ins' own
+      installers) for the packages it installed or updated; ``--rerun-installers``
+      runs them for every requested package, which recovers an interrupted install.
 
 2026.9.26 -- First release of seamm-manager
     * seamm-manager replaces seamm-installer. It manages a SEAMM installation in a
