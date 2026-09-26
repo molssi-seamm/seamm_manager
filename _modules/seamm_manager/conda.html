@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.conda &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <title>seamm_manager.conda &#8212; SEAMM Manager Step 2026.9.26.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/documentation_options.js?v=5393bb44"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.conda</a></li> 
       </ul>
@@ -38,6 +38,7 @@
   <h1>Source code for seamm_manager.conda</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -47,6 +48,55 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># Where conda is usually installed when it is not on the PATH, e.g. for an</span>
+<span class="c1"># app launched from the Dock or a service, whose PATH is minimal.</span>
+<span class="n">_CONDA_LOCATIONS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"~/miniforge3"</span><span class="p">,</span>
+    <span class="s2">"~/mambaforge"</span><span class="p">,</span>
+    <span class="s2">"~/miniconda3"</span><span class="p">,</span>
+    <span class="s2">"~/anaconda3"</span><span class="p">,</span>
+    <span class="s2">"~/opt/miniconda3"</span><span class="p">,</span>
+    <span class="s2">"~/opt/anaconda3"</span><span class="p">,</span>
+    <span class="s2">"/opt/homebrew/Caskroom/miniforge/base"</span><span class="p">,</span>
+    <span class="s2">"/opt/miniforge3"</span><span class="p">,</span>
+    <span class="s2">"/opt/miniconda3"</span><span class="p">,</span>
+    <span class="s2">"/opt/anaconda3"</span><span class="p">,</span>
+    <span class="s2">"/opt/conda"</span><span class="p">,</span>
+    <span class="s2">"/usr/local/miniforge3"</span><span class="p">,</span>
+    <span class="s2">"/usr/local/miniconda3"</span><span class="p">,</span>
+    <span class="s2">"/usr/local/anaconda3"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="find_conda">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.conda.find_conda">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_conda</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The path to the conda executable, or None.</span>
+
+<span class="sd">    Tries, in order: ``$CONDA_EXE`` (set by an activated conda shell), the</span>
+<span class="sd">    PATH, then the usual installation directories. When found somewhere</span>
+<span class="sd">    other than the PATH, its directory is added to the PATH so that</span>
+<span class="sd">    sub-processes (``conda run``, the plug-in installers) find it too.</span>
+<span class="sd">    """</span>
+    <span class="n">conda</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"CONDA_EXE"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">conda</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">conda</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">conda</span>
+    <span class="n">conda</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"conda"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">conda</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">conda</span>
+    <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">_CONDA_LOCATIONS</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">location</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"condabin"</span><span class="p">,</span> <span class="s2">"bin"</span><span class="p">):</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="n">sub</span> <span class="o">/</span> <span class="s2">"conda"</span>
+            <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"PATH"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">candidate</span><span class="o">.</span><span class="n">parent</span><span class="si">}{</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">"PATH"</span><span class="p">,</span> <span class="s2">""</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="Conda">
@@ -162,7 +212,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Get the information about the current Conda installation."""</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda info --json"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span> <span class="o">=</span> <span class="n">find_conda</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Cannot find conda: not on the PATH nor in a usual place"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_installed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' info --json"</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
@@ -214,9 +270,16 @@
         <span class="c1">#         break</span>
 
         <span class="c1"># self.root_path = root</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">"active_prefix"</span><span class="p">])</span><span class="o">.</span><span class="n">parent</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"envs"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="o">.</span><span class="n">parent</span>
+        <span class="c1"># root_prefix is the base installation whether or not an environment is</span>
+        <span class="c1"># active (active_prefix is null when nothing is activated, e.g. for an</span>
+        <span class="c1"># app launched from the Dock or a service).</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"root_prefix"</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"conda_prefix"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">root</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">"active_prefix"</span><span class="p">])</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"envs"</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="o">.</span><span class="n">parent</span>
 
         <span class="n">tmp</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environments</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"environments:</span><span class="se">\n\t</span><span class="si">{</span><span class="n">tmp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -241,7 +304,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">environment_file</span>
 
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"conda env create --file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' env create --file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
         <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="s2">" --force"</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -272,7 +335,7 @@
         <span class="c1"># Using the name leads to odd paths, so be explicit.</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"conda env remove --yes  --prefix '</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' env remove --yes  --prefix '</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"command = </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -316,7 +379,7 @@
 <span class="sd">            An optional filename to export to</span>
 <span class="sd">        """</span>
         <span class="n">environment_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"conda env export --prefix '</span><span class="si">{</span><span class="n">environment_path</span><span class="si">}</span><span class="s2">'"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' env export --prefix '</span><span class="si">{</span><span class="n">environment_path</span><span class="si">}</span><span class="s2">'"</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" --file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
         <span class="k">try</span><span class="p">:</span>
@@ -358,7 +421,7 @@
 <span class="sd">        update : None or method</span>
 <span class="sd">            Method to call to e.g. update a progress bar</span>
 <span class="sd">        """</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda install --yes "</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' install --yes "</span>
         <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Using the name leads to odd paths, so be explicit.</span>
             <span class="c1"># command += f" --name '{environment}'"</span>
@@ -413,9 +476,9 @@
 <span class="sd">            A dictionary keyed by the package names.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">explicit</span><span class="p">:</span>
-            <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda list --explicit"</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' list --explicit"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda list --json"</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' list --json"</span>
         <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" --prefix '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
@@ -487,7 +550,7 @@
 <span class="sd">            The name of the environment to remove.</span>
 <span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"conda env remove --prefix '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">' --yes --json"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' env remove --prefix '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">' --yes --json"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -532,7 +595,7 @@
 <span class="sd">        dict</span>
 <span class="sd">            A dictionary of packages, with versions for each.</span>
 <span class="sd">        """</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda search --json"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' search --json"</span>
         <span class="k">if</span> <span class="n">override_channels</span><span class="p">:</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="s2">" --override-channels"</span>
         <span class="k">if</span> <span class="n">channels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -622,7 +685,7 @@
 <span class="sd">        update : None or method</span>
 <span class="sd">            Method to call to e.g. update a progress bar</span>
 <span class="sd">        """</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda update --yes "</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' update --yes "</span>
         <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Using the name leads to odd paths, so be explicit.</span>
             <span class="c1"># command += f" --name '{environment}'"</span>
@@ -682,7 +745,7 @@
 <span class="sd">        update : None or method</span>
 <span class="sd">            Method to call to e.g. update a progress bar</span>
 <span class="sd">        """</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="s2">"conda uninstall --yes "</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' uninstall --yes "</span>
         <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" --prefix '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
@@ -721,7 +784,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">environment_file</span>
 
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"conda env update --file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' env update --file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Using the name leads to odd paths, so be explicit.</span>
             <span class="c1"># command += f" --name '{name}'"</span>
@@ -840,7 +903,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.conda</a></li> 
       </ul>

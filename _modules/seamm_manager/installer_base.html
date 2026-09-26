@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.26.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/documentation_options.js?v=5393bb44"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -344,7 +344,7 @@
                             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span>
                                 <span class="s2">"local"</span><span class="p">,</span> <span class="s2">"conda-environment"</span><span class="p">,</span> <span class="n">conda_environment</span>
                             <span class="p">)</span>
-                            <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"conda"</span><span class="p">)</span>
+                            <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
                             <span class="k">if</span> <span class="n">conda_exe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                                 <span class="nb">print</span><span class="p">(</span>
                                     <span class="s2">"    Cannot find the path to the conda executable! "</span>
@@ -379,7 +379,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">have_executables</span><span class="p">(</span><span class="n">conda_path</span><span class="p">):</span>
                     <span class="c1"># All is good!</span>
                     <span class="n">conda_environment</span> <span class="o">=</span> <span class="n">initial_conda_environment</span>
-                    <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"conda"</span><span class="p">)</span>
+                    <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
                     <span class="k">if</span> <span class="n">conda_exe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span>
                             <span class="s2">"    Cannot find the path to the conda executable! "</span>
@@ -634,7 +634,7 @@
 
         <span class="c1"># Update the executable configuration file.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"installation"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">)</span>
-        <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"conda"</span><span class="p">)</span>
+        <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">conda_exe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">,</span> <span class="n">conda_exe</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"conda-environment"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
@@ -821,7 +821,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">)</span>
             <span class="c1"># Update the configuration file, just in case.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"installation"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">)</span>
-            <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"conda"</span><span class="p">)</span>
+            <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">conda_exe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">,</span> <span class="n">conda_exe</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"conda-environment"</span><span class="p">,</span> <span class="n">environment</span><span class="p">)</span>
@@ -871,7 +871,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>

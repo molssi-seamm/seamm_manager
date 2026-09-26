@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../_static/documentation_options.js?v=5393bb44"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -383,6 +383,16 @@ environment file.</p></li>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.conda.find_conda">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.conda.</span></span><span class="sig-name descname"><span class="pre">find_conda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#find_conda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.find_conda" title="Link to this definition">¶</a></dt>
+<dd><p>The path to the conda executable, or None.</p>
+<p>Tries, in order: <code class="docutils literal notranslate"><span class="pre">$CONDA_EXE</span></code> (set by an activated conda shell), the
+PATH, then the usual installation directories. When found somewhere
+other than the PATH, its directory is added to the PATH so that
+sub-processes (<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">run</span></code>, the plug-in installers) find it too.</p>
 </dd></dl>
 
 </section>
@@ -1891,6 +1901,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.update_environment"><code class="docutils literal notranslate"><span class="pre">Conda.update_environment()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#seamm_manager.conda.find_conda"><code class="docutils literal notranslate"><span class="pre">find_conda()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.configuration">seamm_manager.configuration module</a><ul>
@@ -2168,7 +2179,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

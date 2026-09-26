@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.26.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=adbb5640"></script>
+    <script src="_static/documentation_options.js?v=5393bb44"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="authors.html" title="Credits"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,24 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.26.1 – Bugfixes from the first real migration</dt><dd><ul class="simple">
+<li><p>Conda could not be found by a manager or plug-in installer launched from the
+Dock or as a service, whose PATH is minimal, so the GUI showed a traceback in
+each plug-in’s description. Conda is now found through <code class="docutils literal notranslate"><span class="pre">$CONDA_EXE</span></code>, the PATH,
+or the usual installation directories, and its directory is passed on to
+sub-processes. With no conda environment active the base installation is taken
+from <code class="docutils literal notranslate"><span class="pre">root_prefix</span></code> rather than the (empty) active prefix.</p></li>
+<li><p>The services and datastore commands used the raw <code class="docutils literal notranslate"><span class="pre">--root</span></code> option, which is
+empty when the default root applies; the post-install step crashed. They now
+use the resolved root.</p></li>
+<li><p>A plug-in installer writing a fresh <code class="docutils literal notranslate"><span class="pre">&lt;code&gt;.ini</span></code> crashed serializing an empty
+configuration.</p></li>
+<li><p>The manager’s desktop app is <code class="docutils literal notranslate"><span class="pre">SEAMM-Manager</span></code>, running <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">install</span></code> runs the per-package steps (datastore update, the plug-ins’ own
+installers) for the packages it installed or updated; <code class="docutils literal notranslate"><span class="pre">--rerun-installers</span></code>
+runs them for every requested package, which recovers an interrupted install.</p></li>
+</ul>
+</dd>
 <dt>2026.9.26 – First release of seamm-manager</dt><dd><ul class="simple">
 <li><p>seamm-manager replaces seamm-installer. It manages a SEAMM installation in a
 uv-managed Python virtual environment under the SEAMM root (<code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code>):
@@ -107,7 +125,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="authors.html" title="Credits"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
