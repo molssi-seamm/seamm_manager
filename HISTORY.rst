@@ -1,6 +1,12 @@
 =======
 History
 =======
+2026.9.26.5 -- Bugfix: the manager's release was only synced alongside other updates
+    * The step added in 2026.9.26.4 that puts the running manager's release into the
+      environment ran only when some other package was being installed or updated, so
+      an environment with nothing else to update kept the older manager. It now runs
+      every time.
+
 2026.9.26.4 -- The environment keeps the manager's own release; manual codes
     * After installing or updating, the manager puts its own release into the
       environment if the package list still names an older one. The list is refreshed

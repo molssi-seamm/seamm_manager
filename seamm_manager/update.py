@@ -180,11 +180,16 @@ def update_packages(to_update, gui_only=False, progress=None, update_text=None):
         else:
             print(f"Updating with uv, constrained to the published lock {lock.name}.")
         my.uv.install(specs, constraints=lock, upgrade=True)
-        sync_manager()
         path = write_environment_snapshot("update")
         print(f"done; the environment is recorded in {path.name}")
     else:
         print("Everything is up to date.")
+
+    # Whether or not anything else changed: the environment must hold this
+    # manager's release (the package list lags a release by up to a day).
+    if sync_manager() is not None:
+        path = write_environment_snapshot("update-manager")
+        print(f"the environment is recorded in {path.name}")
 
     # See if any packages have an installer
     if not metadata["gui-only"] and not gui_only:
