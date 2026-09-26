@@ -14,6 +14,7 @@ from .util import (
     constraints,
     find_packages,
     retire_installer,
+    sync_manager,
     get_metadata,
     run_plugin_installer,
     set_metadata,
@@ -229,6 +230,7 @@ def install_packages(
         else:
             print(f"Installing with uv, constrained to the published lock {lock.name}.")
         my.uv.install(specs, constraints=lock, upgrade=update)
+        sync_manager()
         path = write_environment_snapshot("install")
         print(f"done; the environment is recorded in {path.name}")
     else:

@@ -1,6 +1,15 @@
 =======
 History
 =======
+2026.9.26.4 -- The environment keeps the manager's own release; manual codes
+    * After installing or updating, the manager puts its own release into the
+      environment if the package list still names an older one. The list is refreshed
+      nightly, so for up to a day after a manager release the environment -- and with it
+      the plug-ins' installers -- used to get the previous version.
+    * A plug-in installer for a code that is not installed automatically (ORCA,
+      Gaussian, VASP) now says so when asked to install, instead of failing with an
+      AttributeError about a missing environment file.
+
 2026.9.26.3 -- Bugfixes from the first Linux migration (ChemAI)
     * ``update --all`` upgrades the manager itself with a forced, index-refreshing
       reinstall; ``uv tool upgrade`` could report "Nothing to upgrade" minutes after a

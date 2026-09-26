@@ -100,6 +100,32 @@ def find_packages(progress=True, update=None, update_cache=False, cache_valid=1)
     return package_db["packages"]
 
 
+def sync_manager():
+    """Put the running manager's own release into the environment.
+
+    The package list (and lock) on Zenodo names the manager version current
+    when the nightly job last ran, so for up to a day after a release the
+    environment would get the previous manager -- and the plug-ins' installers
+    run with that copy. If this manager is a clean release newer than what
+    the environment holds, install exactly this version there, outside the
+    lock's constraints (only this package). Returns the version installed, or
+    None if nothing was done.
+    """
+    import seamm_manager
+
+    version = seamm_manager.__version__
+    if "+" in version or "untagged" in version or version.startswith("0"):
+        return None  # a development build; leave the environment alone
+    installed = my.uv.list().get("seamm-manager", {}).get("version")
+    if installed is None:
+        return None  # not installed there at all (not in the list yet)
+    if Version(installed) >= Version(version):
+        return None
+    print(f"Updating seamm-manager in the environment to this release, {version}.")
+    my.uv.install(f"seamm-manager=={version}")
+    return version
+
+
 def retire_installer(specs, installed):
     """Remove ``seamm-installer`` from the environment before ``seamm-manager``
     goes in.
