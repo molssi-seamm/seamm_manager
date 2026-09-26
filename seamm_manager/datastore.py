@@ -60,7 +60,7 @@ def latest_version():
 
 def db_version():
     """Return the version of the database."""
-    db_path = Path(my.options.root) / "Jobs" / "seamm.db"
+    db_path = my.root / "Jobs" / "seamm.db"
     if not db_path.expanduser().exists():
         version = "not installed"
     else:
@@ -84,7 +84,7 @@ def db_version():
 
 def update():
     """Update the database to the latest version."""
-    db_path = Path(my.options.root) / "Jobs" / "seamm.db"
+    db_path = my.root / "Jobs" / "seamm.db"
     if not db_path.expanduser().exists():
         print(f"The database file '{db_path}' does not exist.")
     else:
@@ -120,7 +120,7 @@ def update():
 
 def update_db():
     """Update the database to the latest version."""
-    db_path = Path(my.options.root) / "Jobs" / "seamm.db"
+    db_path = my.root / "Jobs" / "seamm.db"
     if not db_path.expanduser().exists():
         raise RuntimeError(f"The database '{db_path}' does not exist.")
 
@@ -145,7 +145,7 @@ def update_db():
 
 def show():
     """Show information about the datastore."""
-    db_path = Path(my.options.root) / "Jobs" / "seamm.db"
+    db_path = my.root / "Jobs" / "seamm.db"
     latest = latest_version()
     if not db_path.expanduser().exists():
         print(f"The database file '{db_path}' does not exist.")
