@@ -41,12 +41,22 @@ def setup(parser):
     tmp_parser.set_defaults(func=update)
 
 
+def _alembic():
+    """The environment's alembic executable, or None.
+
+    The manager may run from a different interpreter (the uv tool
+    environment), which has no alembic; the datastore's is in the venv.
+    """
+    return my.uv.which("alembic") if my.uv is not None else None
+
+
 def latest_version():
     """Show information about the datastore."""
     path = _find_path()
+    alembic = _alembic()
     version = None
-    if path is not None:
-        cmd = "alembic heads"
+    if path is not None and alembic is not None:
+        cmd = f'"{alembic}" heads'
         result = subprocess.run(
             cmd, cwd=path, shell=True, text=True, capture_output=True
         )
@@ -65,10 +75,11 @@ def db_version():
         version = "not installed"
     else:
         path = _find_path()
+        alembic = _alembic()
         version = "unknown"
-        if path is not None:
+        if path is not None and alembic is not None:
             uri = f"sqlite:///{str(db_path.expanduser())}"
-            cmd = f'alembic -x uri="{uri}" current'
+            cmd = f'"{alembic}" -x uri="{uri}" current'
             result = subprocess.run(
                 cmd, cwd=path, shell=True, text=True, capture_output=True
             )
@@ -164,7 +175,7 @@ def update_db():
             "Is it installed?"
         )
     uri = f"sqlite:///{str(db_path.expanduser())}"
-    alembic = my.uv.which("alembic")
+    alembic = _alembic()
     if alembic is None:
         raise RuntimeError(
             f"Cannot find 'alembic' in the SEAMM environment {my.uv.path}.\n"

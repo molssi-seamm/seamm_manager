@@ -225,7 +225,21 @@ class Uv(object):
     # ---- the manager itself -------------------------------------------------
 
     def tool_upgrade(self, tool="seamm-manager"):
-        """Upgrade a uv tool (the manager's own installation). Returns True if
-        uv reports the tool is installed and the upgrade succeeded."""
-        result = self.run("tool", "upgrade", tool, check=False)
+        """Upgrade a uv tool (the manager's own installation) to the newest
+        release. Returns True if it succeeded.
+
+        Not ``uv tool upgrade``: that reuses uv's cached view of the index and
+        can report "Nothing to upgrade" minutes after a release. A forced
+        reinstall with ``--refresh`` always consults PyPI.
+        """
+        result = self.run(
+            "tool",
+            "install",
+            "--force",
+            "--refresh",
+            "--python",
+            self.python_version,
+            tool,
+            check=False,
+        )
         return result.returncode == 0
