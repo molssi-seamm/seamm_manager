@@ -1,6 +1,17 @@
 =======
 History
 =======
+2026.9.26.2 -- Bugfixes from a first installation on a brand-new Mac
+    * On a fresh Mac ``uv tool install seamm-manager`` built the manager on the
+      system Python 3.9, because nothing declared a minimum version. The package now
+      requires Python 3.12 or later, so uv installs one if needed.
+    * A plug-in's own installer that fails (for instance because conda is not
+      installed) now reports what went wrong, instead of leaving the code silently
+      uninstalled.
+    * The datastore is created at installation, and before a service is started,
+      rather than by the web interface's first start; a JobServer created first
+      used to crash-loop on the missing database.
+
 2026.9.26.1 -- Bugfixes from the first real migration
     * Conda could not be found by a manager or plug-in installer launched from the
       Dock or as a service, whose PATH is minimal, so the GUI showed a traceback in

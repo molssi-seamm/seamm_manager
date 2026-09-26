@@ -49,6 +49,9 @@ setup(
     # Required packages, pulls from pip if needed; do not use for Conda
     # deployment
     install_requires=requirements,
+    # uv tool install picks whatever Python it finds unless told the minimum;
+    # without this a fresh Mac built the tool on the system Python 3.9.
+    python_requires='>=3.12',
 
     test_suite='tests',
 

@@ -236,6 +236,17 @@ def run_plugin_installer(package, *args, verbose=True):
             print(f"   Running the plug-in specific installer for {package}.")
         result = subprocess.run([str(installer), *args], capture_output=True, text=True)
         my.logger.info(f"    ran the local installer: {result}")
+        # An installer that failed used to fail silently: its output was only
+        # logged, so e.g. "conda not found" left the code uninstalled with no
+        # word to the user. Show the tail of what it said.
+        if result.returncode != 0:
+            text = (result.stderr or result.stdout or "").strip().splitlines()
+            tail = "\n".join("      " + line for line in text[-6:])
+            print(
+                f"   The installer for {package} failed (exit {result.returncode}):"
+                f"\n{tail}\n   Fix the cause and run "
+                f"'seamm-manager install --rerun-installers {package}'."
+            )
         return result
 
 

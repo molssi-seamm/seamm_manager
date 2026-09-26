@@ -7,6 +7,7 @@ import platform
 
 from tabulate import tabulate
 
+from . import datastore
 from . import my
 
 system = platform.system()
@@ -228,6 +229,8 @@ def create():
                 stderr_path=str(stderr_path),
                 stdout_path=str(stdout_path),
             )
+        # Both services need the datastore; create it if this is a fresh root.
+        datastore.ensure()
         # And start it up
         mgr.start(service_name)
         print(f"Created and started the service {service_name}")
