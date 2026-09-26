@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.26.4 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=c013b537"></script>
+    <script src="../../_static/documentation_options.js?v=0b9a25fa"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -622,12 +622,24 @@
 <div class="viewcode-block" id="InstallerBase.install">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.install">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">install</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Install using a Conda environment."""</span>
+<span class="w">        </span><span class="sd">"""Install using a Conda environment.</span>
+
+<span class="sd">        A plug-in whose code cannot be installed this way (ORCA, Gaussian,</span>
+<span class="sd">        VASP, ... are licensed manual installations) has no</span>
+<span class="sd">        ``environment_file``; say so instead of failing.</span>
+<span class="sd">        """</span>
+        <span class="n">environment_file</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"environment_file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">environment_file</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"    This code is not installed automatically; install it yourself "</span>
+                <span class="sa">f</span><span class="s2">"and give its location in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"    Installing Conda environment '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This "</span>
             <span class="s2">"may take a minute or two."</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">create_environment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">create_environment</span><span class="p">(</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
 
         <span class="c1"># Update the configuration file.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_exe_configuration_file</span><span class="p">()</span>
@@ -871,7 +883,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>

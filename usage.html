@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.26.3 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.9.26.4 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=c013b537"></script>
+    <script src="_static/documentation_options.js?v=0b9a25fa"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -107,7 +107,10 @@ every dependency that resolved together – are published nightly to Zenodo by
 <code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code>. <code class="docutils literal notranslate"><span class="pre">install</span></code> and <code class="docutils literal notranslate"><span class="pre">update</span></code> pass that lock to <code class="docutils literal notranslate"><span class="pre">uv</span></code> as
 constraints, so what you get is the tested set, and two installations made the same
 day are identical. <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code> opts out and takes the newest releases that
-resolve. After every change the manager writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/environments/&lt;timestamp&gt;_*.txt</span></code>
+resolve. The one exception is the manager itself: since the list is refreshed
+nightly, after an install or update the manager makes sure the environment holds
+the same release it is running, so the plug-ins’ installers never run on an older
+one. After every change the manager writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/environments/&lt;timestamp&gt;_*.txt</span></code>
 with the full <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">freeze</span></code> of the environment as a record.</p>
 </section>
 <section id="where-things-are">
@@ -190,7 +193,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
