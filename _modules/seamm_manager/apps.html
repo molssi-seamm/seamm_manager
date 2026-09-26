@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.apps &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.apps</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.apps</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Handle the apps for SEAMM."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+
+<span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Darwin"</span><span class="p">,):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.mac</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_app</span><span class="p">,</span> <span class="n">delete_app</span><span class="p">,</span> <span class="n">get_apps</span><span class="p">,</span> <span class="n">update_app</span>
+
+    <span class="n">icons</span> <span class="o">=</span> <span class="s2">"SEAMM.icns"</span>
+<span class="k">elif</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Linux"</span><span class="p">,):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.linux</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_app</span><span class="p">,</span> <span class="n">delete_app</span><span class="p">,</span> <span class="n">get_apps</span><span class="p">,</span> <span class="n">update_app</span>
+
+    <span class="n">icons</span> <span class="o">=</span> <span class="s2">"linux_icons"</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SEAMM does not support apps on </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2"> yet."</span><span class="p">)</span>
+
+<span class="c1"># known_apps = ["SEAMM", "Dashboard", "JobServer"]</span>
+<span class="n">known_apps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SEAMM"</span><span class="p">,</span> <span class="s2">"installer"</span><span class="p">]</span>
+<span class="n">app_names</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"seamm"</span><span class="p">:</span> <span class="s2">"SEAMM"</span><span class="p">,</span>
+    <span class="s2">"dashboard"</span><span class="p">:</span> <span class="s2">"Dashboard"</span><span class="p">,</span>
+    <span class="s2">"jobserver"</span><span class="p">:</span> <span class="s2">"JobServer"</span><span class="p">,</span>
+    <span class="s2">"installer"</span><span class="p">:</span> <span class="s2">"SEAMM-Installer"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">app_package</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"seamm"</span><span class="p">:</span> <span class="s2">"seamm"</span><span class="p">,</span>
+    <span class="s2">"dashboard"</span><span class="p">:</span> <span class="s2">"seamm-dashboard"</span><span class="p">,</span>
+    <span class="s2">"jobserver"</span><span class="p">:</span> <span class="s2">"seamm-jobserver"</span><span class="p">,</span>
+    <span class="s2">"installer"</span><span class="p">:</span> <span class="s2">"seamm-manager"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for handling the apps.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse.ArgumentParser</span>
+<span class="sd">        The main parser for the application.</span>
+<span class="sd">    """</span>
+    <span class="n">apps_parser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"apps"</span><span class="p">)</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">apps_parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">()</span>
+
+    <span class="c1"># Create</span>
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"create"</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">create</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--force"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Recreate the app if it already exists."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--all-users"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Install the apps for all users."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-p"</span><span class="p">,</span>
+        <span class="s2">"--port"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">55066</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="mi">55055</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"apps"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">known_apps</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"The apps to create: </span><span class="si">%(default)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Delete</span>
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"delete"</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">delete</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"apps"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">known_apps</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"The apps to delete: </span><span class="si">%(default)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Show</span>
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"show"</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"apps"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">known_apps</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"The apps to show: </span><span class="si">%(default)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Update</span>
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"apps"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">known_apps</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"The apps to update: </span><span class="si">%(default)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.create">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Create the requested apps."""</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">get_apps</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">app_lower</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">app_names</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2">-dev"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">app</span>
+        <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="n">package</span> <span class="o">=</span> <span class="n">app_package</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"The package '</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">' needed by the app </span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2"> is not "</span>
+                <span class="s2">"installed."</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">app_name</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">force</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"The app '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">' already exists! Use --force to "</span>
+                    <span class="s2">"recreate the app from scratch."</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">delete_app</span><span class="p">(</span><span class="n">app_name</span><span class="p">)</span>
+
+        <span class="n">data_path</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"seamm_manager"</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"data"</span>
+        <span class="n">icons_path</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">/</span> <span class="n">icons</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">app_lower</span> <span class="o">==</span> <span class="s2">"dashboard"</span><span class="p">:</span>
+            <span class="n">bin_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"seamm-dashboard"</span><span class="p">)</span>
+            <span class="n">create_app</span><span class="p">(</span>
+                <span class="n">bin_path</span><span class="p">,</span>
+                <span class="s2">"--root"</span><span class="p">,</span>
+                <span class="n">root</span><span class="p">,</span>
+                <span class="s2">"--port"</span><span class="p">,</span>
+                <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span>
+                <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                <span class="n">user_only</span><span class="o">=</span><span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all_users</span><span class="p">,</span>
+                <span class="n">icons</span><span class="o">=</span><span class="n">icons_path</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">app_lower</span> <span class="o">==</span> <span class="s2">"jobserver"</span><span class="p">:</span>
+            <span class="n">bin_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="n">create_app</span><span class="p">(</span>
+                <span class="n">bin_path</span><span class="p">,</span>
+                <span class="s2">"--root"</span><span class="p">,</span>
+                <span class="n">root</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span>
+                <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                <span class="n">user_only</span><span class="o">=</span><span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all_users</span><span class="p">,</span>
+                <span class="n">icons</span><span class="o">=</span><span class="n">icons_path</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bin_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="n">create_app</span><span class="p">(</span>
+                <span class="n">bin_path</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span>
+                <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                <span class="n">user_only</span><span class="o">=</span><span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all_users</span><span class="p">,</span>
+                <span class="n">icons</span><span class="o">=</span><span class="n">icons_path</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all_users</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Installed app </span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2"> for all users."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Installed app </span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2"> for this user."</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.delete">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">():</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">get_apps</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">app_lower</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">app_names</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2">-dev"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">app</span>
+        <span class="k">if</span> <span class="n">app_name</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="n">delete_app</span><span class="p">(</span><span class="n">app_name</span><span class="p">,</span> <span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Deleted the app '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"App '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">' was not installed."</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="show">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.show">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">():</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">get_apps</span><span class="p">()</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">app_lower</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">app_names</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2">-dev"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">app</span>
+        <span class="k">if</span> <span class="n">app_name</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">apps</span><span class="p">[</span><span class="n">app_name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">())</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_name</span><span class="p">,</span> <span class="s2">"~/"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_name</span><span class="p">,</span> <span class="s2">"not found"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Found no apps."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="p">(</span><span class="s2">"App"</span><span class="p">,</span> <span class="s2">"Path"</span><span class="p">),</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">"fancy_grid"</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="update">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.update">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">():</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">get_apps</span><span class="p">()</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">app_lower</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">app_names</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2">-dev"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">app</span>
+        <span class="n">package</span> <span class="o">=</span> <span class="n">app_package</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">app_name</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+                <span class="n">version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"The package '</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">' needed by the app </span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2"> is not "</span>
+                    <span class="s2">"installed. Removed the app, since it cannot be used."</span>
+                <span class="p">)</span>
+                <span class="n">delete_app</span><span class="p">(</span><span class="n">app_name</span><span class="p">,</span> <span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">update_app</span><span class="p">(</span><span class="n">app_name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updated the app '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">' to version </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"App '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">' was not installed."</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.apps</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

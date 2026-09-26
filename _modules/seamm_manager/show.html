@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.show &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.show</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.show</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Show the status of the SEAMM installation."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_packages</span><span class="p">,</span> <span class="n">run_plugin_installer</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.show.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for installing SEAMM components.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse.ArgumentParser</span>
+<span class="sd">        The main parser for the application.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Install</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"show"</span><span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">show</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="show">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.show.show">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">():</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Entering show part of the SEAMM manager"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no SEAMM environment at </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">, so none of SEAMM is."</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Install it with 'seamm-manager install --all'."</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">find_packages</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Showing the modules in SEAMM:"</span><span class="p">)</span>
+
+    <span class="c1"># Get the info about the installed packages</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">am_current</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span> <span class="ow">and</span> <span class="s2">"description"</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">]:</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"description"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">description</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="s2">"description unavailable"</span>
+
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s2">"*"</span> <span class="o">+</span> <span class="n">package</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">available</span><span class="p">,</span> <span class="n">description</span><span class="p">])</span>
+            <span class="n">am_current</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">state</span><span class="p">[</span><span class="n">package</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"not installed"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">&lt;</span> <span class="n">available</span><span class="p">:</span>
+                <span class="n">am_current</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">state</span><span class="p">[</span><span class="n">package</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"not up-to-date"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">state</span><span class="p">[</span><span class="n">package</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"up-to-date"</span>
+
+                <span class="c1"># See if the package has an installer</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">run_plugin_installer</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="s2">"show"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                            <span class="n">description</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">description</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">The installer for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> "</span>
+                            <span class="sa">f</span><span class="s2">"returned code </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                            <span class="n">description</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="o">&lt;</span> <span class="n">available</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s2">"*"</span> <span class="o">+</span> <span class="n">package</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">available</span><span class="p">,</span> <span class="n">description</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">package</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">available</span><span class="p">,</span> <span class="n">description</span><span class="p">])</span>
+
+    <span class="c1"># Sort by the plug-in names</span>
+    <span class="k">for</span> <span class="n">ptype</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Core package"</span><span class="p">,</span> <span class="s2">"MolSSI plug-in"</span><span class="p">,</span> <span class="s2">"3rd-party plug-in"</span><span class="p">):</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">packages</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="n">ptype</span><span class="p">:</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">m</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span><span class="p">])</span>
+
+        <span class="n">group</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># And number</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">line</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">"Core package"</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Core modules of SEAMM"</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Number"</span><span class="p">,</span> <span class="s2">"Component"</span><span class="p">,</span> <span class="s2">"Installed"</span><span class="p">,</span> <span class="s2">"Available"</span><span class="p">,</span> <span class="s2">"Description"</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ptype</span><span class="si">}</span><span class="s2">s"</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Number"</span><span class="p">,</span> <span class="s2">"Plug-in"</span><span class="p">,</span> <span class="s2">"Installed"</span><span class="p">,</span> <span class="s2">"Available"</span><span class="p">,</span> <span class="s2">"Description"</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">"fancy_grid"</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">am_current</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"SEAMM is up-to-date."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"* indicates the component is not up-to-date."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.show</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

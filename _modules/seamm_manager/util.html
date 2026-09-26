@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.util</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Utility methods for the SEAMM installer."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">platformdirs</span><span class="w"> </span><span class="kn">import</span> <span class="n">user_data_dir</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">seamm_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">Zenodo</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.conda</span><span class="w"> </span><span class="kn">import</span> <span class="n">Conda</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.pip</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pip</span>
+
+<span class="c1"># The Zenodo concept record holding the package list and its lock file</span>
+<span class="c1"># (seamm_packaging publishes new versions there nightly).</span>
+<span class="n">PACKAGE_LIST_RECORD</span> <span class="o">=</span> <span class="mi">22970126</span>
+
+<span class="c1"># from .metadata import core_packages, molssi_plug_ins, excluded_plug_ins</span>
+
+
+<div class="viewcode-block" id="JSONEncoder">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.JSONEncoder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JSONEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Class for handling the package versions in JSON."""</span>
+
+<div class="viewcode-block" id="JSONEncoder.default">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.JSONEncoder.default">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Version</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"__type__"</span><span class="p">:</span> <span class="s2">"Version"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="JSONDecoder">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.JSONDecoder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JSONDecoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Class for handling the package versions in JSON."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># kwargs because simplejson passes in encoding=.... causing crash</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">object_hook</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_to_object</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JSONDecoder.dict_to_object">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.JSONDecoder.dict_to_object">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dict_to_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">"__type__"</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">type_</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"__type__"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">"Version"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Version</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Oops... better put this back together.</span>
+                <span class="n">d</span><span class="p">[</span><span class="s2">"__type__"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="find_packages">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.find_packages">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_packages</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache_valid</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Fetch the package list and its lock file from Zenodo.</span>
+
+<span class="sd">    The package list (``SEAMM_packages.json``, format 2) gives every package</span>
+<span class="sd">    the manager handles with its current version and type. The lock file</span>
+<span class="sd">    (``seamm.lock.txt``) is the universal set of pinned versions that</span>
+<span class="sd">    resolved together; it is saved under ``&lt;root&gt;/environments`` and passed</span>
+<span class="sd">    to uv as constraints so installations are reproducible.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict(str, dict)</span>
+<span class="sd">        name -&gt; {"description", "type", "version"}</span>
+<span class="sd">    """</span>
+    <span class="n">zenodo</span> <span class="o">=</span> <span class="n">Zenodo</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">zenodo</span><span class="o">.</span><span class="n">get_latest_public_record</span><span class="p">(</span><span class="n">PACKAGE_LIST_RECORD</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error finding the package list from Zenodo: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="s2">"SEAMM_packages.json"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error getting the package list from Zenodo: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">package_db</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">JSONDecoder</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">package_db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"The package list from Zenodo is not in the expected format (2); "</span>
+            <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">package_db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'format'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+
+    <span class="n">my</span><span class="o">.</span><span class="n">package_metadata</span> <span class="o">=</span> <span class="n">package_db</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"metadata"</span> <span class="ow">in</span> <span class="n">package_db</span> <span class="k">else</span> <span class="p">{}</span>
+
+    <span class="c1"># The lock file, kept beside the environment for uv to use as constraints</span>
+    <span class="n">lock_name</span> <span class="o">=</span> <span class="n">package_db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lock"</span><span class="p">,</span> <span class="s2">"seamm.lock.txt"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">lock</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="n">lock_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not get the lock file </span><span class="si">{</span><span class="n">lock_name</span><span class="si">}</span><span class="s2"> from Zenodo: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"environments"</span>
+        <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="n">lock_name</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">lock</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">package_db</span><span class="p">[</span><span class="s2">"packages"</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="retire_installer">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.retire_installer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retire_installer</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">installed</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remove ``seamm-installer`` from the environment before ``seamm-manager``</span>
+<span class="sd">    goes in.</span>
+
+<span class="sd">    Both provide the ``seamm_installer`` module (the manager ships it as a</span>
+<span class="sd">    compatibility shim for the plug-ins' installers), so they cannot coexist</span>
+<span class="sd">    in one environment. Returns True if it was removed.</span>
+<span class="sd">    """</span>
+    <span class="n">wants_manager</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"=="</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"seamm-manager"</span><span class="p">,</span> <span class="s2">"seamm_manager"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">wants_manager</span> <span class="ow">and</span> <span class="s2">"seamm-installer"</span> <span class="ow">in</span> <span class="n">installed</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Removing seamm-installer, which seamm-manager replaces."</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">uninstall</span><span class="p">(</span><span class="s2">"seamm-installer"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="constraints">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">constraints</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The lock file to pass to uv, or None if the user opted out or it is</span>
+<span class="sd">    missing."""</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"no_constraints"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">my</span><span class="o">.</span><span class="n">lock</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">lock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">my</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="write_environment_snapshot">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.write_environment_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_environment_snapshot</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record ``uv pip freeze`` under ``&lt;root&gt;/environments`` as the audit trail."""</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"environments"</span>
+    <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tstamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">"seconds"</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tstamp</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">.txt"</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">freeze</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="get_metadata">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.get_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Get the metadata for this installation.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    {str: any}</span>
+<span class="sd">        A dictionary of the metadata.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Get the metadata for the installation</span>
+    <span class="n">environment</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">environment</span>
+    <span class="n">user_data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s2">"seamm-manager"</span><span class="p">,</span> <span class="n">appauthor</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">user_data_path</span> <span class="o">/</span> <span class="p">(</span><span class="n">environment</span> <span class="o">+</span> <span class="s2">".json"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">JSONDecoder</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exception reading the metadata for </span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   File path is </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error reading metadata from </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"environment"</span><span class="p">:</span> <span class="n">environment</span><span class="p">,</span>
+            <span class="s2">"development"</span><span class="p">:</span> <span class="s2">"dev"</span> <span class="ow">in</span> <span class="n">environment</span><span class="p">,</span>
+            <span class="s2">"gui-only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">user_data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">JSONEncoder</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">metadata</span></div>
+
+
+
+<div class="viewcode-block" id="initialize">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.initialize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Set up the conda and pip wrappers. Conda is only needed for the external</span>
+<span class="sd">    codes' own environments, so its absence is not an error here; the plug-in</span>
+<span class="sd">    installers report it when they need it."""</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">conda</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">conda</span> <span class="o">=</span> <span class="n">Conda</span><span class="p">()</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Set up conda"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Conda is not available: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">my</span><span class="o">.</span><span class="n">conda</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">pip</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">pip</span> <span class="o">=</span> <span class="n">Pip</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="package_info">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.package_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">package_info</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">conda_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return info on a package in the SEAMM environment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    package:</span>
+<span class="sd">        The name of the package.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str)</span>
+<span class="sd">        The installed version and "pypi", or (None, None) if not installed.</span>
+<span class="sd">    """</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Info on package '</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">package</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">"version"</span><span class="p">],</span> <span class="s2">"pypi"</span>
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="run_plugin_installer">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.run_plugin_installer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_plugin_installer</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Run the plug-in installer with given arguments.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    package</span>
+<span class="sd">        The package name for the plug-in. Usually xxxx-step.</span>
+<span class="sd">    args</span>
+<span class="sd">        Command-line arguments for the plugin installer.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xxxx</span>
+<span class="sd">        The result structure from subprocess.run, or None if there is no</span>
+<span class="sd">        installer.</span>
+<span class="sd">    """</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run_plugin_installer </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">package</span> <span class="o">==</span> <span class="s2">"seamm"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">installer</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">-installer"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">installer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"    no local installer, returning None"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Running the plug-in specific installer for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">installer</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    ran the local installer: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="set_metadata">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.set_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Set the metadata for this installation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    {str: any}</span>
+<span class="sd">        A dictionary of the metadata.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Find the metadata for the installation</span>
+    <span class="n">environment</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">environment</span>
+    <span class="n">user_data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s2">"seamm-manager"</span><span class="p">,</span> <span class="n">appauthor</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">user_data_path</span> <span class="o">/</span> <span class="p">(</span><span class="n">environment</span> <span class="o">+</span> <span class="s2">".json"</span><span class="p">)</span>
+
+    <span class="n">user_data_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">JSONEncoder</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

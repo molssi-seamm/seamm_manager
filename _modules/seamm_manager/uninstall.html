@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.uninstall &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.uninstall</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.uninstall</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Uninstall requested components of SEAMM."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">find_packages</span><span class="p">,</span>
+    <span class="n">get_metadata</span><span class="p">,</span>
+    <span class="n">run_plugin_installer</span><span class="p">,</span>
+    <span class="n">write_environment_snapshot</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uninstall.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for removing SEAMM components.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse.ArgumentParser</span>
+<span class="sd">        The main parser for the application.</span>
+<span class="sd">    """</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"uninstall"</span><span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">uninstall</span><span class="p">)</span>
+
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--all"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Fully uninstall the SEAMM installation"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--third-party"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Uninstall all packages from 3rd parties"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--gui-only"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Uninstall only the GUI part of packages, leaving the background part."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"modules"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Specific modules and plug-ins to uninstall."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="uninstall">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uninstall.uninstall">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uninstall</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Uninstall the requested SEAMM components and plug-ins.</span>
+
+<span class="sd">    With --all the whole environment is removed after the plug-ins' own</span>
+<span class="sd">    uninstallers (for the external codes) have run.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no SEAMM environment at </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">; nothing to uninstall."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+        <span class="n">uninstall_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removing the environment </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">uninstall_packages</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="uninstall_packages">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uninstall.uninstall_packages">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uninstall_packages</span><span class="p">(</span><span class="n">to_uninstall</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Uninstall SEAMM components and plug-ins."""</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">get_metadata</span><span class="p">()</span>
+
+    <span class="c1"># Find all the packages</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">find_packages</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Get the info about the installed packages</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">to_uninstall</span> <span class="o">==</span> <span class="s2">"all"</span><span class="p">:</span>
+        <span class="n">to_uninstall</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">packages</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+    <span class="c1"># First uninstall any plug-in installation</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"Checking for plug-ins that have their own installations, and "</span>
+            <span class="s2">"uninstalling them."</span>
+        <span class="p">)</span>
+
+    <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">to_uninstall</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+            <span class="c1"># See if the package has an installer</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
+                <span class="n">run_plugin_installer</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="s2">"uninstall"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Uninstalling </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">uninstall</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"uninstall"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"done; the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"None of the requested packages is installed."</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.uninstall</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

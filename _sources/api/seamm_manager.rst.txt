@@ -1,0 +1,181 @@
+seamm\_manager package
+======================
+
+Submodules
+----------
+
+seamm\_manager.apps module
+--------------------------
+
+.. automodule:: seamm_manager.apps
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.cache module
+---------------------------
+
+.. automodule:: seamm_manager.cache
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.cli module
+-------------------------
+
+.. automodule:: seamm_manager.cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.conda module
+---------------------------
+
+.. automodule:: seamm_manager.conda
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.configuration module
+-----------------------------------
+
+.. automodule:: seamm_manager.configuration
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.datastore module
+-------------------------------
+
+.. automodule:: seamm_manager.datastore
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.environment module
+---------------------------------
+
+.. automodule:: seamm_manager.environment
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.gui module
+-------------------------
+
+.. automodule:: seamm_manager.gui
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.install module
+-----------------------------
+
+.. automodule:: seamm_manager.install
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.installer\_base module
+-------------------------------------
+
+.. automodule:: seamm_manager.installer_base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.linux module
+---------------------------
+
+.. automodule:: seamm_manager.linux
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.mac module
+-------------------------
+
+.. automodule:: seamm_manager.mac
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.metadata module
+------------------------------
+
+.. automodule:: seamm_manager.metadata
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.my module
+------------------------
+
+.. automodule:: seamm_manager.my
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.pip module
+-------------------------
+
+.. automodule:: seamm_manager.pip
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.services module
+------------------------------
+
+.. automodule:: seamm_manager.services
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.show module
+--------------------------
+
+.. automodule:: seamm_manager.show
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.uninstall module
+-------------------------------
+
+.. automodule:: seamm_manager.uninstall
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.update module
+----------------------------
+
+.. automodule:: seamm_manager.update
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.util module
+--------------------------
+
+.. automodule:: seamm_manager.util
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.uv module
+------------------------
+
+.. automodule:: seamm_manager.uv
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: seamm_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:

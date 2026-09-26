@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.update</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Update requested components of SEAMM."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.datastore</span><span class="w"> </span><span class="kn">import</span> <span class="n">update</span> <span class="k">as</span> <span class="n">update_datastore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">development_packages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">constraints</span><span class="p">,</span>
+    <span class="n">find_packages</span><span class="p">,</span>
+    <span class="n">retire_installer</span><span class="p">,</span>
+    <span class="n">get_metadata</span><span class="p">,</span>
+    <span class="n">package_info</span><span class="p">,</span>
+    <span class="n">run_plugin_installer</span><span class="p">,</span>
+    <span class="n">write_environment_snapshot</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Darwin"</span><span class="p">,):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.mac</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceManager</span>
+
+    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm"</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Linux"</span><span class="p">,):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.linux</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceManager</span>
+
+    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SEAMM does not support services on </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2"> yet."</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for updating SEAMM components.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse.ArgumentParser</span>
+<span class="sd">        The main parser for the application.</span>
+<span class="sd">    """</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--all"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Fully update the SEAMM installation"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--gui-only"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Update only packages necessary for the GUI"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--no-constraints"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Do not constrain versions to the published lock file; take the "</span>
+            <span class="s2">"newest releases pip can resolve."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"modules"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Specific modules and plug-ins to update."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Update the requested SEAMM components and plug-ins."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no SEAMM environment at </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">; nothing to update."</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Install SEAMM first with 'seamm-manager install --all'."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="c1"># The manager itself, if installed as a uv tool: keep it current first.</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SEAMM_MANAGER_UPGRADED"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">tool_upgrade</span><span class="p">(</span><span class="s2">"seamm-manager"</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SEAMM_MANAGER_UPGRADED"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1"</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Re-running with the updated manager."</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">execv</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="o">*</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">])</span>
+
+    <span class="c1"># Need to track packages that require services to be restarted.</span>
+    <span class="n">service_packages</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"seamm-datastore"</span><span class="p">,</span> <span class="s2">"seamm-jobserver"</span><span class="p">)</span>
+    <span class="n">initial_version</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">package_info</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">service_packages</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+        <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">update_packages</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
+        <span class="n">update_development_environment</span><span class="p">()</span>
+
+    <span class="n">final_version</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">package_info</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">service_packages</span><span class="p">}</span>
+    <span class="c1"># And restart any services that need it</span>
+    <span class="n">service_name</span> <span class="o">=</span> <span class="s2">"dev_jobserver"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="s2">"jobserver"</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-datastore"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-datastore"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">Version</span><span class="p">(</span><span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-datastore"</span><span class="p">])</span>
+        <span class="o">&gt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-datastore"</span><span class="p">])</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">):</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+            <span class="n">update_datastore</span><span class="p">()</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because the datastore was updated."</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">Version</span><span class="p">(</span><span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">])</span>
+        <span class="o">&gt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">])</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">):</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because it was updated."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="update_packages">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_packages">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_packages</span><span class="p">(</span><span class="n">to_update</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update_text</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Update SEAMM components and plug-ins."""</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">get_metadata</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="p">()</span>
+
+    <span class="c1"># Find all the packages</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">find_packages</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">to_update</span> <span class="o">==</span> <span class="s2">"all"</span><span class="p">:</span>
+        <span class="n">to_update</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">packages</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+    <span class="c1"># What is installed now</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="p">()</span>
+
+    <span class="n">specs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">to_update</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">' is not a SEAMM package; skipping it."</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+
+        <span class="c1"># Skip packages that aren't installed.</span>
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">installed_version</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+        <span class="n">pinned</span> <span class="o">=</span> <span class="s2">"pinned"</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">]</span> <span class="ow">and</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"pinned"</span><span class="p">]</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">==</span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">pinned</span> <span class="k">else</span> <span class="n">package</span>
+
+        <span class="n">ptype</span> <span class="o">=</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">installed_version</span> <span class="o">&lt;</span> <span class="n">available</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Updating </span><span class="si">{</span><span class="n">ptype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> from version </span><span class="si">{</span><span class="n">installed_version</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"to </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">retire_installer</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+        <span class="n">lock</span> <span class="o">=</span> <span class="n">constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">lock</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating with uv (no constraints)."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating with uv, constrained to the published lock </span><span class="si">{</span><span class="n">lock</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"done; the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Everything is up to date."</span><span class="p">)</span>
+
+    <span class="c1"># See if any packages have an installer</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">to_update</span><span class="p">:</span>
+            <span class="c1"># Skip packages that aren't installed.</span>
+            <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">progress</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">update_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating background codes for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">update_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating background codes for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">run_plugin_installer</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="s2">"update"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_development_environment">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_development_environment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_development_environment</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Update packages needed for development."""</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">package_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"development packages"</span><span class="p">,</span> <span class="n">development_packages</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating development packages </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">packages</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">packages</span><span class="p">),</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

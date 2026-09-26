@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>seamm_manager &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../_static/documentation_options.js?v=adbb5640"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="seamm_manager package" href="seamm_manager.html" />
+    <link rel="prev" title="Usage" href="../usage.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="seamm_manager.html" title="seamm_manager package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../usage.html" title="Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="seamm-manager">
+<h1>seamm_manager<a class="headerlink" href="#seamm-manager" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="seamm_manager.html">seamm_manager package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.apps">seamm_manager.apps module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.apps.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.apps.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.apps.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.apps.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.apps.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.cache">seamm_manager.cache module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.cache.refresh"><code class="docutils literal notranslate"><span class="pre">refresh()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.cache.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.cli">seamm_manager.cli module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.cli.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.conda">seamm_manager.conda module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda"><code class="docutils literal notranslate"><span class="pre">Conda</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.activate"><code class="docutils literal notranslate"><span class="pre">Conda.activate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.active_environment"><code class="docutils literal notranslate"><span class="pre">Conda.active_environment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.create_environment"><code class="docutils literal notranslate"><span class="pre">Conda.create_environment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.delete_environment"><code class="docutils literal notranslate"><span class="pre">Conda.delete_environment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.environments"><code class="docutils literal notranslate"><span class="pre">Conda.environments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.exists"><code class="docutils literal notranslate"><span class="pre">Conda.exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.export_environment"><code class="docutils literal notranslate"><span class="pre">Conda.export_environment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.install"><code class="docutils literal notranslate"><span class="pre">Conda.install()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.is_installed"><code class="docutils literal notranslate"><span class="pre">Conda.is_installed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.list"><code class="docutils literal notranslate"><span class="pre">Conda.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.path"><code class="docutils literal notranslate"><span class="pre">Conda.path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.prefix"><code class="docutils literal notranslate"><span class="pre">Conda.prefix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.remove_environment"><code class="docutils literal notranslate"><span class="pre">Conda.remove_environment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.root_prefix"><code class="docutils literal notranslate"><span class="pre">Conda.root_prefix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.search"><code class="docutils literal notranslate"><span class="pre">Conda.search()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.show"><code class="docutils literal notranslate"><span class="pre">Conda.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.uninstall"><code class="docutils literal notranslate"><span class="pre">Conda.uninstall()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.update"><code class="docutils literal notranslate"><span class="pre">Conda.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.update_environment"><code class="docutils literal notranslate"><span class="pre">Conda.update_environment()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.configuration">seamm_manager.configuration module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.add_prolog"><code class="docutils literal notranslate"><span class="pre">Configuration.add_prolog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.add_section"><code class="docutils literal notranslate"><span class="pre">Configuration.add_section()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.file_exists"><code class="docutils literal notranslate"><span class="pre">Configuration.file_exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.from_string"><code class="docutils literal notranslate"><span class="pre">Configuration.from_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.get_prolog"><code class="docutils literal notranslate"><span class="pre">Configuration.get_prolog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.get_values"><code class="docutils literal notranslate"><span class="pre">Configuration.get_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.path"><code class="docutils literal notranslate"><span class="pre">Configuration.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.save"><code class="docutils literal notranslate"><span class="pre">Configuration.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.section_exists"><code class="docutils literal notranslate"><span class="pre">Configuration.section_exists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.sections"><code class="docutils literal notranslate"><span class="pre">Configuration.sections()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.set_value"><code class="docutils literal notranslate"><span class="pre">Configuration.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.configuration.Configuration.to_string"><code class="docutils literal notranslate"><span class="pre">Configuration.to_string()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.datastore">seamm_manager.datastore module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.db_version"><code class="docutils literal notranslate"><span class="pre">db_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.latest_version"><code class="docutils literal notranslate"><span class="pre">latest_version()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.update_db"><code class="docutils literal notranslate"><span class="pre">update_db()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.environment">seamm_manager.environment module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.ensure"><code class="docutils literal notranslate"><span class="pre">ensure()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.recreate"><code class="docutils literal notranslate"><span class="pre">recreate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.remove"><code class="docutils literal notranslate"><span class="pre">remove()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.gui">seamm_manager.gui module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI"><code class="docutils literal notranslate"><span class="pre">GUI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.about"><code class="docutils literal notranslate"><span class="pre">GUI.about()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.cancel"><code class="docutils literal notranslate"><span class="pre">GUI.cancel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.event_loop"><code class="docutils literal notranslate"><span class="pre">GUI.event_loop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.gui_only"><code class="docutils literal notranslate"><span class="pre">GUI.gui_only</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.handle_dbg_level"><code class="docutils literal notranslate"><span class="pre">GUI.handle_dbg_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.layout_apps"><code class="docutils literal notranslate"><span class="pre">GUI.layout_apps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.layout_services"><code class="docutils literal notranslate"><span class="pre">GUI.layout_services()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.preferences"><code class="docutils literal notranslate"><span class="pre">GUI.preferences()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.refresh"><code class="docutils literal notranslate"><span class="pre">GUI.refresh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.refresh_apps"><code class="docutils literal notranslate"><span class="pre">GUI.refresh_apps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.refresh_services"><code class="docutils literal notranslate"><span class="pre">GUI.refresh_services()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.reset_table"><code class="docutils literal notranslate"><span class="pre">GUI.reset_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.gui.GUI.setup"><code class="docutils literal notranslate"><span class="pre">GUI.setup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.install">seamm_manager.install module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.install.install"><code class="docutils literal notranslate"><span class="pre">install()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.install.install_development_environment"><code class="docutils literal notranslate"><span class="pre">install_development_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.install.install_packages"><code class="docutils literal notranslate"><span class="pre">install_packages()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.install.install_seamm_webui"><code class="docutils literal notranslate"><span class="pre">install_seamm_webui()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.install.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.installer_base">seamm_manager.installer_base module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase"><code class="docutils literal notranslate"><span class="pre">InstallerBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.section"><code class="docutils literal notranslate"><span class="pre">InstallerBase.section</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">InstallerBase.ask_yes_no()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.check"><code class="docutils literal notranslate"><span class="pre">InstallerBase.check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.check_configuration_file"><code class="docutils literal notranslate"><span class="pre">InstallerBase.check_configuration_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.check_exe_configuration_file"><code class="docutils literal notranslate"><span class="pre">InstallerBase.check_exe_configuration_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.conda"><code class="docutils literal notranslate"><span class="pre">InstallerBase.conda</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.configuration"><code class="docutils literal notranslate"><span class="pre">InstallerBase.configuration</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.exe_config"><code class="docutils literal notranslate"><span class="pre">InstallerBase.exe_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.executables_in_path"><code class="docutils literal notranslate"><span class="pre">InstallerBase.executables_in_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.have_executables"><code class="docutils literal notranslate"><span class="pre">InstallerBase.have_executables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.init_file_name"><code class="docutils literal notranslate"><span class="pre">InstallerBase.init_file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.install"><code class="docutils literal notranslate"><span class="pre">InstallerBase.install()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.pip"><code class="docutils literal notranslate"><span class="pre">InstallerBase.pip</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.root"><code class="docutils literal notranslate"><span class="pre">InstallerBase.root</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.run"><code class="docutils literal notranslate"><span class="pre">InstallerBase.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.setup_parser"><code class="docutils literal notranslate"><span class="pre">InstallerBase.setup_parser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.show"><code class="docutils literal notranslate"><span class="pre">InstallerBase.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.uninstall"><code class="docutils literal notranslate"><span class="pre">InstallerBase.uninstall()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.update"><code class="docutils literal notranslate"><span class="pre">InstallerBase.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.linux">seamm_manager.linux module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager"><code class="docutils literal notranslate"><span class="pre">ServiceManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.create"><code class="docutils literal notranslate"><span class="pre">ServiceManager.create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.data"><code class="docutils literal notranslate"><span class="pre">ServiceManager.data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.delete"><code class="docutils literal notranslate"><span class="pre">ServiceManager.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.file_path"><code class="docutils literal notranslate"><span class="pre">ServiceManager.file_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.is_installed"><code class="docutils literal notranslate"><span class="pre">ServiceManager.is_installed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.is_running"><code class="docutils literal notranslate"><span class="pre">ServiceManager.is_running()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.list"><code class="docutils literal notranslate"><span class="pre">ServiceManager.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.paths"><code class="docutils literal notranslate"><span class="pre">ServiceManager.paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.restart"><code class="docutils literal notranslate"><span class="pre">ServiceManager.restart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.start"><code class="docutils literal notranslate"><span class="pre">ServiceManager.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.status"><code class="docutils literal notranslate"><span class="pre">ServiceManager.status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.stop"><code class="docutils literal notranslate"><span class="pre">ServiceManager.stop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.ServiceManager.uid"><code class="docutils literal notranslate"><span class="pre">ServiceManager.uid</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.delete_app"><code class="docutils literal notranslate"><span class="pre">delete_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.get_apps"><code class="docutils literal notranslate"><span class="pre">get_apps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.list_to_dict"><code class="docutils literal notranslate"><span class="pre">list_to_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.linux.update_app"><code class="docutils literal notranslate"><span class="pre">update_app()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.mac">seamm_manager.mac module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager"><code class="docutils literal notranslate"><span class="pre">ServiceManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.create"><code class="docutils literal notranslate"><span class="pre">ServiceManager.create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.data"><code class="docutils literal notranslate"><span class="pre">ServiceManager.data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.delete"><code class="docutils literal notranslate"><span class="pre">ServiceManager.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.file_path"><code class="docutils literal notranslate"><span class="pre">ServiceManager.file_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.is_installed"><code class="docutils literal notranslate"><span class="pre">ServiceManager.is_installed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.is_running"><code class="docutils literal notranslate"><span class="pre">ServiceManager.is_running()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.list"><code class="docutils literal notranslate"><span class="pre">ServiceManager.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.paths"><code class="docutils literal notranslate"><span class="pre">ServiceManager.paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.restart"><code class="docutils literal notranslate"><span class="pre">ServiceManager.restart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.start"><code class="docutils literal notranslate"><span class="pre">ServiceManager.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.status"><code class="docutils literal notranslate"><span class="pre">ServiceManager.status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.stop"><code class="docutils literal notranslate"><span class="pre">ServiceManager.stop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.ServiceManager.uid"><code class="docutils literal notranslate"><span class="pre">ServiceManager.uid</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.delete_app"><code class="docutils literal notranslate"><span class="pre">delete_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.get_apps"><code class="docutils literal notranslate"><span class="pre">get_apps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.mac.update_app"><code class="docutils literal notranslate"><span class="pre">update_app()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.metadata">seamm_manager.metadata module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.my">seamm_manager.my module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.pip">seamm_manager.pip module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip"><code class="docutils literal notranslate"><span class="pre">Pip</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.install"><code class="docutils literal notranslate"><span class="pre">Pip.install()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.list"><code class="docutils literal notranslate"><span class="pre">Pip.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.search"><code class="docutils literal notranslate"><span class="pre">Pip.search()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.show"><code class="docutils literal notranslate"><span class="pre">Pip.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.uninstall"><code class="docutils literal notranslate"><span class="pre">Pip.uninstall()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.pip.Pip.update"><code class="docutils literal notranslate"><span class="pre">Pip.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.services">seamm_manager.services module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.restart"><code class="docutils literal notranslate"><span class="pre">restart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.start"><code class="docutils literal notranslate"><span class="pre">start()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.status"><code class="docutils literal notranslate"><span class="pre">status()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.services.stop"><code class="docutils literal notranslate"><span class="pre">stop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.show">seamm_manager.show module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.show.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.show.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.uninstall">seamm_manager.uninstall module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uninstall.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uninstall.uninstall"><code class="docutils literal notranslate"><span class="pre">uninstall()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uninstall.uninstall_packages"><code class="docutils literal notranslate"><span class="pre">uninstall_packages()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.update">seamm_manager.update module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.update.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.update.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.update.update_development_environment"><code class="docutils literal notranslate"><span class="pre">update_development_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.update.update_packages"><code class="docutils literal notranslate"><span class="pre">update_packages()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.util">seamm_manager.util module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.JSONDecoder"><code class="docutils literal notranslate"><span class="pre">JSONDecoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.JSONDecoder.dict_to_object"><code class="docutils literal notranslate"><span class="pre">JSONDecoder.dict_to_object()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.JSONEncoder"><code class="docutils literal notranslate"><span class="pre">JSONEncoder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.JSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">JSONEncoder.default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.constraints"><code class="docutils literal notranslate"><span class="pre">constraints()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.find_packages"><code class="docutils literal notranslate"><span class="pre">find_packages()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.get_metadata"><code class="docutils literal notranslate"><span class="pre">get_metadata()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.initialize"><code class="docutils literal notranslate"><span class="pre">initialize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.package_info"><code class="docutils literal notranslate"><span class="pre">package_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.retire_installer"><code class="docutils literal notranslate"><span class="pre">retire_installer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.run_plugin_installer"><code class="docutils literal notranslate"><span class="pre">run_plugin_installer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.set_metadata"><code class="docutils literal notranslate"><span class="pre">set_metadata()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.write_environment_snapshot"><code class="docutils literal notranslate"><span class="pre">write_environment_snapshot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.uv">seamm_manager.uv module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv"><code class="docutils literal notranslate"><span class="pre">Uv</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.bin"><code class="docutils literal notranslate"><span class="pre">Uv.bin()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.bin_path"><code class="docutils literal notranslate"><span class="pre">Uv.bin_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.create"><code class="docutils literal notranslate"><span class="pre">Uv.create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.exists"><code class="docutils literal notranslate"><span class="pre">Uv.exists</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.freeze"><code class="docutils literal notranslate"><span class="pre">Uv.freeze()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.install"><code class="docutils literal notranslate"><span class="pre">Uv.install()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.list"><code class="docutils literal notranslate"><span class="pre">Uv.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.path"><code class="docutils literal notranslate"><span class="pre">Uv.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.python"><code class="docutils literal notranslate"><span class="pre">Uv.python</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.python_version_installed"><code class="docutils literal notranslate"><span class="pre">Uv.python_version_installed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.remove"><code class="docutils literal notranslate"><span class="pre">Uv.remove()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.run"><code class="docutils literal notranslate"><span class="pre">Uv.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.tool_upgrade"><code class="docutils literal notranslate"><span class="pre">Uv.tool_upgrade()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.uninstall"><code class="docutils literal notranslate"><span class="pre">Uv.uninstall()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.uv"><code class="docutils literal notranslate"><span class="pre">Uv.uv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.Uv.which"><code class="docutils literal notranslate"><span class="pre">Uv.which()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.UvError"><code class="docutils literal notranslate"><span class="pre">UvError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.find_uv"><code class="docutils literal notranslate"><span class="pre">find_uv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../usage.html"
+                          title="previous chapter">Usage</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="seamm_manager.html"
+                          title="next chapter">seamm_manager package</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/modules.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="seamm_manager.html" title="seamm_manager package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../usage.html" title="Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

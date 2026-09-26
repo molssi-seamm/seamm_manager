@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>History &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=adbb5640"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Credits" href="authors.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="authors.html" title="Credits"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">History</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="history">
+<h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
+<dl class="simple">
+<dt>2026.9.26 – First release of seamm-manager</dt><dd><ul class="simple">
+<li><p>seamm-manager replaces seamm-installer. It manages a SEAMM installation in a
+uv-managed Python virtual environment under the SEAMM root (<code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code>):
+every package comes from PyPI, resolved against the published lock file, so an
+installation is reproducible and takes seconds rather than minutes. Conda is
+used only for the external codes’ own environments (MOPAC, Psi4, LAMMPS, …).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">install</span> <span class="pre">--all</span></code> creates the environment (Python 3.12 via uv) and
+installs SEAMM with all the MolSSI plug-ins in one constrained step; <code class="docutils literal notranslate"><span class="pre">update</span></code>
+keeps the manager and the packages current; a new <code class="docutils literal notranslate"><span class="pre">environment</span></code> command shows,
+creates, recreates or removes the environment. Services, desktop apps and the
+datastore migration use the environment’s own executables.</p></li>
+<li><p>seamm-installer stays available for existing conda-based installations, which
+keep working but no longer receive updates; see the migration guide in the
+installation documentation. A <code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code> compatibility module keeps the
+plug-ins’ own installers working inside the new environment.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="authors.html"
+                          title="previous chapter">Credits</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/history.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="authors.html" title="Credits"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">History</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

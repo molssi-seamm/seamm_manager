@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SEAMM Manager &#8212; SEAMM Manager Step 2026.9.26 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=adbb5640"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Welcome to the documentation for the SEAMM Manager" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to the documentation for the SEAMM Manager"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SEAMM Manager</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="seamm-manager">
+<h1>SEAMM Manager<a class="headerlink" href="#seamm-manager" title="Link to this heading">¶</a></h1>
+<div class="line-block">
+<div class="line"><a class="reference external" href="https://github.com/molssi-seamm/seamm_manager/pulls"><img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/molssi-seamm/seamm_manager" /></a> <a class="reference external" href="https://github.com/molssi-seamm/seamm_manager/actions?query=workflow%3ACI"><img alt="CI status" src="https://github.com/molssi-seamm/seamm_manager/workflows/CI/badge.svg" /></a> <a class="reference external" href="https://github.com/molssi-seamm/seamm_manager/actions?query=workflow%3ADocumentation"><img alt="Documentation Status" src="https://github.com/molssi-seamm/seamm_manager/workflows/Documentation/badge.svg" /></a> <a class="reference external" href="https://codecov.io/gh/molssi-seamm/seamm_manager"><img alt="Code coverage" src="https://codecov.io/gh/molssi-seamm/seamm_manager/branch/master/graph/badge.svg" /></a> <a class="reference external" href="https://lgtm.com/projects/g/molssi-seamm/seamm_manager/context:python"><img alt="Code Quality" src="https://img.shields.io/lgtm/grade/python/g/molssi-seamm/seamm_manager.svg?logo=lgtm&amp;logoWidth=18" /></a> <a class="reference external" href="https://pyup.io/repos/github/molssi-seamm/seamm_manager/"><img alt="Updates for requirements" src="https://pyup.io/repos/github/molssi-seamm/seamm_manager/shield.svg" /></a></div>
+<div class="line"><a class="reference external" href="https://github.com/molssi-seamm/seamm_manager/actions?query=workflow%3ARelease"><img alt="CI status for releases" src="https://github.com/molssi-seamm/seamm_manager/workflows/Release/badge.svg" /></a> <a class="reference external" href="https://pypi.python.org/pypi/seamm_manager"><img alt="Release version" src="https://img.shields.io/pypi/v/seamm_manager.svg" /></a></div>
+</div>
+<p>Installs, updates and configures SEAMM (the Simulation Environment for Atomistic and
+Molecular Simulations) in a uv-managed Python environment.</p>
+<ul class="simple">
+<li><p>Free software: GNU Lesser General Public License v3+</p></li>
+<li><p>Documentation: <a class="reference external" href="https://molssi-seamm.github.io/seamm_manager/index.html">https://molssi-seamm.github.io/seamm_manager/index.html</a></p></li>
+</ul>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>One environment, all from PyPI.</strong> SEAMM and every plug-in are installed into a
+Python virtual environment under the SEAMM root (<code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code>) with <a class="reference external" href="https://docs.astral.sh/uv/">uv</a>,
+constrained to a published lock file, so every installation gets the same
+known-good set of versions and installs in seconds.</p></li>
+<li><p><strong>The interpreter comes with it.</strong> <code class="docutils literal notranslate"><span class="pre">uv</span></code> installs Python (with Tk for the
+graphical editor); no conda, no system Python needed for SEAMM itself.</p></li>
+<li><p><strong>Conda only for the codes.</strong> External programs (MOPAC, Psi4, DFTB+, LAMMPS, …)
+are installed by their plug-ins into their own conda environments, exactly as
+before; conda is only needed if you install one of those plug-ins.</p></li>
+<li><p>Services (the JobServer and the web interface), desktop apps, and the datastore are
+set up and kept current by the same tool.</p></li>
+</ul>
+</section>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh<span class="w">    </span><span class="c1"># once, if you do not have uv</span>
+uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>seamm-manager
+seamm-manager<span class="w"> </span>install<span class="w"> </span>--all
+</pre></div>
+</div>
+<p>That creates <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, the environment inside it, and installs SEAMM with all the
+MolSSI plug-ins. <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">update</span> <span class="pre">--all</span></code> keeps everything current; without any
+arguments <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> opens a graphical installer.</p>
+</section>
+<section id="coming-from-seamm-installer">
+<h2>Coming from seamm-installer<a class="headerlink" href="#coming-from-seamm-installer" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> replaces <code class="docutils literal notranslate"><span class="pre">seamm-installer</span></code>, which managed a conda environment.
+Existing conda-based installations keep working but no longer receive updates. To
+move: run the three lines above, then <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">services</span> <span class="pre">create</span></code> and
+<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">apps</span> <span class="pre">create</span></code> to point the JobServer, web interface and desktop apps
+at the new environment. Your jobs, configuration files and the codes’ own conda
+environments are untouched. Remove the old conda environment when you are happy.</p>
+</section>
+<section id="acknowledgements">
+<h2>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Link to this heading">¶</a></h2>
+<p>This package is based on <code class="docutils literal notranslate"><span class="pre">seamm-installer</span></code>, and was developed by the Molecular
+Sciences Software Institute (<a class="reference external" href="https://www.molssi.org">MolSSI</a>), which receives funding from the <a class="reference external" href="https://www.nsf.gov">National
+Science Foundation</a> under awards OAC-1547580 and CHE-2136142.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">SEAMM Manager</a><ul>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li><a class="reference internal" href="#coming-from-seamm-installer">Coming from seamm-installer</a></li>
+<li><a class="reference internal" href="#acknowledgements">Acknowledgements</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Welcome to the documentation for the SEAMM Manager</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="installation.html"
+                          title="next chapter">Installation</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to the documentation for the SEAMM Manager"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SEAMM Manager</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

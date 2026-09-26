@@ -1,0 +1,7 @@
+seamm_manager
+=============
+
+.. toctree::
+   :maxdepth: 4
+
+   seamm_manager
