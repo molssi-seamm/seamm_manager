@@ -34,6 +34,11 @@ SEAMM Manager is the one tool you install by hand; it installs everything else.
    published lock file so the versions are a tested set. Add ``--third-party`` for
    the third-party plug-ins, or name individual plug-ins instead of ``--all``.
 
+The installation also creates the jobs database (the *datastore*) under
+``~/SEAMM/Jobs`` with an administrator account ``admin`` whose password is ``admin``;
+change it from the web interface once that is running. Running a flowchart locally
+with ``run_flowchart`` needs no account at all.
+
 Optional: ``seamm-manager services create jobserver`` sets up the JobServer to run
 in the background, ``seamm-manager install seamm-webui`` and ``... services create
 webui`` the web interface, and ``seamm-manager apps create`` desktop apps for the

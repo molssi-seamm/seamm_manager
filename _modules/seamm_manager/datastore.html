@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.26.1 documentation</title>
+    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.26.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5393bb44"></script>
+    <script src="../../_static/documentation_options.js?v=646b312e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
@@ -129,20 +129,56 @@
 
 
 
+<div class="viewcode-block" id="ensure">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.datastore.ensure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure</span><span class="p">(</span><span class="n">default_project</span><span class="o">=</span><span class="s2">"default"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Create the datastore if it does not exist, using the environment's own</span>
+<span class="sd">    seamm_datastore, so that the JobServer and the web interface can start in</span>
+<span class="sd">    any order. Returns True if it was created.</span>
+
+<span class="sd">    The first version of the manager left this to the web interface's first</span>
+<span class="sd">    start; a JobServer created before it crash-looped on the missing database.</span>
+<span class="sd">    """</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"seamm.db"</span>
+    <span class="k">if</span> <span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">or</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">db_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Creating the datastore </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"import seamm_datastore</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"seamm_datastore.connect(database_uri='sqlite:///</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">', "</span>
+        <span class="sa">f</span><span class="s2">"datastore_location='</span><span class="si">{</span><span class="n">db_path</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2">', initialize=True, "</span>
+        <span class="sa">f</span><span class="s2">"default_project='</span><span class="si">{</span><span class="n">default_project</span><span class="si">}</span><span class="s2">')</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="n">code</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"   ...could not create the datastore:"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"      "</span> <span class="o">+</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">6</span><span class="p">:]))</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"   done; the administrator account is 'admin' (password 'admin')."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
 <div class="viewcode-block" id="update">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.datastore.update">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">"""Update the database to the latest version."""</span>
     <span class="n">db_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"seamm.db"</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">db_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database file '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' does not exist."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database file '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' does not exist."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">version</span> <span class="o">=</span> <span class="n">db_version</span><span class="p">()</span>
         <span class="n">latest</span> <span class="o">=</span> <span class="n">latest_version</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="n">latest</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database at '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' is already up-to-date."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">service_name</span> <span class="o">=</span> <span class="s2">"dev_dashboard"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="s2">"dashboard"</span>
+            <span class="n">service_name</span> <span class="o">=</span> <span class="s2">"dev_jobserver"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="s2">"jobserver"</span>
             <span class="n">restart</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">restart</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Stopping the service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -273,7 +309,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
