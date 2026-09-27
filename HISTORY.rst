@@ -1,6 +1,17 @@
 =======
 History
 =======
+2026.9.27.1 -- Bugfix: the Mac apps no longer ask for Rosetta
+    * On an Apple Silicon Mac without Rosetta, starting SEAMM or SEAMM-Manager from its
+      app showed a dialog asking to install Rosetta. The app's executable was a shell
+      script, which carries no architecture, so macOS assumed it might need Intel code.
+      The apps now use a small compiled launcher, built for both Apple Silicon and
+      Intel, which runs the same script from the app's Resources folder. Nothing in
+      SEAMM needs Rosetta.
+    * ``seamm-manager update`` converts existing apps automatically (and keeps their
+      version current); ``seamm-manager apps update`` does the same on its own.
+    * The app's process is now SEAMM itself rather than a shell waiting on it.
+
 2026.9.27 -- update --latest picks up a same-day release from PyPI
     * ``seamm-manager update`` takes the available version of each package from the
       package list published nightly, so a release made today was reported as

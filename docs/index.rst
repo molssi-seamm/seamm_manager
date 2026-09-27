@@ -12,6 +12,7 @@ Contents:
    api/modules
    contributing
    authors
+   developer_guide/index
    history
 
 Indices and tables

@@ -7,6 +7,7 @@
 
 import datetime
 import getpass
+import importlib.resources
 import logging
 import os
 from pathlib import Path
@@ -15,6 +16,75 @@ import shutil
 import subprocess
 
 logger = logging.getLogger(__name__)
+
+# First four bytes of a Mach-O file: thin 64-bit (either byte order) or universal.
+_MACHO_MAGIC = (
+    b"\xcf\xfa\xed\xfe",
+    b"\xfe\xed\xfa\xcf",
+    b"\xca\xfe\xba\xbe",
+    b"\xbe\xba\xfe\xca",
+)
+
+
+def is_macho(path):
+    """Whether the file is a compiled Mach-O program (not a script)."""
+    try:
+        with open(path, "rb") as fd:
+            return fd.read(4) in _MACHO_MAGIC
+    except OSError:
+        return False
+
+
+def _exec_script(text):
+    """Make an old launcher script ``exec`` its command and pass arguments on.
+
+    The old scripts ran the command as a child of bash, so the app's process was
+    a bash waiting on SEAMM. With ``exec`` the app's process is SEAMM itself.
+    """
+    lines = text.rstrip("\n").split("\n")
+    for i in range(len(lines) - 1, -1, -1):
+        line = lines[i].strip()
+        if line == "" or line.startswith("#"):
+            continue
+        if not line.startswith("exec "):
+            lines[i] = f'exec {line} "$@"'
+        break
+    return "\n".join(lines) + "\n"
+
+
+def install_launcher(contents_path, name, script):
+    """Put the compiled launcher and the script it runs into an app bundle.
+
+    macOS needs a bundle's executable to be a compiled program. A shell script
+    carries no architecture, so on Apple Silicon without Rosetta the system
+    asks the user to install Rosetta before launching it. The universal
+    launcher shipped in ``data/macos_launcher`` (source beside it) runs
+    ``Contents/Resources/<name>.sh`` with bash instead.
+
+    Parameters
+    ----------
+    contents_path : pathlib.Path
+        The bundle's ``Contents`` directory.
+    name : str
+        The app's name, which is also the executable's (``CFBundleExecutable``).
+    script : str
+        The text of the shell script to run.
+    """
+    macos_path = contents_path / "MacOS"
+    macos_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+    resources_path = contents_path / "Resources"
+    resources_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+    script_path = resources_path / f"{name}.sh"
+    script_path.write_text(script)
+    script_path.chmod(0o755)
+
+    launcher = importlib.resources.files("seamm_manager") / "data" / "macos_launcher"
+    exe_path = macos_path / name
+    exe_path.unlink(missing_ok=True)
+    with importlib.resources.as_file(launcher) as source:
+        shutil.copyfile(source, exe_path)
+    exe_path.chmod(0o755)
 
 
 def create_app(
@@ -61,20 +131,15 @@ def create_app(
     contents_path = applications_path / (name + ".app") / "Contents"
     contents_path.mkdir(mode=0o755, parents=True, exist_ok=True)
 
-    # Create the script to run the executable
-    macos_path = contents_path / "MacOS"
-    macos_path.mkdir(mode=0o755, parents=False, exist_ok=True)
-    script_path = macos_path / name
+    # The compiled launcher, and the script it runs to start the executable
     path = Path(exe_path).expanduser().resolve()
     cmd = '"' + str(path) + '"'
     for arg in args:
         cmd += f" {arg}"
-    script_path.write_text(f"#!/bin/bash\n{cmd}\n")
-    script_path.chmod(0o755)
+    install_launcher(contents_path, name, f'#!/bin/bash\nexec {cmd} "$@"\n')
 
     # And put the icons in place
     resources_path = contents_path / "Resources"
-    resources_path.mkdir(mode=0o755, parents=False, exist_ok=True)
     icons_path = resources_path / (name + ".icns")
     path = Path(icons).expanduser().resolve()
     shutil.copyfile(path, icons_path)
@@ -146,6 +211,19 @@ def update_app(name, version, missing_ok=False):
         with plist_path.open(mode="rb") as fd:
             data = plistlib.load(fd)
         data["CFBundleShortVersionString"] = version
+
+        # Bundles made by older versions have a shell script as the executable,
+        # which asks for Rosetta on Apple Silicon. Move the script to Resources
+        # and put the compiled launcher in its place.
+        exe_name = data.get("CFBundleExecutable", name)
+        exe_path = contents_path / "MacOS" / exe_name
+        if exe_path.exists() and not is_macho(exe_path):
+            install_launcher(
+                contents_path, exe_name, _exec_script(exe_path.read_text())
+            )
+            logger.info(
+                f"Replaced the script launcher of {name} with the compiled one."
+            )
         with plist_path.open(mode="wb") as fd:
             plistlib.dump(data, fd)
     elif not missing_ok:

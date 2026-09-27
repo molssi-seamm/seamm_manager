@@ -113,3 +113,10 @@ update: ## post-release: sync main and dev, reinstall, run checks, push dev
 	git merge --ff-only main
 	$(MAKE) lint install test
 	git push
+
+launcher: ## rebuild the universal macOS app launcher (needs Xcode command line tools)
+	clang -Os -Wall -Wextra -arch arm64 -arch x86_64 -mmacosx-version-min=11.0 \
+		-o seamm_manager/data/macos_launcher seamm_manager/data/macos_launcher.c
+	strip -x seamm_manager/data/macos_launcher
+	codesign --force --sign - seamm_manager/data/macos_launcher
+	xattr -c seamm_manager/data/macos_launcher
