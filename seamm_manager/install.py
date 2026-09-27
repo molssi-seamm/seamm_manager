@@ -81,6 +81,17 @@ def setup(parser):
         help="Python version if the environment has to be created (default 3.12)",
     )
     subparser.add_argument(
+        "--code-environments",
+        choices=("own", "shared", "prefixed"),
+        default=None,
+        help=(
+            "How this installation gets the external codes' conda environments: "
+            "'shared' uses the default installation's (the default for any root "
+            "but ~/SEAMM), 'own' creates and updates them, 'prefixed' makes its "
+            "own copies named seamm-<name>-<code>."
+        ),
+    )
+    subparser.add_argument(
         "--rerun-installers",
         action="store_true",
         help=(
@@ -110,6 +121,33 @@ def install():
         if not metadata["gui-only"]:
             metadata["gui-only"] = True
             set_metadata(metadata)
+
+    # The installation's code-environment policy, recorded before any plug-in's
+    # installer runs, since they honour it.
+    from .policy import (
+        POLICY_FILE,
+        code_environment_policy,
+        is_default_root,
+        set_code_environment_policy,
+    )
+
+    choice = getattr(my.options, "code_environments", None)
+    try:
+        if choice is not None:
+            set_code_environment_policy(my.root, choice)
+        elif not is_default_root(my.root) and not (my.root / POLICY_FILE).exists():
+            set_code_environment_policy(my.root, "shared")
+    except ValueError as e:
+        print(e)
+        return 1
+    policy = code_environment_policy(my.root)
+    if policy == "shared":
+        print(
+            "This installation shares the default installation's codes: plug-ins "
+            "will not create or update conda environments here."
+        )
+    elif policy == "prefixed":
+        print("This installation has its own copies of the codes' environments.")
 
     environment.ensure(python_version=my.options.python)
 

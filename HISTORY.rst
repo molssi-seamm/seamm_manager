@@ -1,6 +1,23 @@
 =======
 History
 =======
+2026.9.27.6 -- A trial installation cannot change production's codes
+    * Each installation now has a code-environment policy for the external codes'
+      conda environments, kept in ``<root>/installation.ini``. ``own`` (always the case
+      for ``~/SEAMM``) creates and updates them as before. ``shared``, the default for
+      any other installation, uses ``~/SEAMM``'s: installing a plug-in copies its
+      ``<code>.ini`` from ``~/SEAMM``, and installing, updating or uninstalling never
+      touches a conda environment, only reports. ``prefixed`` gives the installation its
+      own copies named ``seamm-<name>-<code>``. ``install --code-environments`` chooses
+      it and ``environment show`` shows it.
+    * Before, installing plug-ins in a second installation recreated the shared
+      environments, which is how a test on 2026-09-27 replaced the codes' environments
+      on one machine.
+    * The policy is applied by the seamm-manager in the installation's own
+      environment. If that copy is too old to know about it, the manager now skips the
+      plug-ins' install, update and uninstall steps in a non-default installation
+      instead of letting them run.
+
 2026.9.27.5 -- Several installations side by side; update --latest fixed
     * The services, desktop apps and macOS service bundles of an installation other
       than ``~/SEAMM`` now carry its name, which is the root's directory name unless

@@ -274,6 +274,30 @@ def package_info(package, conda_only=False):
     return None, None
 
 
+def _installers_honour_policy():
+    """Whether the plug-ins' installers will respect this installation's policy.
+
+    The installers use the seamm-manager in the installation's own environment, not
+    this one. In an installation that does not own its codes (policy ``shared`` or
+    ``prefixed``), an older copy there would create or update the shared conda
+    environments. True for the default installation, or when that copy has the
+    policy code (checked by importing it, not by comparing versions).
+    """
+    from .policy import code_environment_policy
+
+    if code_environment_policy(my.root) == "own":
+        return True
+    python = my.uv.which("python")
+    if python is None:
+        return False
+    result = subprocess.run(
+        [str(python), "-c", "import seamm_manager.policy"],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def run_plugin_installer(package, *args, verbose=True):
     """Run the plug-in installer with given arguments.
 
@@ -297,6 +321,17 @@ def run_plugin_installer(package, *args, verbose=True):
     installer = my.uv.which(f"{package}-installer")
     if installer is None:
         my.logger.info("    no local installer, returning None")
+        return None
+    elif (
+        args
+        and args[0] in ("install", "update", "uninstall")
+        and not (_installers_honour_policy())
+    ):
+        print(
+            f"   Skipped the installer for {package}: this installation does not "
+            "manage its own codes, but its environment has a seamm-manager too old "
+            "to know that. Run 'seamm-manager update seamm-manager' for it first."
+        )
         return None
     else:
         if verbose:

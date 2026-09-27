@@ -27,8 +27,9 @@ def test_run_plugin_installer_passes_root(tmp_path, monkeypatch):
         def which(self, name):
             return tmp_path / name
 
-    def fake_run(cmd, capture_output, text, env):
-        seen["env"] = env
+    def fake_run(cmd, capture_output, text, env=None):
+        if env is not None:  # the installer itself (not the policy check)
+            seen["env"] = env
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.setattr(my, "uv", _Uv())

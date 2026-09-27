@@ -81,6 +81,9 @@ def show():
     packages = my.uv.list()
     seamm = {k: v for k, v in packages.items() if "seamm" in k or k == "molsystem"}
     print(f"Packages:    {len(packages)} installed, {len(seamm)} SEAMM")
+    from .policy import code_environment_policy
+
+    print(f"Codes:       {code_environment_policy(my.root)} conda environments")
     return 0
 
 

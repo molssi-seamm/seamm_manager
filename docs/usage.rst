@@ -75,7 +75,29 @@ as an older ``dev_jobserver``), so two JobServers never share one datastore.
 Reference data -- VASP potentials, ``local:`` forcefields and models, the
 thermochemistry database, ``dashboards.ini`` -- is taken from the installation's own
 root if it has a copy, else from ``~/SEAMM``, so a new installation works without
-copying it. The codes' conda environments are shared by name between installations.
+copying it.
+
+The external codes' conda environments (``seamm-lammps``, ``seamm-mopac``, ...) are
+governed by the installation's *code-environment policy*, kept in
+``<root>/installation.ini`` and shown by ``environment show``:
+
+``own``
+    The plug-ins create and update the codes' environments. Always the case for
+    ``~/SEAMM``.
+``shared``
+    The default for any other installation. Installing a plug-in copies ``~/SEAMM``'s
+    ``<code>.ini`` into the root, so the code runs from the same environment; installing
+    or updating never creates, updates or removes a conda environment, and a code that
+    ``~/SEAMM`` lacks is reported instead. So a trial installation cannot change the
+    codes production uses.
+``prefixed``
+    The installation gets its own copies, named ``seamm-<name>-<code>`` (e.g.
+    ``seamm-SEAMM_NEW-lammps``), for trying new versions of the codes themselves.
+
+Choose it with ``seamm-manager --root <root> install --code-environments <policy>``.
+The plug-ins' installers honour it through the seamm-manager in the installation's
+own environment; if that copy is too old to know about policies, the manager skips
+their install, update and uninstall steps rather than risk the shared environments.
 
 Where things are
 ----------------
