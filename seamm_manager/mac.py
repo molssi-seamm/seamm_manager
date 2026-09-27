@@ -98,10 +98,12 @@ def _link_interpreter(python, exe_path):
             return False
         exe_path.unlink()
     try:
+        # A hard link shares the interpreter's mode, and its owner may not be us
+        # (e.g. root for a system Python), so it must not be chmod-ed.
         os.link(real, exe_path)
     except OSError:
         shutil.copy2(real, exe_path)
-    exe_path.chmod(0o755)
+        exe_path.chmod(0o755)
     return True
 
 
