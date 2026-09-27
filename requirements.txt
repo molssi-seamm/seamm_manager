@@ -1,8 +1,9 @@
+
 packaging
 platformdirs
 pmw
+pyyaml
 requests
 seamm-util
 seamm-widgets
 tabulate
-
