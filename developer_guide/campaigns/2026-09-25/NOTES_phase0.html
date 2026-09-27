@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Phase 0 notes – manual migration on a clone (2026-09-25) &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../../_static/documentation_options.js?v=2246f11d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)" href="NOTES_phase0_uv.html" />
+    <link rel="prev" title="2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0_uv.html" title="Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Phase 0 notes – manual migration on a clone (2026-09-25)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="phase-0-notes-manual-migration-on-a-clone-2026-09-25">
+<h1>Phase 0 notes – manual migration on a clone (2026-09-25)<a class="headerlink" href="#phase-0-notes-manual-migration-on-a-clone-2026-09-25" title="Link to this heading">¶</a></h1>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">create</span> <span class="pre">-n</span> <span class="pre">seamm-pip-test</span> <span class="pre">--clone</span> <span class="pre">seamm</span></code> (the production Mac
+environment, Python 3.12.13, 366 packages of which 88 were pypi). Then:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">remove</span> <span class="o">-</span><span class="n">n</span> <span class="n">seamm</span><span class="o">-</span><span class="n">pip</span><span class="o">-</span><span class="n">test</span> <span class="o">--</span><span class="n">force</span> \
+    <span class="n">molsystem</span> <span class="n">seamm</span><span class="o">-</span><span class="n">dashboard</span> <span class="n">seamm</span><span class="o">-</span><span class="n">datastore</span> <span class="n">seamm</span><span class="o">-</span><span class="n">ff</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">installer</span> \
+    <span class="n">seamm</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">widgets</span> <span class="n">reference</span><span class="o">-</span><span class="n">handler</span> <span class="n">openbabel</span> <span class="n">rdkit</span> <span class="n">psutil</span> <span class="n">pillow</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">molsystem</span> <span class="n">seamm</span> <span class="n">seamm</span><span class="o">-</span><span class="n">datastore</span> <span class="n">seamm</span><span class="o">-</span><span class="n">ff</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">installer</span> \
+    <span class="n">seamm</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">widgets</span> <span class="n">reference</span><span class="o">-</span><span class="n">handler</span> <span class="n">openbabel</span> <span class="n">rdkit</span> <span class="n">psutil</span> <span class="n">pillow</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">reference-handler</span></code> was added to the list: it is conda-forge in the
+production environment but missing from the conda list in
+<code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code>’s metadata. <code class="docutils literal notranslate"><span class="pre">seamm</span></code> itself was already a pip-installed
+development build in production, so pip reported it as satisfied.</p>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading">¶</a></h2>
+<p>All checks pass on the migrated environment (script:
+<code class="docutils literal notranslate"><span class="pre">phase0_checks.py</span></code>, kept in the session scratchpad; recreate from this
+list if needed). The same script was run on the untouched <code class="docutils literal notranslate"><span class="pre">seamm</span></code>
+environment first and also passed, so the comparison is like for like.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Check</p></th>
+<th class="head"><p>Result on migrated env</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>import openbabel / rdkit / psutil / PIL / spglib</p></td>
+<td><p>OK, all from pip wheels</p></td>
+</tr>
+<tr class="row-odd"><td><p>openbabel 3D build from SMILES</p></td>
+<td><p>OK, openbabel 3.2.1 wheel</p></td>
+</tr>
+<tr class="row-even"><td><p>rdkit embed</p></td>
+<td><p>OK, rdkit 2026.3.6 wheel</p></td>
+</tr>
+<tr class="row-odd"><td><p>molsystem SMILES -&gt; OBMol -&gt; RDKMol -&gt; SDF</p></td>
+<td><p>OK, molsystem 2026.9.20</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>PIL.ImageTk PhotoImage under conda Tk 8.6</strong></p></td>
+<td><p><strong>OK, Pillow 12.3.0 wheel</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>seamm_datastore connect + initialize + login</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-even"><td><p>TkFlowchart created headlessly</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">check</span></code></p></td>
+<td><p>no broken requirements</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">export</span></code> on the mixed env</p></td>
+<td><p>OK (269 conda, ~100 pip entries)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">list</span> <span class="pre">--explicit</span></code></p></td>
+<td><p>OK</p></td>
+</tr>
+</tbody>
+</table>
+<p>The ImageTk result settles the main risk in the plan: the pip Pillow wheel
+binds to the conda-forge Tk without any special handling. Pillow does not
+need to stay a conda dependency.</p>
+</section>
+<section id="findings-that-change-the-plan">
+<h2>Findings that change the plan<a class="headerlink" href="#findings-that-change-the-plan" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p><strong>A targeted conda install is safe; ``conda update –all`` is not.</strong>
+<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">--dry-run</span> <span class="pre">tk</span></code> on the mixed environment touched only
+<code class="docutils literal notranslate"><span class="pre">tk</span></code> and <code class="docutils literal notranslate"><span class="pre">openssl</span></code>: the solver treated the pip copies as satisfying
+the <code class="docutils literal notranslate"><span class="pre">pillow</span></code>/<code class="docutils literal notranslate"><span class="pre">rdkit</span></code> requirements of the remaining conda packages.
+But <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span> <span class="pre">--all</span> <span class="pre">--dry-run</span></code> proposed 38 new and 228 updated
+packages, including:</p>
+<ul class="simple">
+<li><p>a <strong>conda ``pillow``</strong> back on top of the pip one (pulled by
+<code class="docutils literal notranslate"><span class="pre">matplotlib-base</span></code> and <code class="docutils literal notranslate"><span class="pre">reportlab</span></code>);</p></li>
+<li><p><strong>``bibtexparser`` 1.4.3 -&gt; 2.0.1</strong>, straight through the <code class="docutils literal notranslate"><span class="pre">&lt;2</span></code>
+upper bound that four SEAMM packages declare – conda does not read
+pip constraints;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sqlalchemy</span></code> 1.4 -&gt; 2.1, <code class="docutils literal notranslate"><span class="pre">numpy</span></code> 2.2 -&gt; 2.5, and a conda <code class="docutils literal notranslate"><span class="pre">pmw</span></code>
+over the pip <code class="docutils literal notranslate"><span class="pre">pmw</span></code>.</p></li>
+</ul>
+<p>So the plan’s Phase 5 “base update” must be <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">python</span> <span class="pre">pip</span>
+<span class="pre">tk</span> <span class="pre">libsqlite</span></code> (targeted), never <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code>, and the user docs must
+say so. This is the same two-resolver failure the campaign exists to
+remove; it persists for as long as conda still owns Python packages.</p>
+</li>
+<li><p><strong>150 conda-managed Python packages remain</strong> after moving the seven.
+They are the transitive dependencies conda pulled in originally
+(numpy, pandas, matplotlib, sqlalchemy, …). While they exist, conda has
+something to “update” and finding 1 applies. The clean end state is
+<em>zero</em> conda Python packages: conda owns <code class="docutils literal notranslate"><span class="pre">python</span></code>, <code class="docutils literal notranslate"><span class="pre">pip</span></code>, <code class="docutils literal notranslate"><span class="pre">tk</span></code>,
+<code class="docutils literal notranslate"><span class="pre">libsqlite</span></code> and their C libraries only. Two ways to get there:</p>
+<ul class="simple">
+<li><p><strong>Fresh environment</strong> (new installs, and the simplest fix for
+existing ones): <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">create</span> <span class="pre">-n</span> <span class="pre">seamm</span> <span class="pre">python=3.12</span> <span class="pre">pip</span> <span class="pre">tk</span></code> then
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the SEAMM package set. This is what the installer’s
+<code class="docutils literal notranslate"><span class="pre">seamm.yml</span></code> should become.</p></li>
+<li><p><strong>In-place</strong>: force-remove every conda package whose build string is
+<code class="docutils literal notranslate"><span class="pre">py312*</span></code> or <code class="docutils literal notranslate"><span class="pre">pyh*</span></code> and re-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the SEAMM set so pip
+re-resolves them. Not tested in Phase 0; the partial removal was.</p></li>
+</ul>
+<p>Recommendation: make the in-place migration in Phase 1 remove <em>all</em>
+conda Python packages, not just the seven, and offer “recreate the
+environment” as the documented alternative.</p>
+</li>
+<li><p><strong>The ``defaults`` channel is leaking into the environment.</strong>
+<code class="docutils literal notranslate"><span class="pre">create_env</span></code> in <code class="docutils literal notranslate"><span class="pre">seamm_installer/util.py</span></code> writes <code class="docutils literal notranslate"><span class="pre">channels:</span>
+<span class="pre">conda-forge,</span> <span class="pre">defaults</span></code>. Two packages in production come from
+<code class="docutils literal notranslate"><span class="pre">pkgs/main</span></code>: <code class="docutils literal notranslate"><span class="pre">apsw</span></code> 3.51.1.0 and <code class="docutils literal notranslate"><span class="pre">sqlite</span></code> 3.53.2. The
+<code class="docutils literal notranslate"><span class="pre">defaults</span></code> <code class="docutils literal notranslate"><span class="pre">sqlite</span></code> and the conda-forge <code class="docutils literal notranslate"><span class="pre">libsqlite</span></code> 3.53.4 <strong>both
+own ``lib/libsqlite3.dylib``</strong>; in production the symlink points at
+3.53.4, in the clone it came out pointing at 3.53.2 (the clone re-linked
+in a different order). Python’s <code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> module therefore reports a
+different SQLite version in the two environments. Not caused by pip,
+but exactly the kind of silent inconsistency the <code class="docutils literal notranslate"><span class="pre">!=3.49.1</span></code> pin was
+meant to guard against. Drop <code class="docutils literal notranslate"><span class="pre">defaults</span></code> from <code class="docutils literal notranslate"><span class="pre">create_env</span></code> and from
+<code class="docutils literal notranslate"><span class="pre">seamm.yml</span></code>; with everything else on pip there is no reason for it.</p></li>
+<li><p><strong>Two packages are missing from the packaging metadata’s conda list.</strong>
+<code class="docutils literal notranslate"><span class="pre">reference-handler</span></code> is installed from conda-forge in production but
+listed nowhere in <code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code>’s metadata (it is in
+<code class="docutils literal notranslate"><span class="pre">seamm_installer/metadata.py</span></code>’s <code class="docutils literal notranslate"><span class="pre">core_packages</span></code>). It must be in the
+Phase 1 force-removal set or a conda solve will keep it. The production
+<code class="docutils literal notranslate"><span class="pre">seamm</span></code> being a pip dev build also means the “seven” is really “six
+plus whatever the user has” – the migration code should derive the set
+from <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">list</span></code> (channel != pypi, name in the package list) rather
+than from a hard-coded list.</p></li>
+<li><p><strong>Version drift between channels is real.</strong> The conda-forge
+<code class="docutils literal notranslate"><span class="pre">molsystem</span></code> in production was 2026.6.29; PyPI had 2026.9.20.
+<code class="docutils literal notranslate"><span class="pre">seamm-ff-util</span></code> 2025.8.1 vs 2026.9.20.1. <code class="docutils literal notranslate"><span class="pre">seamm-util</span></code> and
+<code class="docutils literal notranslate"><span class="pre">seamm-widgets</span></code> 2026.7.26/6.28 vs 2026.9.18. This is the “release
+lag” motivation, measured: two to three months behind on a machine that
+is updated regularly.</p></li>
+</ol>
+</section>
+<section id="environment-left-in-place">
+<h2>Environment left in place<a class="headerlink" href="#environment-left-in-place" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">seamm-pip-test</span></code> is still present for further poking (it is a full
+2.4 GB clone). Remove with <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">remove</span> <span class="pre">-n</span> <span class="pre">seamm-pip-test</span></code> when
+done.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Phase 0 notes – manual migration on a clone (2026-09-25)</a><ul>
+<li><a class="reference internal" href="#setup">Setup</a></li>
+<li><a class="reference internal" href="#results">Results</a></li>
+<li><a class="reference internal" href="#findings-that-change-the-plan">Findings that change the plan</a></li>
+<li><a class="reference internal" href="#environment-left-in-place">Environment left in place</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="NOTES_phase0_uv.html"
+                          title="next chapter">Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/developer_guide/campaigns/2026-09-25/NOTES_phase0.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0_uv.html" title="Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Phase 0 notes – manual migration on a clone (2026-09-25)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

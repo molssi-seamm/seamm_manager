@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../../_static/documentation_options.js?v=2246f11d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Phase 0 notes – manual migration on a clone (2026-09-25)" href="NOTES_phase0.html" />
+    <link rel="prev" title="Campaigns" href="../index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0.html" title="Phase 0 notes – manual migration on a clone (2026-09-25)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Campaigns"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" accesskey="U">Campaigns</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="move-seamm-off-conda-a-uv-managed-environment-pypi-only">
+<h1>2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only<a class="headerlink" href="#move-seamm-off-conda-a-uv-managed-environment-pypi-only" title="Link to this heading">¶</a></h1>
+<p>Status (2026-09-27): <strong>complete and deployed.</strong> Phases 0-4 done: uv-managed
+environment, PyPI-only packages, new Zenodo package list + universal lock (concept
+record 22970126; the old 7789853 is frozen), CI on uv, <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> released
+(2026.9.26 through 2026.9.27: find_conda, datastore.ensure, sync_manager,
+conservative pip policy for the plug-ins’ conda environment files,
+<code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code>), and all four machines migrated with an end-to-end job each
+(this Mac, paul.local, ChemAI, MolSSI10; <code class="docutils literal notranslate"><span class="pre">NOTES_phase4.rst</span></code>). The 2026-09-27
+incident (a shared conda environment’s torch and xnns upgraded by a plug-in’s
+environment file) and its fixes are in <code class="docutils literal notranslate"><span class="pre">NOTES_phase4.rst</span></code>. What is left is
+listed under <em>Outstanding</em> at the end.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="NOTES_phase0.html">Phase 0 notes – manual migration on a clone (2026-09-25)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NOTES_phase0_uv.html">Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NOTES_phase1_audit.html">Phase 1 notes – the <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> audit (2026-09-25)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NOTES_phase4.html">Phase 4 notes – rolling out seamm-manager (started 2026-09-26)</a></li>
+</ul>
+</div>
+<section id="why">
+<h2>Why<a class="headerlink" href="#why" title="Link to this heading">¶</a></h2>
+<p>Eight core packages are installed from conda-forge while the ~45 plug-ins and
+the other core libraries are installed with pip, all into one conda
+environment. The mixed model causes recurring problems:</p>
+<ol class="arabic simple">
+<li><p><strong>Release lag.</strong> A conda-forge feedstock publishes hours to days after the
+PyPI release and needs a separate PR per package. Measured in Phase 0:
+the production <code class="docutils literal notranslate"><span class="pre">molsystem</span></code> was three months behind PyPI.</p></li>
+<li><p><strong>Two resolvers, one environment.</strong> Conda solves its packages ignoring
+everything pip installed; conda then runs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span></code> on the pip
+list; pip <em>does</em> see conda’s packages and upgrades them when asked; the
+next conda solve puts the conda copy back. This is the source of the
+“conda <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> replaced the pip CUDA torch” and “pip <code class="docutils literal notranslate"><span class="pre">pymdi</span></code>
+replaced conda’s MPI-linked MDI” incidents. Phase 0 showed the same
+thing in a dry run: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span> <span class="pre">--all</span></code> on a mixed environment would
+reinstall a conda <code class="docutils literal notranslate"><span class="pre">pillow</span></code> over the pip one and walk <code class="docutils literal notranslate"><span class="pre">bibtexparser</span></code>
+past the <code class="docutils literal notranslate"><span class="pre">&lt;2</span></code> bound that four SEAMM packages declare.</p></li>
+<li><p><strong>The installer cannot change a package’s channel</strong> (<code class="docutils literal notranslate"><span class="pre">install.py</span></code> /
+<code class="docutils literal notranslate"><span class="pre">update.py</span></code> <code class="docutils literal notranslate"><span class="pre">raise</span> <span class="pre">NotImplementedError</span></code>), so the metadata cannot be
+changed without breaking every existing installation.</p></li>
+<li><p><strong>Environment-level rot.</strong> <code class="docutils literal notranslate"><span class="pre">create_env</span></code> lists the <code class="docutils literal notranslate"><span class="pre">defaults</span></code> channel;
+production has a <code class="docutils literal notranslate"><span class="pre">pkgs/main</span></code> <code class="docutils literal notranslate"><span class="pre">sqlite</span></code> and a conda-forge
+<code class="docutils literal notranslate"><span class="pre">libsqlite</span></code> that both own <code class="docutils literal notranslate"><span class="pre">lib/libsqlite3.dylib</span></code>.</p></li>
+</ol>
+<p>The original reason for conda was compiled dependencies with no wheels,
+chiefly <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> and <code class="docutils literal notranslate"><span class="pre">rdkit</span></code>. That reason is gone (survey below).
+The one thing pip cannot supply is the interpreter, with its <code class="docutils literal notranslate"><span class="pre">tkinter</span></code> and
+<code class="docutils literal notranslate"><span class="pre">sqlite3</span></code>; <code class="docutils literal notranslate"><span class="pre">uv</span></code> supplies exactly that. Conda remains the right tool for
+the external codes, which are not Python packages.</p>
+</section>
+<section id="survey-what-actually-needed-conda">
+<h2>Survey: what actually needed conda<a class="headerlink" href="#survey-what-actually-needed-conda" title="Link to this heading">¶</a></h2>
+<p>Packages on the conda-forge channel in <code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code>’s <code class="docutils literal notranslate"><span class="pre">metadata.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">molsystem</span>  <span class="n">seamm</span>  <span class="n">seamm</span><span class="o">-</span><span class="n">dashboard</span>  <span class="n">seamm</span><span class="o">-</span><span class="n">datastore</span>
+<span class="n">seamm</span><span class="o">-</span><span class="n">ff</span><span class="o">-</span><span class="n">util</span>  <span class="n">seamm</span><span class="o">-</span><span class="n">installer</span>  <span class="n">seamm</span><span class="o">-</span><span class="n">util</span>  <span class="n">seamm</span><span class="o">-</span><span class="n">widgets</span>
+</pre></div>
+</div>
+<p>plus <code class="docutils literal notranslate"><span class="pre">reference-handler</span></code>, which is conda-forge in production but absent
+from that list. <code class="docutils literal notranslate"><span class="pre">seamm-dashboard</span></code> is being retired.</p>
+<p>PyPI wheels for every compiled dependency, checked 2026-09-25:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Package</p></th>
+<th class="head"><p>Version</p></th>
+<th class="head"><p>Wheels</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>openbabel</p></td>
+<td><p>3.2.1</p></td>
+<td><p>official (upstream); macOS x86_64 + arm64,
+manylinux x86_64 + aarch64, Windows;
+cp310 – cp314</p></td>
+</tr>
+<tr class="row-odd"><td><p>rdkit</p></td>
+<td><p>2026.3.6</p></td>
+<td><p>macOS arm64, manylinux, Windows; cp310 – cp315</p></td>
+</tr>
+<tr class="row-even"><td><p>psutil, pillow</p></td>
+<td><p>current</p></td>
+<td><p>all platforms</p></td>
+</tr>
+<tr class="row-odd"><td><p>spglib,</p></td>
+<td><p>current</p></td>
+<td><p>all platforms</p></td>
+</tr>
+<tr class="row-even"><td><p>pycifrw</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>scipy, numpy,</p></td>
+<td><p>current</p></td>
+<td><p>all platforms</p></td>
+</tr>
+<tr class="row-even"><td><p>statsmodels,</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>sqlalchemy</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>apsw</p></td>
+<td><p>3.53.4.0</p></td>
+<td><p>all platforms (qcportal’s compiled dependency)</p></td>
+</tr>
+<tr class="row-odd"><td><p>kaleido, pmw</p></td>
+<td><p>current</p></td>
+<td><p>PyPI only – already pip</p></td>
+</tr>
+</tbody>
+</table>
+<p>What the interpreter must bring: <code class="docutils literal notranslate"><span class="pre">tkinter</span></code> with Tk, and <code class="docutils literal notranslate"><span class="pre">sqlite3</span></code>.
+The uv-managed <code class="docutils literal notranslate"><span class="pre">cpython-3.12.14</span></code> (python-build-standalone) brings
+<strong>Tk 9.0.4</strong> and SQLite 3.53.1. The python.org 3.12 installer brings Tk
+8.6 and is the fallback interpreter if Tk 9 proves a problem; uv can
+create the venv from it.</p>
+</section>
+<section id="what-phase-0-established">
+<h2>What Phase 0 established<a class="headerlink" href="#what-phase-0-established" title="Link to this heading">¶</a></h2>
+<p>Full detail in the two NOTES files. The short version:</p>
+<ul class="simple">
+<li><p><strong>Everything works on pip wheels</strong>, on macOS arm64, both in a conda
+environment with the conda copies removed (<code class="docutils literal notranslate"><span class="pre">NOTES_phase0</span></code>) and on a
+conda-free uv-managed Python (<code class="docutils literal notranslate"><span class="pre">NOTES_phase0_uv</span></code>): openbabel, rdkit,
+molsystem round trips, datastore login, <code class="docutils literal notranslate"><span class="pre">PIL.ImageTk</span></code>.</p></li>
+<li><p><strong>Tk 9.0.4 works headlessly</strong> for Pmw 2.1.1, seamm_widgets (incl.
+PeriodicTable, UnitEntry) and <code class="docutils literal notranslate"><span class="pre">TkFlowchart</span></code>. Appearance not yet judged.</p></li>
+<li><p><strong>A uv install of the core set takes 42 s; the venv is 521 MB</strong> (conda
+environment: 2.4 GB). <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">compile</span> <span class="pre">--universal</span></code> locks it in 1 s.</p></li>
+<li><p><strong>The in-place path is the hard part.</strong> After moving the SEAMM packages,
+~150 conda Python packages remain and <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span> <span class="pre">--all</span></code> clobbers pip.
+A fresh environment has none of this. Hence the decision to drop in-place.</p></li>
+<li><p><strong>Undeclared dependencies surface at once on a pip-only base.</strong> The
+universal lock had no <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> because <code class="docutils literal notranslate"><span class="pre">molsystem</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">install_requires</span></code> does not list it (only the conda recipe did).</p></li>
+</ul>
+</section>
+<section id="retiring-seamm-dashboard">
+<h2>Retiring seamm-dashboard<a class="headerlink" href="#retiring-seamm-dashboard" title="Link to this heading">¶</a></h2>
+<p>All three fragile pins in the metadata (<code class="docutils literal notranslate"><span class="pre">connexion</span> <span class="pre">&lt;3.0</span></code>,
+<code class="docutils literal notranslate"><span class="pre">flask-jwt-extended</span> <span class="pre">=4.5.3</span></code>, <code class="docutils literal notranslate"><span class="pre">pyjwt</span> <span class="pre">=2.9.0</span></code>) belong to the dashboard and
+go with it, as do ~20 Flask packages and <code class="docutils literal notranslate"><span class="pre">sqlalchemy&lt;2.0</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">seamm-datastore</span></code> <strong>stays</strong>: it is the data layer of <code class="docutils literal notranslate"><span class="pre">seamm_webui</span></code> (its
+<code class="docutils literal notranslate"><span class="pre">db.py</span></code> and every router import the datastore models) and of
+<code class="docutils literal notranslate"><span class="pre">seamm_exec</span></code> (<code class="docutils literal notranslate"><span class="pre">exec_flowchart.py</span></code> creates and updates the Job row). The
+JobServer reads job status through <code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> directly and does not import
+it. The core <code class="docutils literal notranslate"><span class="pre">seamm</span></code> package lists it in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> without
+importing it; that dependency can be dropped.</p>
+</section>
+<section id="target-architecture">
+<h2>Target architecture<a class="headerlink" href="#target-architecture" title="Link to this heading">¶</a></h2>
+<p><strong>Main environment.</strong> A uv-managed CPython 3.12 (later 3.13) in a venv at a
+fixed location under the SEAMM root, e.g. <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code> (decision
+below). Every SEAMM package and every Python dependency from PyPI via
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span></code>. No conda anywhere in it.</p>
+<p><strong>Installer.</strong> <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> (new package, decision 4) installed with
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">install</span></code> into its own isolated environment, <em>outside</em> the
+environment it manages, and also into the venv for the plug-in installer
+scripts. It can
+therefore create, delete and recreate the SEAMM venv freely, and updating
+the installer (<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">upgrade</span> <span class="pre">seamm-installer</span></code>) never reinstalls a
+package that is currently running.</p>
+<p><strong>Known-good set.</strong> <code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code> publishes, nightly, a universal
+lock (<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">compile</span> <span class="pre">--universal</span></code>) alongside the package list. The
+installer passes it as a constraints file by default; <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code>
+opts out (default in development mode).</p>
+<p><strong>Code environments.</strong> Unchanged: the plug-in installers create conda
+environments for Psi4, MOPAC, DFTB+, LAMMPS, xtb, Packmol, TorchANI via
+conda-forge. The <code class="docutils literal notranslate"><span class="pre">Conda</span></code> class stays for this. Conda is required on the
+machine only when one of those plug-ins is installed; the installer should
+say so at that point rather than at bootstrap. Docker remains the other
+route.</p>
+<p><strong>Migration.</strong> No in-place conversion. Users create the new environment
+with the bootstrap below, then delete (or keep, renamed) the old conda
+environment. The old package list on Zenodo is left as is, so old
+installations freeze cleanly rather than break (decision below).</p>
+<p><strong>Bootstrap</strong> (the whole user-facing story, same on macOS and Linux):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">LsSf</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">astral</span><span class="o">.</span><span class="n">sh</span><span class="o">/</span><span class="n">uv</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">sh</span> <span class="o">|</span> <span class="n">sh</span>
+<span class="n">uv</span> <span class="n">tool</span> <span class="n">install</span> <span class="n">seamm</span><span class="o">-</span><span class="n">manager</span>
+<span class="n">seamm</span><span class="o">-</span><span class="n">manager</span> <span class="n">install</span> <span class="nb">all</span>              <span class="c1"># creates the venv, installs, sets up services/apps</span>
+</pre></div>
+</div>
+</section>
+<section id="phases">
+<h2>Phases<a class="headerlink" href="#phases" title="Link to this heading">¶</a></h2>
+<section id="phase-0-validate-done">
+<h3>Phase 0 – validate (done)<a class="headerlink" href="#phase-0-validate-done" title="Link to this heading">¶</a></h3>
+<p>Done 2026-09-25 for macOS arm64; see the NOTES. Remaining, before Phase 3
+is finalized:</p>
+<ul class="simple">
+<li><p>Open the flowchart editor and two or three step dialogs under Tk 9 by
+eye (Paul). A durable test environment for this is at
+<code class="docutils literal notranslate"><span class="pre">~/Work/SEAMM/Testing/uvenv</span></code> (core + the MolSSI plug-ins); launch with
+<code class="docutils literal notranslate"><span class="pre">~/Work/SEAMM/Testing/uvenv/bin/seamm</span></code>. If Tk 9 is unacceptable, the
+python.org interpreter is the base and <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">venv</span> <span class="pre">--python</span> <span class="pre">&lt;path&gt;</span></code> points
+at it; the rest of the plan is unchanged.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">phase0_checks.py</span></code> (in the session scratchpad; recreate from the
+NOTES if lost) on ChemAI with a uv-managed Linux Python. Needs uv
+installed in that account – ask first.</p></li>
+</ul>
+</section>
+<section id="phase-1-make-the-packages-honest-about-their-dependencies">
+<h3>Phase 1 – make the packages honest about their dependencies<a class="headerlink" href="#phase-1-make-the-packages-honest-about-their-dependencies" title="Link to this heading">¶</a></h3>
+<p>Independent of the installer; ordinary PyPI releases. Pip only knows
+<code class="docutils literal notranslate"><span class="pre">install_requires</span></code>, so every dependency that today lives in a conda
+recipe or in the packaging metadata’s side-table must move into the
+package.</p>
+<ul class="simple">
+<li><p><strong>Audit ``install_requires``</strong> of <code class="docutils literal notranslate"><span class="pre">molsystem</span></code>, <code class="docutils literal notranslate"><span class="pre">seamm</span></code>,
+<code class="docutils literal notranslate"><span class="pre">seamm-datastore</span></code>, <code class="docutils literal notranslate"><span class="pre">seamm-ff-util</span></code>, <code class="docutils literal notranslate"><span class="pre">seamm-installer</span></code>,
+<code class="docutils literal notranslate"><span class="pre">seamm-util</span></code>, <code class="docutils literal notranslate"><span class="pre">seamm-widgets</span></code>, <code class="docutils literal notranslate"><span class="pre">reference-handler</span></code> against their
+<code class="docutils literal notranslate"><span class="pre">conda/meta.yaml</span></code> <code class="docutils literal notranslate"><span class="pre">run:</span></code> lists and the metadata <code class="docutils literal notranslate"><span class="pre">dependencies</span></code>
+tables. Known gaps: <code class="docutils literal notranslate"><span class="pre">molsystem</span></code> lacks <code class="docutils literal notranslate"><span class="pre">openbabel</span></code>; <code class="docutils literal notranslate"><span class="pre">seamm-util</span></code>
+lacks <code class="docutils literal notranslate"><span class="pre">kaleido</span></code>. Check the plug-ins the same way where they have a
+recipe.</p></li>
+<li><p><strong>Stdlib removals hidden by conda’s setuptools.</strong> <code class="docutils literal notranslate"><span class="pre">lammps_step</span></code> imports
+<code class="docutils literal notranslate"><span class="pre">GPUtil</span></code>, which imports <code class="docutils literal notranslate"><span class="pre">distutils</span></code> (gone in 3.12); it only loads in
+conda envs because they ship setuptools. Replace GPUtil with a
+<code class="docutils literal notranslate"><span class="pre">shutil.which(&quot;nvidia-smi&quot;)</span></code> check. Grep all plug-ins for <code class="docutils literal notranslate"><span class="pre">distutils</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pkg_resources</span></code> (torchani_step) and <code class="docutils literal notranslate"><span class="pre">imp</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">molsystem/setup.py</span></code>: fix the stale “openbabel has no wheels” comment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm/requirements.txt</span></code>: drop <code class="docutils literal notranslate"><span class="pre">seamm-datastore</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-installer</span></code>: add <code class="docutils literal notranslate"><span class="pre">uv</span></code> handling (Phase 3) but <em>not</em> a hard
+dependency on conda; <code class="docutils literal notranslate"><span class="pre">psutil</span></code> etc. are ordinary requirements.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">devtools/conda-envs/test_env.yaml</span></code> in each: SEAMM deps in the <code class="docutils literal notranslate"><span class="pre">pip:</span></code>
+sublist per the existing CI convention (or switch CI to uv outright –
+separate decision, not required here).</p></li>
+<li><p>Delete or archive <code class="docutils literal notranslate"><span class="pre">conda/meta.yaml</span></code> and the feedstocks with a pointer to
+PyPI once Phase 4 is done. No further conda-forge releases are needed
+for correctness because nothing in the new design reads conda-forge.</p></li>
+</ul>
+</section>
+<section id="phase-1b-ci-on-uv-instead-of-conda">
+<h3>Phase 1b – CI on uv instead of conda<a class="headerlink" href="#phase-1b-ci-on-uv-instead-of-conda" title="Link to this heading">¶</a></h3>
+<p>Why: every package’s CI builds a hand-maintained
+<code class="docutils literal notranslate"><span class="pre">devtools/conda-envs/test_env.yaml</span></code> with setup-miniconda and then runs
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span> <span class="pre">--no-deps</span></code>, so <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> is never exercised. The
+env file is a second copy of the dependency list (hence <code class="docutils literal notranslate"><span class="pre">check_deps.py</span></code>),
+49 of the 75 files take <code class="docutils literal notranslate"><span class="pre">seamm</span></code> from conda-forge and so inherit openbabel
+from the conda recipe, and a fix released to PyPI is not testable
+downstream until conda-forge catches up. molsystem’s missing openbabel
+survived for years because CI could not see it; the energy_scan CI failure
+on 2026-09-25 was the same mechanism.</p>
+<p>What changes, in <code class="docutils literal notranslate"><span class="pre">molssi-seamm/devops</span></code> (one change, every package uses
+the reusable workflows at <code class="docutils literal notranslate"><span class="pre">&#64;main</span></code>):</p>
+<ul class="simple">
+<li><p>The four workflows (<code class="docutils literal notranslate"><span class="pre">CI</span></code>, <code class="docutils literal notranslate"><span class="pre">BranchCI</span></code>, <code class="docutils literal notranslate"><span class="pre">Docs</span></code>, <code class="docutils literal notranslate"><span class="pre">Release</span></code>) gain a
+<strong>uv path</strong> beside the conda path, selected per step with
+<code class="docutils literal notranslate"><span class="pre">if:</span> <span class="pre">hashFiles('devtools/conda-envs/test_env.yaml')</span> <span class="pre">==</span> <span class="pre">''</span></code>. A package
+with the env file keeps the conda path unchanged; a package that deletes
+it gets uv. Migration is therefore per package, at its own pace.</p></li>
+<li><p>The uv path: <code class="docutils literal notranslate"><span class="pre">astral-sh/setup-uv</span></code> with the matrix Python, <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">venv</span>
+<span class="pre">--seed</span> <span class="pre">.venv</span></code> (seeded so <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span></code> in <code class="docutils literal notranslate"><span class="pre">buildDocs.sh</span></code> still
+works), the venv’s <code class="docutils literal notranslate"><span class="pre">bin</span></code> on <code class="docutils literal notranslate"><span class="pre">GITHUB_PATH</span></code>, then one
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'.[test,docs]'</span></code> <strong>with dependencies</strong> plus the fixed
+tooling set: pytest, pytest-cov, black, flake8, codecov, and the docs
+tools every package uses (pydata-sphinx-theme, sphinx-design,
+sphinx-copybutton, sphinxnotes-strike, sphinx-rtd-theme, rinohtype,
+pystemmer, pygments). uv ignores extras a package does not define, so
+<code class="docutils literal notranslate"><span class="pre">[test,docs]</span></code> costs nothing where absent and lets a package add its own.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">list</span></code> becomes <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">list</span></code> / <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">list</span></code>; the <code class="docutils literal notranslate"><span class="pre">deploy</span></code> job
+(already conda-free) stops calling <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">list</span></code>.</p></li>
+<li><p>Compiled dependencies (openbabel, rdkit, numpy, scipy) come from wheels,
+which is exactly what users get.</p></li>
+</ul>
+<p>Per package, when it next releases: delete <code class="docutils literal notranslate"><span class="pre">test_env.yaml</span></code>; add a
+<code class="docutils literal notranslate"><span class="pre">[test]</span></code>/<code class="docutils literal notranslate"><span class="pre">[docs]</span></code> extra only if it needs something beyond the fixed
+set. <code class="docutils literal notranslate"><span class="pre">check_deps.py</span></code> becomes unnecessary for converted packages. Update
+the cookiecutter template first (drop <code class="docutils literal notranslate"><span class="pre">test_env.yaml</span></code> from the plug-in
+and substep templates).</p>
+<p>Validation: push the devops change on a branch, point one package’s
+<code class="docutils literal notranslate"><span class="pre">BranchCI</span></code> caller at <code class="docutils literal notranslate"><span class="pre">&#64;&lt;branch&gt;</span></code> on a throwaway branch with
+<code class="docutils literal notranslate"><span class="pre">test_env.yaml</span></code> deleted, confirm lint/tests/docs pass on ubuntu and macOS
+for 3.11 and 3.12, then merge devops to main. Pilot packages: molsystem
+(compiled wheels) and seamm_widgets (Tk). Remember the reusable-workflow
+rerun gotcha: a re-run keeps the old devops version; push a new commit.</p>
+</section>
+<section id="phase-2-seamm-packaging-the-package-list-and-the-lock">
+<h3>Phase 2 – seamm_packaging: the package list and the lock<a class="headerlink" href="#phase-2-seamm-packaging-the-package-list-and-the-lock" title="Link to this heading">¶</a></h3>
+<p><strong>Implemented 2026-09-25 in seamm_packaging PR #1</strong>, as below, with these
+details: the database is <code class="docutils literal notranslate"><span class="pre">&quot;format&quot;:</span> <span class="pre">2</span></code> with <code class="docutils literal notranslate"><span class="pre">python</span></code>, <code class="docutils literal notranslate"><span class="pre">lock</span></code>, <code class="docutils literal notranslate"><span class="pre">doi</span></code>,
+<code class="docutils literal notranslate"><span class="pre">conceptdoi</span></code> and <code class="docutils literal notranslate"><span class="pre">zenodo_id</span></code> fields; the first upload (no <code class="docutils literal notranslate"><span class="pre">zenodo_id</span></code>)
+creates a new deposition with a pre-reserved DOI, later ones add a version;
+a <code class="docutils literal notranslate"><span class="pre">packaging_dry_run</span></code> command creates and discards a draft;
+<code class="docutils literal notranslate"><span class="pre">resolve_packages</span></code> resolves without touching Zenodo; the whole 57-package
+set resolves in ~3 s to 776 lock lines. <code class="docutils literal notranslate"><span class="pre">seamm-installer</span></code> stays in the
+list until <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> is on PyPI.</p>
+<p><strong>Published.</strong> The first <code class="docutils literal notranslate"><span class="pre">check_for_changes</span></code> after the merge created Zenodo
+record 22970127 under <strong>concept record 22970126</strong> (<code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">Package</span> <span class="pre">List</span></code>,
+CC-BY-4.0, files <code class="docutils literal notranslate"><span class="pre">SEAMM_packages.json</span></code> + <code class="docutils literal notranslate"><span class="pre">seamm.lock.txt</span></code>), committed as
+seamm_packaging 2026.9.25.1. The old record (concept 7789853) is frozen. The
+installer’s lookup is “latest version of concept 22970126”.</p>
+<ul class="simple">
+<li><p><strong>Metadata.</strong> Remove the <code class="docutils literal notranslate"><span class="pre">repository</span></code> field’s role (everything is
+PyPI); move <code class="docutils literal notranslate"><span class="pre">seamm-dashboard</span></code> to <code class="docutils literal notranslate"><span class="pre">excluded</span> <span class="pre">plug-ins</span></code>; delete the
+<code class="docutils literal notranslate"><span class="pre">dependencies</span></code> side-tables (their content now lives in
+<code class="docutils literal notranslate"><span class="pre">install_requires</span></code> per Phase 1); the <code class="docutils literal notranslate"><span class="pre">libsqlite</span></code> pin becomes a
+documentation note about interpreter builds, since SQLite now comes with
+the interpreter.</p></li>
+<li><p><strong>Resolution.</strong> Replace the conda dry-run in <code class="docutils literal notranslate"><span class="pre">create_full_environment</span></code>
+with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">compile</span> <span class="pre">--universal</span> <span class="pre">--python-version</span> <span class="pre">3.12</span></code> over the full
+package set. Output: <code class="docutils literal notranslate"><span class="pre">SEAMM_packages.json</span></code> (name, version, type,
+description – no channel) and <code class="docutils literal notranslate"><span class="pre">seamm.lock.txt</span></code> (the universal lock).
+Drop <code class="docutils literal notranslate"><span class="pre">seamm.yml</span></code> / <code class="docutils literal notranslate"><span class="pre">seamm_pinned.yml</span></code>. The nightly job installs uv
+with the official script.</p></li>
+<li><p><strong>Zenodo.</strong> Publish to a <strong>new</strong> Zenodo record. The installer reads the
+record ID from code; the new installer reads the new record. The old
+record’s last version is left untouched so the old installer keeps
+working against a frozen list and old environments simply stop
+updating. (Decision below; the alternative, updating the old record,
+needs an old-installer release to avoid <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.)</p></li>
+<li><p>Keep the draft-reuse / discard-on-failure logic from 2026-09-19.</p></li>
+</ul>
+</section>
+<section id="phase-3-seamm-manager-uv-hosted-environment-direct-installs">
+<h3>Phase 3 – seamm_manager: uv-hosted environment, direct installs<a class="headerlink" href="#phase-3-seamm-manager-uv-hosted-environment-direct-installs" title="Link to this heading">¶</a></h3>
+<p>(Decision 4: this is a <strong>new package</strong> <code class="docutils literal notranslate"><span class="pre">seamm_manager</span></code> built from the
+<code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code> code base, not an in-place change to <code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code>.
+Everything below refers to the new package; <code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code> is frozen.)</p>
+<p>The bulk of the code work. Files: <code class="docutils literal notranslate"><span class="pre">install.py</span></code>, <code class="docutils literal notranslate"><span class="pre">update.py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">uninstall.py</span></code>, <code class="docutils literal notranslate"><span class="pre">util.py</span></code> (<code class="docutils literal notranslate"><span class="pre">create_env</span></code>, <code class="docutils literal notranslate"><span class="pre">find_packages</span></code>,
+<code class="docutils literal notranslate"><span class="pre">package_info</span></code>), <code class="docutils literal notranslate"><span class="pre">my.py</span></code>, <code class="docutils literal notranslate"><span class="pre">services.py</span></code>, <code class="docutils literal notranslate"><span class="pre">apps.py</span></code>, <code class="docutils literal notranslate"><span class="pre">mac.py</span></code> /
+<code class="docutils literal notranslate"><span class="pre">linux.py</span></code>, <code class="docutils literal notranslate"><span class="pre">datastore.py</span></code>, <code class="docutils literal notranslate"><span class="pre">data/</span></code>.</p>
+<ul class="simple">
+<li><p><strong>New ``Uv`` class</strong> (<code class="docutils literal notranslate"><span class="pre">uv.py</span></code>) beside <code class="docutils literal notranslate"><span class="pre">Conda</span></code>: <code class="docutils literal notranslate"><span class="pre">python_install</span></code>,
+<code class="docutils literal notranslate"><span class="pre">venv</span></code>, <code class="docutils literal notranslate"><span class="pre">pip_install(packages,</span> <span class="pre">constraints=None,</span> <span class="pre">upgrade=False)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pip_list</span></code> (<code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">json</span></code>), <code class="docutils literal notranslate"><span class="pre">pip_uninstall</span></code>, <code class="docutils literal notranslate"><span class="pre">locate</span></code> (find
+<code class="docutils literal notranslate"><span class="pre">uv</span></code> on PATH or at <code class="docutils literal notranslate"><span class="pre">~/.local/bin/uv</span></code>). Thin subprocess wrappers, like
+<code class="docutils literal notranslate"><span class="pre">Conda</span></code>.</p></li>
+<li><p><strong>Environment model.</strong> <code class="docutils literal notranslate"><span class="pre">my.environment</span></code> becomes a venv path under the
+root (default <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code>); <code class="docutils literal notranslate"><span class="pre">my.python</span></code> its interpreter. Created on
+first <code class="docutils literal notranslate"><span class="pre">install</span></code> if absent; <code class="docutils literal notranslate"><span class="pre">seamm-installer</span> <span class="pre">environment</span> <span class="pre">recreate</span></code>
+deletes and rebuilds it (cheap: 42 s). No <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span></code> anywhere.</p></li>
+<li><p><strong>Install / update / uninstall</strong> become one uv command each:
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">[-c</span> <span class="pre">lock]</span> <span class="pre">pkg</span> <span class="pre">...</span></code>, <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span> <span class="pre">[-c</span> <span class="pre">lock]</span> <span class="pre">pkg</span>
+<span class="pre">...</span></code>, <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">uninstall</span> <span class="pre">pkg</span> <span class="pre">...</span></code>. A <code class="docutils literal notranslate"><span class="pre">pinned</span></code> entry in the package list
+is <code class="docutils literal notranslate"><span class="pre">pkg==ver</span></code>. Delete: the conda/pypi split, channel comparison,
+<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> branches, <code class="docutils literal notranslate"><span class="pre">create_env</span></code> and its dependency
+side-table, the environment yml writing. Keep writing
+<code class="docutils literal notranslate"><span class="pre">environments/&lt;stamp&gt;.txt</span></code> from <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">freeze</span></code> as the audit trail.</p></li>
+<li><p><strong>Constraints.</strong> <code class="docutils literal notranslate"><span class="pre">--constraints</span></code> (default on) fetches <code class="docutils literal notranslate"><span class="pre">seamm.lock.txt</span></code>
+from the Zenodo record and passes <code class="docutils literal notranslate"><span class="pre">-c</span></code>; <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code> opts out,
+and is the default when <code class="docutils literal notranslate"><span class="pre">my.development</span></code>.</p></li>
+<li><p><strong>Self-management.</strong> The installer is a uv tool; <code class="docutils literal notranslate"><span class="pre">seamm-installer</span>
+<span class="pre">update</span></code> upgrades it with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">upgrade</span> <span class="pre">seamm-installer</span></code> first, then
+re-execs itself so the rest of the update runs on the new code. If the
+installer is found to be running from inside the SEAMM venv (developer
+setups), skip that step and say so.</p></li>
+<li><p><strong>Services and apps.</strong> <code class="docutils literal notranslate"><span class="pre">services.py</span></code> (launchd / systemd) and <code class="docutils literal notranslate"><span class="pre">apps.py</span></code>
+embed the interpreter path; point them at the venv and provide
+<code class="docutils literal notranslate"><span class="pre">seamm-installer</span> <span class="pre">services</span> <span class="pre">reinstall</span></code> for users moving from the conda
+environment. The datastore alembic step in <code class="docutils literal notranslate"><span class="pre">datastore.py</span></code> locates
+<code class="docutils literal notranslate"><span class="pre">alembic.ini</span></code> via <code class="docutils literal notranslate"><span class="pre">importlib.metadata</span></code> and needs the venv’s python.</p></li>
+<li><p><strong>Code environments.</strong> Untouched. <code class="docutils literal notranslate"><span class="pre">Conda</span></code> is required lazily: the first
+time a plug-in installer needs it, check for conda and print how to get
+Miniforge if missing.</p></li>
+<li><p><strong>seamm-webui.</strong> Its dedicated environment becomes a second uv venv
+(<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv-webui</span></code>) created the same way; <code class="docutils literal notranslate"><span class="pre">install_seamm_webui</span></code> in
+<code class="docutils literal notranslate"><span class="pre">install.py</span></code> already only needs python + pip.</p></li>
+<li><p><strong>Remove</strong> the <code class="docutils literal notranslate"><span class="pre">defaults</span></code> channel everywhere and <code class="docutils literal notranslate"><span class="pre">data/seamm.yml</span></code> /
+<code class="docutils literal notranslate"><span class="pre">development.yml</span></code> (replaced by the bootstrap and by
+<code class="docutils literal notranslate"><span class="pre">seamm-installer</span> <span class="pre">install</span> <span class="pre">development</span></code> which is a uv install of the dev
+package list).</p></li>
+<li><p><strong>Tests.</strong> Unit tests for <code class="docutils literal notranslate"><span class="pre">Uv</span></code> command construction (with/without
+constraints, pins, upgrade), for the install/update planners with a mocked
+<code class="docutils literal notranslate"><span class="pre">Uv</span></code>, and an integration test that bootstraps a venv in a temp root and
+installs one small package.</p></li>
+<li><p>Release to PyPI. <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">install</span> <span class="pre">seamm-installer</span></code> is then the only
+install path.</p></li>
+</ul>
+</section>
+<section id="phase-4-roll-out-migrate-ourselves-document">
+<h3>Phase 4 – roll out, migrate ourselves, document<a class="headerlink" href="#phase-4-roll-out-migrate-ourselves-document" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Our machines</strong>, one at a time, JobServer idle: this Mac (<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>
+and <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code>), ChemAI (<code class="docutils literal notranslate"><span class="pre">seamm</span></code> account), MolSSI10. Rename the
+conda environment rather than delete it until the new one has run real
+jobs; reinstall services and apps; verify a flowchart end to end and the
+webui.</p></li>
+<li><p><strong>Developer workflow.</strong> <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>) works
+unchanged inside a uv venv; document creating <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code> as
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">venv</span></code> + <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span></code> or the existing Makefiles.</p></li>
+<li><p><strong>Docs.</strong> New installation page (the three-line bootstrap); a migration
+page (create new, reinstall services, remove old conda env, what stays in
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>); the “never <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span> <span class="pre">--all</span></code>” warning is no longer
+needed because there is no conda environment; conda is documented only
+under the code plug-ins. Update the main molssi-seamm.github.io docs.</p></li>
+<li><p><strong>Announcement / release notes</strong> for users on the old record: what
+“frozen” means and how to move.</p></li>
+<li><p>Archive the eight feedstocks.</p></li>
+</ul>
+</section>
+</section>
+<section id="decisions-paul-2026-09-25">
+<h2>Decisions (Paul, 2026-09-25)<a class="headerlink" href="#decisions-paul-2026-09-25" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Tk 9: accepted.</strong> The uv-managed standalone Python is the interpreter
+as is. Any Tk 9 rendering quirks are fixed in seamm_widgets as found.</p></li>
+<li><p><strong>Venv location: ``&lt;root&gt;/venv``</strong>, i.e. <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code> by default and
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv</span></code> for the dev root, so <code class="docutils literal notranslate"><span class="pre">--root</span></code> selects both.</p></li>
+<li><p><strong>Old Zenodo record: frozen.</strong> The new package list and lock go to a
+<em>new</em> record. Old installers keep working against the last conda-era
+list and simply stop seeing updates; an announcement tells people how to
+migrate.</p></li>
+<li><p><strong>Installer: a new package, ``seamm_manager``</strong> (PyPI <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code>,
+CLI <code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code>), installed as a uv tool outside the venv <em>and</em>
+into the venv as an ordinary package so the plug-ins’ <code class="docutils literal notranslate"><span class="pre">*-step-installer</span></code>
+scripts keep working. It ships a thin <code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code> compatibility
+module (re-exporting <code class="docutils literal notranslate"><span class="pre">installer_base</span></code>) until the ten plug-ins that
+import it switch at their next release. <code class="docutils literal notranslate"><span class="pre">seamm_installer</span></code> on PyPI and
+conda-forge stays frozen as the conda-era tool – no ambiguity about
+which tool a document means. New repo, not a rename.</p></li>
+<li><p><strong>Python: 3.12 now, 3.13 once CI covers it.</strong> Add 3.13 to the devops
+matrix first; bump the default when green across packages
+(<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">environment</span> <span class="pre">recreate</span></code> makes the switch cheap).</p></li>
+</ol>
+</section>
+<section id="risks-and-open-questions">
+<h2>Risks and open questions<a class="headerlink" href="#risks-and-open-questions" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>uv governance.</strong> Astral is venture-funded and uv is at 0.x. Mitigation:
+uv only drives standard wheels into a standard venv; falling back to
+python.org Python plus pip is a documentation change, not a repackaging.</p></li>
+<li><p><strong>python-build-standalone quirks.</strong> Non-framework build on macOS (same
+as conda today), <code class="docutils literal notranslate"><span class="pre">libedit</span></code> rather than <code class="docutils literal notranslate"><span class="pre">readline</span></code>, occasional C
+extensions that object to how it is built. Nothing showed in Phase 0;
+the Tk 9 by-eye check is the remaining exposure.</p></li>
+<li><p><strong>Tk 9 appearance.</strong> Headless OK; visual unknown. Fallback exists.</p></li>
+<li><p><strong>Linux untested</strong> for the uv path as of this writing.</p></li>
+<li><p><strong>Users who skip the announcement</strong> keep a frozen but working conda
+environment indefinitely. Acceptable.</p></li>
+<li><p><strong>Constraints staleness.</strong> The lock is regenerated when the package list
+changes; add a scheduled regeneration as well so third-party security
+fixes flow.</p></li>
+<li><p><strong>HPC accounts without ``~/.local/bin`` on PATH.</strong> The uv installer
+handles this for interactive shells; document the one-line PATH addition
+for batch scripts and for the JobServer’s environment.</p></li>
+<li><p><strong>Windows.</strong> Every wheel exists and uv supplies the interpreter, so this
+removes the last conda-only obstacle. Not in scope, but now plausible.</p></li>
+</ul>
+</section>
+<section id="outstanding-as-of-2026-09-27">
+<h2>Outstanding (as of 2026-09-27)<a class="headerlink" href="#outstanding-as-of-2026-09-27" title="Link to this heading">¶</a></h2>
+<p>Retire the conda-era pieces, once the venv installations are trusted:</p>
+<ul class="simple">
+<li><p>The conda-era dashboards still running on ChemAI and MolSSI10 (port 55055) beside
+the new webui. ChemAI is hands-off until Paul asks for a specific action.</p></li>
+<li><p>The old conda <code class="docutils literal notranslate"><span class="pre">seamm</span></code> environments and <code class="docutils literal notranslate"><span class="pre">SEAMM-Installer.app</span></code> on this Mac,
+paul.local, ChemAI and MolSSI10, kept as fallbacks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> on this Mac (conda-based development root with <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>).</p></li>
+<li><p>The conda-forge feedstocks of the seven core packages: archive or leave dormant.</p></li>
+</ul>
+<p>Communicate:</p>
+<ul class="simple">
+<li><p>The main docs site (molssi-seamm.github.io): replace the seamm-installer/conda
+installation pages with the uv bootstrap (<code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-LsSf</span> <span class="pre">https://astral.sh/uv/install.sh</span>
+<span class="pre">|</span> <span class="pre">sh</span></code>; <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">install</span> <span class="pre">seamm-manager</span></code>; <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">install</span> <span class="pre">--all</span></code>) and the
+migration guide from seamm_manager’s installation docs.</p></li>
+<li><p>A migration announcement to users.</p></li>
+<li><p>Docs site PR molssi-seamm.github.io#56 (2026-09-27) rewrote the installation section,
+tutorials and how-tos. Still to do there: <em>Managing the Dashboard</em> shows the old
+Dashboard’s screens and the queue how-to runs <code class="docutils literal notranslate"><span class="pre">seamm-dashboard</span></code>; both need the web
+interface’s equivalents. The graphical page reuses the SEAMM Installer screenshots.</p></li>
+</ul>
+<p>Loose ends found along the way:</p>
+<ul class="simple">
+<li><p>xnn_step: the <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch carries uncommitted D4 work (another session) that must
+be rebased onto <code class="docutils literal notranslate"><span class="pre">main</span></code> (2026.9.27 pinned <code class="docutils literal notranslate"><span class="pre">xnns&lt;0.2</span></code>; move the pin forward when an
+xnns release loads the older checkpoints again).</p></li>
+<li><p>pyxtal-step (third party) imports <code class="docutils literal notranslate"><span class="pre">pkg_resources</span></code> and its installer fails on
+Python 3.12: report upstream or exclude it from the package list.</p></li>
+<li><p>ChemAI’s jobserver unit has a hand-added <code class="docutils literal notranslate"><span class="pre">sh</span> <span class="pre">-lc</span></code> login-shell wrapper the manager’s
+parser cannot show; a <code class="docutils literal notranslate"><span class="pre">--login-shell</span></code> option on <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span></code> would make it
+reproducible.</p></li>
+<li><p>MolSSI10 has a stale <code class="docutils literal notranslate"><span class="pre">calpoly</span></code> login session (root <code class="docutils literal notranslate"><span class="pre">loginctl</span> <span class="pre">terminate-user</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> reruns every plug-in’s <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">update</span></code> even when the environment
+file is unchanged, which is slow; skip unchanged files.</p></li>
+<li><p>When Zenodo is slow or down, <code class="docutils literal notranslate"><span class="pre">show</span></code> (and anything else that fetches the package
+list) prints the raw exception chain from <code class="docutils literal notranslate"><span class="pre">find_packages</span></code>. It should say that Zenodo
+is unavailable and fall back to the cached list. Seen 2026-09-27 (15 s responses).</p></li>
+<li><p>GitHub Pages was never enabled for seamm_manager, so its documentation 404’d; enabled
+2026-09-27 from the existing <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> branch.</p></li>
+</ul>
+<p>Later by design:</p>
+<ul class="simple">
+<li><p>Python 3.13 in CI and as the venv default once the stack is checked on it.</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a><ul>
+<li><a class="reference internal" href="#why">Why</a></li>
+<li><a class="reference internal" href="#survey-what-actually-needed-conda">Survey: what actually needed conda</a></li>
+<li><a class="reference internal" href="#what-phase-0-established">What Phase 0 established</a></li>
+<li><a class="reference internal" href="#retiring-seamm-dashboard">Retiring seamm-dashboard</a></li>
+<li><a class="reference internal" href="#target-architecture">Target architecture</a></li>
+<li><a class="reference internal" href="#phases">Phases</a><ul>
+<li><a class="reference internal" href="#phase-0-validate-done">Phase 0 – validate (done)</a></li>
+<li><a class="reference internal" href="#phase-1-make-the-packages-honest-about-their-dependencies">Phase 1 – make the packages honest about their dependencies</a></li>
+<li><a class="reference internal" href="#phase-1b-ci-on-uv-instead-of-conda">Phase 1b – CI on uv instead of conda</a></li>
+<li><a class="reference internal" href="#phase-2-seamm-packaging-the-package-list-and-the-lock">Phase 2 – seamm_packaging: the package list and the lock</a></li>
+<li><a class="reference internal" href="#phase-3-seamm-manager-uv-hosted-environment-direct-installs">Phase 3 – seamm_manager: uv-hosted environment, direct installs</a></li>
+<li><a class="reference internal" href="#phase-4-roll-out-migrate-ourselves-document">Phase 4 – roll out, migrate ourselves, document</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#decisions-paul-2026-09-25">Decisions (Paul, 2026-09-25)</a></li>
+<li><a class="reference internal" href="#risks-and-open-questions">Risks and open questions</a></li>
+<li><a class="reference internal" href="#outstanding-as-of-2026-09-27">Outstanding (as of 2026-09-27)</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../index.html"
+                          title="previous chapter">Campaigns</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="NOTES_phase0.html"
+                          title="next chapter">Phase 0 notes – manual migration on a clone (2026-09-25)</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/developer_guide/campaigns/2026-09-25/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0.html" title="Phase 0 notes – manual migration on a clone (2026-09-25)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Campaigns"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

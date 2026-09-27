@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=09c3d259"></script>
+    <script src="../_static/documentation_options.js?v=2246f11d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -62,6 +62,16 @@
 <dt class="sig sig-object py" id="seamm_manager.apps.delete">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.apps.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/apps.html#delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.apps.delete" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.apps.refresh_apps">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.apps.</span></span><span class="sig-name descname"><span class="pre">refresh_apps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/apps.html#refresh_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.apps.refresh_apps" title="Link to this definition">¶</a></dt>
+<dd><p>Bring the installed apps up to date after an update.</p>
+<p>Sets each app’s version to its package’s and, on macOS, replaces the shell
+script launcher of bundles made by older versions with the compiled one
+(a script makes Apple Silicon Macs without Rosetta ask to install it).
+Apps that are not installed are left alone. Returns the names refreshed.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.apps.setup">
@@ -1319,6 +1329,32 @@ Only affects user agents, not daemons which are always system-wide.</p></li>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.mac.install_launcher">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">install_launcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contents_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#install_launcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.install_launcher" title="Link to this definition">¶</a></dt>
+<dd><p>Put the compiled launcher and the script it runs into an app bundle.</p>
+<p>macOS needs a bundle’s executable to be a compiled program. A shell script
+carries no architecture, so on Apple Silicon without Rosetta the system
+asks the user to install Rosetta before launching it. The universal
+launcher shipped in <code class="docutils literal notranslate"><span class="pre">data/macos_launcher</span></code> (source beside it) runs
+<code class="docutils literal notranslate"><span class="pre">Contents/Resources/&lt;name&gt;.sh</span></code> with bash instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>contents_path</strong> (<em>pathlib.Path</em>) – The bundle’s <code class="docutils literal notranslate"><span class="pre">Contents</span></code> directory.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The app’s name, which is also the executable’s (<code class="docutils literal notranslate"><span class="pre">CFBundleExecutable</span></code>).</p></li>
+<li><p><strong>script</strong> (<em>str</em>) – The text of the shell script to run.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.mac.is_macho">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">is_macho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#is_macho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.is_macho" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the file is a compiled Mach-O program (not a script).</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.mac.update_app">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">update_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing_ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#update_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.update_app" title="Link to this definition">¶</a></dt>
 <dd><p>Update the version for a Mac app.</p>
@@ -1932,6 +1968,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#module-seamm_manager.apps">seamm_manager.apps module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.apps.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.apps.refresh_apps"><code class="docutils literal notranslate"><span class="pre">refresh_apps()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
@@ -2106,6 +2143,8 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.mac.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.delete_app"><code class="docutils literal notranslate"><span class="pre">delete_app()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.get_apps"><code class="docutils literal notranslate"><span class="pre">get_apps()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.mac.install_launcher"><code class="docutils literal notranslate"><span class="pre">install_launcher()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.mac.is_macho"><code class="docutils literal notranslate"><span class="pre">is_macho()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.update_app"><code class="docutils literal notranslate"><span class="pre">update_app()</span></code></a></li>
 </ul>
 </li>
@@ -2251,7 +2290,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

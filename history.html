@@ -5,17 +5,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=09c3d259"></script>
+    <script src="_static/documentation_options.js?v=2246f11d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Credits" href="authors.html" /> 
+    <link rel="prev" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)" href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -27,9 +27,9 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="authors.html" title="Credits"
+          <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,18 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.27.1 – Bugfix: the Mac apps no longer ask for Rosetta</dt><dd><ul class="simple">
+<li><p>On an Apple Silicon Mac without Rosetta, starting SEAMM or SEAMM-Manager from its
+app showed a dialog asking to install Rosetta. The app’s executable was a shell
+script, which carries no architecture, so macOS assumed it might need Intel code.
+The apps now use a small compiled launcher, built for both Apple Silicon and
+Intel, which runs the same script from the app’s Resources folder. Nothing in
+SEAMM needs Rosetta.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">update</span></code> converts existing apps automatically (and keeps their
+version current); <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">apps</span> <span class="pre">update</span></code> does the same on its own.</p></li>
+<li><p>The app’s process is now SEAMM itself rather than a shell waiting on it.</p></li>
+</ul>
+</dd>
 <dt>2026.9.27 – update –latest picks up a same-day release from PyPI</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">update</span></code> takes the available version of each package from the
 package list published nightly, so a release made today was reported as
@@ -153,8 +165,8 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <div class="sphinxsidebarwrapper">
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="authors.html"
-                          title="previous chapter">Credits</a></p>
+    <p class="topless"><a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html"
+                          title="previous chapter">Phase 4 notes – rolling out seamm-manager (started 2026-09-26)</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -187,9 +199,9 @@ plug-ins’ own installers working inside the new environment.</p></li>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="authors.html" title="Credits"
+          <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

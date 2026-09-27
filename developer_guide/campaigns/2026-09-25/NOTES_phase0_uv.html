@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Phase 0b notes – the same checks on a uv-managed Python (2026-09-25) &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../../_static/documentation_options.js?v=2246f11d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Phase 1 notes – the install_requires audit (2026-09-25)" href="NOTES_phase1_audit.html" />
+    <link rel="prev" title="Phase 0 notes – manual migration on a clone (2026-09-25)" href="NOTES_phase0.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase1_audit.html" title="Phase 1 notes – the install_requires audit (2026-09-25)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0.html" title="Phase 0 notes – manual migration on a clone (2026-09-25)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="phase-0b-notes-the-same-checks-on-a-uv-managed-python-2026-09-25">
+<h1>Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)<a class="headerlink" href="#phase-0b-notes-the-same-checks-on-a-uv-managed-python-2026-09-25" title="Link to this heading">¶</a></h1>
+<section id="motivation">
+<h2>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
+<p>After Phase 0 (conda clone, see <code class="docutils literal notranslate"><span class="pre">NOTES_phase0.rst</span></code>) two questions were
+raised: could the in-place migration be dropped in favour of “create a new
+environment”, and could the main environment avoid conda entirely, keeping
+conda only for the per-code environments (Psi4, MOPAC, DFTB+, LAMMPS, …).
+<code class="docutils literal notranslate"><span class="pre">uv</span></code> was proposed as the base because it supplies the interpreter itself,
+which is the one thing pip cannot do. This is the test.</p>
+</section>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">LsSf</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">astral</span><span class="o">.</span><span class="n">sh</span><span class="o">/</span><span class="n">uv</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">sh</span> <span class="o">|</span> <span class="n">sh</span>        <span class="c1"># uv 0.12.19 -&gt; ~/.local/bin</span>
+<span class="n">uv</span> <span class="n">python</span> <span class="n">install</span> <span class="mf">3.12</span>                                 <span class="c1"># 23 s</span>
+<span class="n">uv</span> <span class="n">venv</span> <span class="o">--</span><span class="n">python</span> <span class="mf">3.12</span> <span class="n">uvenv</span>
+<span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">python</span> <span class="n">uvenv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">python</span> \
+    <span class="n">molsystem</span> <span class="n">seamm</span> <span class="n">seamm</span><span class="o">-</span><span class="n">datastore</span> <span class="n">seamm</span><span class="o">-</span><span class="n">ff</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">installer</span> \
+    <span class="n">seamm</span><span class="o">-</span><span class="n">util</span> <span class="n">seamm</span><span class="o">-</span><span class="n">widgets</span> <span class="n">reference</span><span class="o">-</span><span class="n">handler</span> <span class="n">openbabel</span> <span class="n">rdkit</span> <span class="n">psutil</span> \
+    <span class="n">pillow</span> <span class="n">seamm</span><span class="o">-</span><span class="n">exec</span> <span class="n">seamm</span><span class="o">-</span><span class="n">jobserver</span>
+</pre></div>
+</div>
+<p>Resolved 84 packages in 20 s, prepared in 18 s, installed in under 1 s;
+42 s wall clock for the whole install.</p>
+<p>The interpreter is <code class="docutils literal notranslate"><span class="pre">cpython-3.12.14-macos-aarch64-none</span></code> from
+python-build-standalone. Note that <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">python</span> <span class="pre">install</span></code> also placed a
+<code class="docutils literal notranslate"><span class="pre">python3.12</span></code> symlink in <code class="docutils literal notranslate"><span class="pre">~/.local/bin</span></code>.</p>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading">¶</a></h2>
+<p>The Phase 0 check script passes unchanged (0 failures):</p>
+<ul class="simple">
+<li><p>openbabel 3.2.1, rdkit 2026.3.6, psutil, Pillow 12.3.0, spglib, pycifrw
+all from wheels</p></li>
+<li><p>molsystem SMILES -&gt; OBMol -&gt; RDKMol -&gt; SDF</p></li>
+<li><p>seamm_datastore connect, initialize, admin login</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PIL.ImageTk</span></code> PhotoImage</p></li>
+<li><p>sqlite3 module reports SQLite 3.53.1 (bundled with the interpreter)</p></li>
+</ul>
+<p><strong>The bundled Tk is 9.0.4, not 8.6.</strong> SEAMM has only ever run on Tk 8.6,
+so a second, GUI-specific headless test was run under it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Check under Tk 9.0.4</p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ttk themes present (aqua, clam, alt, default, classic)</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pmw 2.1.1: initialise, EntryField, Balloon, NoteBook</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-even"><td><p>seamm_widgets: LabeledEntry, LabeledCombobox, UnitEntry</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-odd"><td><p>(set/get “1.0 Å”), PeriodicTable, ScrolledFrame</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>seamm.TkFlowchart construction, canvas laid out</p></td>
+<td><p>OK</p></td>
+</tr>
+<tr class="row-odd"><td><p>ImageTk on the real SEAMM_notext.png (1853x865)</p></td>
+<td><p>OK</p></td>
+</tr>
+</tbody>
+</table>
+<p>All headless. Nothing here judges <em>appearance</em>: Tk 9 changed default
+scaling, some option handling and the aqua theme details, so the flowchart
+editor and a few step dialogs should be opened by eye once before this is
+adopted. Step plug-ins were not installed in this venv, so no step dialog
+was exercised.</p>
+<p>A durable Tk 9 test environment was then built at
+<code class="docutils literal notranslate"><span class="pre">~/Work/SEAMM/Testing/uvenv</span></code> (core + all MolSSI plug-ins except the
+torch-based ones; 164 packages, 57 s, 1.1 GB). Launch the GUI with
+<code class="docutils literal notranslate"><span class="pre">~/Work/SEAMM/Testing/uvenv/bin/seamm</span></code>. A headless loop over every
+plug-in’s <code class="docutils literal notranslate"><span class="pre">create_node</span></code> + <code class="docutils literal notranslate"><span class="pre">create_tk_node</span></code> gave 30 of 45 succeeding
+under Tk 9; the 15 that did not are the subflowchart-type steps (MOPAC,
+ORCA, Psi4, Gaussian, DFTB+, FHI-aims, VASP, xTB, Structure,
+Thermochemistry, Thermomechanical, Reaction Path, Diffusivity, Thermal
+Conductivity, Subflowchart), all with the same <code class="docutils literal notranslate"><span class="pre">None.winfo_toplevel</span></code>
+error. <strong>The identical script under Tk 8.6</strong> (the <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code> conda
+environment) fails the same set plus four dev-version plug-ins, so this is
+a limitation of the headless harness (no real canvas for the nested
+flowchart), not a Tk 9 regression: Tk 9 introduced zero new failures.</p>
+<p>Size: the venv is <strong>521 MB</strong> against 2.4 GB for the production conda
+environment (which also carries compilers and duplicate libraries).</p>
+</section>
+<section id="lockfile">
+<h2>Lockfile<a class="headerlink" href="#lockfile" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">compile</span> <span class="pre">--universal</span> <span class="pre">--python-version</span> <span class="pre">3.12</span></code> on the ten core
+packages produced an 85-line pinned requirements file in 1.1 s, with
+platform markers where needed (<code class="docutils literal notranslate"><span class="pre">pywin32</span> <span class="pre">;</span> <span class="pre">sys_platform</span> <span class="pre">==</span> <span class="pre">'win32'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tzdata</span></code> likewise). This is the “constraints file” of the plan, but
+cross-platform and produced by the resolver rather than exported from an
+installed environment. It is what <code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code> should publish
+nightly.</p>
+<p>The compiled lock <strong>does not contain ``openbabel``</strong>, because
+<code class="docutils literal notranslate"><span class="pre">molsystem</span></code>’s <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> does not declare it (only its conda
+recipe does). <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">openbabel</span></code> only worked in this venv because it was
+requested explicitly. This is the Phase 3 <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> audit,
+demonstrated: on a pure-pip base an undeclared dependency is simply absent.</p>
+</section>
+<section id="findings">
+<h2>Findings<a class="headerlink" href="#findings" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p><strong>A conda-free main environment works.</strong> Every check that passed on the
+conda clone passes on the uv-managed Python, on macOS arm64. Linux
+(ChemAI) not yet run; the script is the same.</p></li>
+<li><p><strong>Tk 9 is the new compatibility surface.</strong> It works headlessly for Pmw,
+seamm_widgets and the flowchart editor. Visual check still owed. If Tk 9
+turns out to be a problem, the python.org 3.12 installer (Tk 8.6) is
+the fallback interpreter, and uv can be pointed at it with
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">venv</span> <span class="pre">--python</span> <span class="pre">/Library/Frameworks/Python.framework/...</span></code>; uv found
+that interpreter (3.12.7) on this Mac already.</p></li>
+<li><p><strong>Undeclared dependencies surface immediately</strong> (openbabel above). Good:
+it is the failure mode you want, early and loud.</p></li>
+<li><p><strong>Speed changes the migration story.</strong> A full core install in 42 s and a
+universal lock in 1 s make “delete and recreate the environment” cheap
+enough to be the default remedy, which is what makes dropping the
+in-place migration reasonable.</p></li>
+<li><p><strong>uv is not the installer’s dependency for the codes.</strong> Conda remains
+for the per-code environments through the plug-in installers; nothing
+in this test touched those.</p></li>
+<li><p><strong>Two shipping bugs were found by using the clean venv, and fixed the
+same day.</strong> (a) Right-click did nothing in the flowchart editor: Tk 9
+numbers the right mouse button 3 on macOS where Tk 8.6 used 2; fixed in
+seamm 2026.9.25 by binding both. (b) ORCA’s Energy/Optimization/
+Frequencies/BSSE dialogs failed with <code class="docutils literal notranslate"><span class="pre">no</span> <span class="pre">attribute</span> <span class="pre">'LabeledText'</span></code>:
+orca_step 2026.9.25 had been released using a widget that existed only
+as an untracked file in the seamm_widgets checkout. Fixed by releasing
+seamm_widgets 2026.9.25 and orca_step 2026.9.25.1 (which now pins
+<code class="docutils literal notranslate"><span class="pre">seamm-widgets&gt;=2026.9.25</span></code>). Verified from PyPI alone in the uv env.
+Lesson: a PyPI-only environment is the right place to test a release;
+the conda dev environment hides unreleased shared-library symbols.</p></li>
+<li><p><strong>``lammps_step`` does not import on Python 3.12 without setuptools.</strong>
+<code class="docutils literal notranslate"><span class="pre">lammps_step/lammps.py</span></code> imports <code class="docutils literal notranslate"><span class="pre">GPUtil</span></code> (unmaintained since 2019),
+whose <code class="docutils literal notranslate"><span class="pre">GPUtil.py</span></code> does <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">distutils</span> <span class="pre">import</span> <span class="pre">spawn</span></code>. <code class="docutils literal notranslate"><span class="pre">distutils</span></code>
+left the standard library in 3.12; conda environments still have it
+because conda installs <code class="docutils literal notranslate"><span class="pre">setuptools</span></code> (which provides a shim) into every
+environment, while a uv venv does not. So the LAMMPS step silently fails
+to load (“Could not load ‘LAMMPS’: No module named ‘distutils’”) on any
+clean 3.12+ venv. Fix in lammps_step: drop GPUtil and detect GPUs with
+<code class="docutils literal notranslate"><span class="pre">shutil.which(&quot;nvidia-smi&quot;)</span></code> plus a subprocess call, or at least catch
+the ImportError.</p>
+<p><strong>Systematic check, same day.</strong> Every installed SEAMM package and
+plug-in in the uv venv (56) was imported, submodule by submodule, with
+<code class="docutils literal notranslate"><span class="pre">pkg_resources</span></code>/<code class="docutils literal notranslate"><span class="pre">distutils</span></code> absent. Exactly two fail: <code class="docutils literal notranslate"><span class="pre">lammps_step</span></code>
+(GPUtil, above) and <code class="docutils literal notranslate"><span class="pre">energy_scan_step</span></code> (a direct <code class="docutils literal notranslate"><span class="pre">import</span>
+<span class="pre">pkg_resources</span></code>). A source grep of the workspace found the same two plus
+nothing else in released packages (the remaining hits are <code class="docutils literal notranslate"><span class="pre">old/</span></code>,
+<code class="docutils literal notranslate"><span class="pre">*_sv</span></code> and experimental copies). Cross-checking git tags against PyPI
+for the March-2026 “pkg_resources -&gt; importlib” batch showed the cause:
+<code class="docutils literal notranslate"><span class="pre">energy_scan_step</span></code>’s 2026.3.1 GitHub Release exists but its publish run
+failed at the CI step, so PyPI stayed at 2025.8.20; <code class="docutils literal notranslate"><span class="pre">torchani_step</span></code>’s
+fix sat in an open dev-&gt;main PR (#9) since March and was never tagged.
+Fixes: lammps_step PR #111 (nvidia-smi query replaces GPUtil, dependency
+dropped, unit tests), energy_scan_step PR #8 (re-release as 2026.9.25),
+torchani_step PR #9 (retitled, HISTORY re-dated to 2026.9.25). A scan of
+open PRs across all molssi-seamm repos found no other stale fixes.</p>
+<p>Follow-ups the same day: <strong>torchani-step was shelved</strong> (Paul’s decision –
+it needs substantial work; its docs build fails in CI on a
+pydata_sphinx_theme error). PR #9 closed with a note, the fix left on its
+dev branch, and the plug-in moved to <code class="docutils literal notranslate"><span class="pre">excluded</span> <span class="pre">plug-ins</span></code> in
+seamm_packaging (pushed to main; the nightly job drops it from the
+package list) and out of seamm_installer’s <code class="docutils literal notranslate"><span class="pre">molssi_plug_ins</span></code>.
+<strong>energy_scan_step’s CI docs build then failed on a missing openbabel:</strong>
+moving <code class="docutils literal notranslate"><span class="pre">seamm</span></code> from the conda section to the pip sublist of
+<code class="docutils literal notranslate"><span class="pre">test_env.yaml</span></code> meant nothing pulled openbabel in, because molsystem’s
+<code class="docutils literal notranslate"><span class="pre">install_requires</span></code> does not declare it (finding 3 again, this time
+biting CI). Fixed by listing <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> under the conda dependencies.
+Every package that converts its CI env to the pip-sublist convention
+needs the same until molsystem declares openbabel (Phase 1).</p>
+</li>
+</ol>
+</section>
+<section id="recommendation">
+<h2>Recommendation<a class="headerlink" href="#recommendation" title="Link to this heading">¶</a></h2>
+<p>Rewrite the plan around: uv-managed Python + venv for the main
+environment, <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">tool</span> <span class="pre">install</span> <span class="pre">seamm-installer</span></code> for the installer itself
+(outside the environment it manages), a nightly universal lock from
+<code class="docutils literal notranslate"><span class="pre">seamm_packaging</span></code>, conda kept only for code environments, and “create a
+new environment” as the migration path with the old conda environment
+left frozen. Before committing to Tk 9: open the editor and two or three
+step dialogs by eye; run the check script on ChemAI.</p>
+</section>
+<section id="artifacts-left-in-place">
+<h2>Artifacts left in place<a class="headerlink" href="#artifacts-left-in-place" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">~/.local/bin/uv</span></code>, <code class="docutils literal notranslate"><span class="pre">~/.local/bin/uvx</span></code>, the <code class="docutils literal notranslate"><span class="pre">~/.local/bin/python3.12</span></code>
+symlink, the uv-managed interpreter under <code class="docutils literal notranslate"><span class="pre">~/.local/share/uv/python</span></code>, and
+the venv in the session scratchpad (<code class="docutils literal notranslate"><span class="pre">uvenv</span></code>), which will disappear with
+the session. <code class="docutils literal notranslate"><span class="pre">seamm-pip-test</span></code> from Phase 0 is also still present.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)</a><ul>
+<li><a class="reference internal" href="#motivation">Motivation</a></li>
+<li><a class="reference internal" href="#setup">Setup</a></li>
+<li><a class="reference internal" href="#results">Results</a></li>
+<li><a class="reference internal" href="#lockfile">Lockfile</a></li>
+<li><a class="reference internal" href="#findings">Findings</a></li>
+<li><a class="reference internal" href="#recommendation">Recommendation</a></li>
+<li><a class="reference internal" href="#artifacts-left-in-place">Artifacts left in place</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="NOTES_phase0.html"
+                          title="previous chapter">Phase 0 notes – manual migration on a clone (2026-09-25)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="NOTES_phase1_audit.html"
+                          title="next chapter">Phase 1 notes – the <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> audit (2026-09-25)</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/developer_guide/campaigns/2026-09-25/NOTES_phase0_uv.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase1_audit.html" title="Phase 1 notes – the install_requires audit (2026-09-25)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="NOTES_phase0.html" title="Phase 0 notes – manual migration on a clone (2026-09-25)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >2026-09-25 – Move SEAMM off conda: a uv-managed environment, PyPI only</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Phase 0b notes – the same checks on a uv-managed Python (2026-09-25)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

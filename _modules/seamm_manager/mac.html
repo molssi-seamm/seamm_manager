@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.mac &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
+    <title>seamm_manager.mac &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=09c3d259"></script>
+    <script src="../../_static/documentation_options.js?v=2246f11d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.mac</a></li> 
       </ul>
@@ -45,6 +45,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">getpass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.resources</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -53,6 +54,81 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># First four bytes of a Mach-O file: thin 64-bit (either byte order) or universal.</span>
+<span class="n">_MACHO_MAGIC</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">b</span><span class="s2">"</span><span class="se">\xcf\xfa\xed\xfe</span><span class="s2">"</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">"</span><span class="se">\xfe\xed\xfa\xcf</span><span class="s2">"</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">"</span><span class="se">\xca\xfe\xba\xbe</span><span class="s2">"</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">"</span><span class="se">\xbe\xba\xfe\xca</span><span class="s2">"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_macho">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.mac.is_macho">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_macho</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether the file is a compiled Mach-O program (not a script)."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_MACHO_MAGIC</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_exec_script</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make an old launcher script ``exec`` its command and pass arguments on.</span>
+
+<span class="sd">    The old scripts ran the command as a child of bash, so the app's process was</span>
+<span class="sd">    a bash waiting on SEAMM. With ``exec`` the app's process is SEAMM itself.</span>
+<span class="sd">    """</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">""</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"exec "</span><span class="p">):</span>
+            <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'exec </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s1"> "$@"'</span>
+        <span class="k">break</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+
+
+<div class="viewcode-block" id="install_launcher">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.mac.install_launcher">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">install_launcher</span><span class="p">(</span><span class="n">contents_path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">script</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Put the compiled launcher and the script it runs into an app bundle.</span>
+
+<span class="sd">    macOS needs a bundle's executable to be a compiled program. A shell script</span>
+<span class="sd">    carries no architecture, so on Apple Silicon without Rosetta the system</span>
+<span class="sd">    asks the user to install Rosetta before launching it. The universal</span>
+<span class="sd">    launcher shipped in ``data/macos_launcher`` (source beside it) runs</span>
+<span class="sd">    ``Contents/Resources/&lt;name&gt;.sh`` with bash instead.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    contents_path : pathlib.Path</span>
+<span class="sd">        The bundle's ``Contents`` directory.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The app's name, which is also the executable's (``CFBundleExecutable``).</span>
+<span class="sd">    script : str</span>
+<span class="sd">        The text of the shell script to run.</span>
+<span class="sd">    """</span>
+    <span class="n">macos_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"MacOS"</span>
+    <span class="n">macos_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">resources_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"Resources"</span>
+    <span class="n">resources_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">script_path</span> <span class="o">=</span> <span class="n">resources_path</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.sh"</span>
+    <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
+    <span class="n">script_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span>
+
+    <span class="n">launcher</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"seamm_manager"</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"macos_launcher"</span>
+    <span class="n">exe_path</span> <span class="o">=</span> <span class="n">macos_path</span> <span class="o">/</span> <span class="n">name</span>
+    <span class="n">exe_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">as_file</span><span class="p">(</span><span class="n">launcher</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
+    <span class="n">exe_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="create_app">
@@ -101,20 +177,15 @@
     <span class="n">contents_path</span> <span class="o">=</span> <span class="n">applications_path</span> <span class="o">/</span> <span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">".app"</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"Contents"</span>
     <span class="n">contents_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># Create the script to run the executable</span>
-    <span class="n">macos_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"MacOS"</span>
-    <span class="n">macos_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">script_path</span> <span class="o">=</span> <span class="n">macos_path</span> <span class="o">/</span> <span class="n">name</span>
+    <span class="c1"># The compiled launcher, and the script it runs to start the executable</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">exe_path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="s1">'"'</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'"'</span>
     <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
         <span class="n">cmd</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">"</span>
-    <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"#!/bin/bash</span><span class="se">\n</span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">script_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span>
+    <span class="n">install_launcher</span><span class="p">(</span><span class="n">contents_path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'#!/bin/bash</span><span class="se">\n</span><span class="s1">exec </span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="s1"> "$@"</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
 
     <span class="c1"># And put the icons in place</span>
     <span class="n">resources_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"Resources"</span>
-    <span class="n">resources_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">icons_path</span> <span class="o">=</span> <span class="n">resources_path</span> <span class="o">/</span> <span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">".icns"</span><span class="p">)</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">icons</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">icons_path</span><span class="p">)</span>
@@ -195,6 +266,19 @@
         <span class="k">with</span> <span class="n">plist_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">plistlib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
         <span class="n">data</span><span class="p">[</span><span class="s2">"CFBundleShortVersionString"</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+
+        <span class="c1"># Bundles made by older versions have a shell script as the executable,</span>
+        <span class="c1"># which asks for Rosetta on Apple Silicon. Move the script to Resources</span>
+        <span class="c1"># and put the compiled launcher in its place.</span>
+        <span class="n">exe_name</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"CFBundleExecutable"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">exe_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"MacOS"</span> <span class="o">/</span> <span class="n">exe_name</span>
+        <span class="k">if</span> <span class="n">exe_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_macho</span><span class="p">(</span><span class="n">exe_path</span><span class="p">):</span>
+            <span class="n">install_launcher</span><span class="p">(</span>
+                <span class="n">contents_path</span><span class="p">,</span> <span class="n">exe_name</span><span class="p">,</span> <span class="n">_exec_script</span><span class="p">(</span><span class="n">exe_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Replaced the script launcher of </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> with the compiled one."</span>
+            <span class="p">)</span>
         <span class="k">with</span> <span class="n">plist_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
             <span class="n">plistlib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fd</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">missing_ok</span><span class="p">:</span>
@@ -539,7 +623,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.mac</a></li> 
       </ul>
