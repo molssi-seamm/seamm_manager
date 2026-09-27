@@ -230,11 +230,16 @@ def install_packages(
         else:
             print(f"Installing with uv, constrained to the published lock {lock.name}.")
         my.uv.install(specs, constraints=lock, upgrade=update)
-        sync_manager()
         path = write_environment_snapshot("install")
         print(f"done; the environment is recorded in {path.name}")
     else:
         print("Nothing to install.")
+
+    # Whether or not anything else changed: the environment must hold this
+    # manager's release (the package list lags a release by up to a day).
+    if sync_manager() is not None:
+        path = write_environment_snapshot("install-manager")
+        print(f"the environment is recorded in {path.name}")
 
     # Restart services and run the plug-ins' own installers. Normally only for
     # the packages this run installed or updated; --rerun-installers does it
