@@ -2,8 +2,10 @@
 
 """Handle the services (daemons) for SEAMM."""
 
+import importlib.resources
 from pathlib import Path
 import platform
+import plistlib
 
 from tabulate import tabulate
 
@@ -145,6 +147,78 @@ def setup(parser):
     )
 
 
+# The name each service's process gets on macOS (see mac.create_service_bundle)
+bundle_names = {
+    "dashboard": "SEAMM-Dashboard",
+    "jobserver": "SEAMM-JobServer",
+    "webui": "SEAMM-WebUI",
+}
+
+
+def _launch(service, exe_path):
+    """How to launch a service: (program, leading arguments, environment).
+
+    On macOS the program is the interpreter inside a per-service app bundle, so
+    the process is named e.g. SEAMM-JobServer and has the SEAMM icon, rather
+    than python3.12; it runs the service's script with the venv selected by
+    ``__PYVENV_LAUNCHER__``. Elsewhere, or if the script is not in a venv with
+    a ``python`` beside it, the script is run directly as before.
+    """
+    python = Path(exe_path).parent / "python"
+    if system != "Darwin" or service not in bundle_names or not python.exists():
+        return str(exe_path), [], None
+    from .mac import create_service_bundle
+
+    name = bundle_names[service] + ("-dev" if my.development else "")
+    icons = importlib.resources.files("seamm_manager") / "data" / "SEAMM.icns"
+    with importlib.resources.as_file(icons) as icons_path:
+        program = create_service_bundle(my.root / "services", name, python, icons_path)
+    return str(program), [str(exe_path)], {"__PYVENV_LAUNCHER__": str(python)}
+
+
+def refresh_service_bundles():
+    """Keep the macOS service bundles in step with their environments.
+
+    Re-links a bundle's interpreter when its environment's Python has changed
+    (effective at the service's next restart), and points out services still
+    run directly as ``python3.12``. Returns the bundles re-linked.
+    """
+    if system != "Darwin":
+        return []
+    from .mac import refresh_service_bundle
+
+    relinked = []
+    for bundle in sorted((my.root / "services").glob("*.app")):
+        if refresh_service_bundle(bundle):
+            relinked.append(bundle.stem)
+    if relinked:
+        print(
+            f"Updated the interpreter for {', '.join(relinked)}; it is used when the "
+            "service next restarts."
+        )
+
+    old_style = []
+    for service in bundle_names:
+        service_name = f"dev_{service}" if my.development else service
+        entry = mgr.data.get(service_name)
+        if entry is None:
+            continue
+        try:
+            with open(entry[2], "rb") as fd:
+                program = plistlib.load(fd)["ProgramArguments"][0]
+        except Exception:
+            continue
+        if ".app/Contents/MacOS/" not in program:
+            old_style.append(service)
+    if old_style:
+        print(
+            "To show the services by name (e.g. SEAMM-JobServer rather than "
+            "python3.12) with the SEAMM icon, recreate them when no jobs are "
+            f"running: seamm-manager services create --force {' '.join(old_style)}"
+        )
+    return relinked
+
+
 def create():
     services = mgr.list()
     for service in my.options.services:
@@ -192,10 +266,14 @@ def create():
         stderr_path = my.root / "logs" / f"{service}.out"
         stdout_path = my.root / "logs" / f"{service}.out"
 
+        program, leading, environment = _launch(service, exe_path)
+        extra = {} if environment is None else {"environment": environment}
+
         if service == "dashboard":
             mgr.create(
                 service_name,
-                exe_path,
+                program,
+                *leading,
                 "--root",
                 root,
                 "--port",
@@ -204,11 +282,13 @@ def create():
                 my.options.dashboard_name,
                 stderr_path=str(stderr_path),
                 stdout_path=str(stdout_path),
+                **extra,
             )
         elif service == "webui":
             mgr.create(
                 service_name,
-                exe_path,
+                program,
+                *leading,
                 "--root",
                 root,
                 "--port",
@@ -217,17 +297,20 @@ def create():
                 my.options.webui_host,
                 stderr_path=str(stderr_path),
                 stdout_path=str(stdout_path),
+                **extra,
             )
         else:
             mgr.create(
                 service_name,
-                exe_path,
+                program,
+                *leading,
                 "--root",
                 root,
                 "JobServer",
                 "--no-windows",
                 stderr_path=str(stderr_path),
                 stdout_path=str(stdout_path),
+                **extra,
             )
         # Both services need the datastore; create it if this is a fresh root.
         datastore.ensure()

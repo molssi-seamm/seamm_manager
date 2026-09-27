@@ -61,7 +61,12 @@ Where things are
     ~/SEAMM/venv-webui/      the web interface's environment (optional)
     ~/SEAMM/environments/    the lock file and per-change snapshots
     ~/SEAMM/Jobs/            the datastore (jobs and their files)
+    ~/SEAMM/services/        on macOS, the apps the services run as (SEAMM-JobServer, ...)
     ~/SEAMM/*.ini            configuration for SEAMM and each code
+
+On macOS each service runs the environment's Python from a small background app in
+``~/SEAMM/services``, so it shows up in Activity Monitor as ``SEAMM-JobServer`` or
+``SEAMM-WebUI`` with the SEAMM icon rather than as ``python3.12``.
 
 The manager itself, installed with ``uv tool install``, lives in uv's tool directory
 and is also installed into ``~/SEAMM/venv`` so that the plug-ins' own installers can
