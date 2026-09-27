@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2026-09-27 – Several SEAMM installations side by side &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../../_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="History" href="../../../history.html" />
+    <link rel="prev" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)" href="../2026-09-25/NOTES_phase4.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../history.html" title="History"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" accesskey="U">Campaigns</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="several-seamm-installations-side-by-side">
+<h1>2026-09-27 – Several SEAMM installations side by side<a class="headerlink" href="#several-seamm-installations-side-by-side" title="Link to this heading">¶</a></h1>
+<p>Status (2026-09-27): <strong>phase 1 in review.</strong> PRs open, CI green, each verified on
+paul.local: seamm_util#73 (D1, default root), seamm_jobserver#23 (D2, <code class="docutils literal notranslate"><span class="pre">--root</span></code> to
+jobs), seamm_manager#12 (D3, root to the installers). The decisions under <em>Open
+questions</em> are Paul’s and are needed before phase 3.</p>
+<p><strong>Caution for the release of seamm_jobserver#23:</strong> a JobServer whose root has no code
+<code class="docutils literal notranslate"><span class="pre">.ini</span></code> files will make its jobs fail once it passes <code class="docutils literal notranslate"><span class="pre">--root</span></code>. On the Mac that is
+<code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code> (<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">~/SEAMM_DEV</span></code>, conda <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code>), which must not get the
+new JobServer until <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> holds the code <code class="docutils literal notranslate"><span class="pre">.ini</span></code> files (phase 5). The
+single-root installations (<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> everywhere, ChemAI, MolSSI10) are unaffected.</p>
+<section id="goal">
+<h2>Goal<a class="headerlink" href="#goal" title="Link to this heading">¶</a></h2>
+<p>Any number of SEAMM installations can live on one machine for one user – production
+in <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, development in <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code>, a trial of a new release in
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW</span></code> – each using its own configuration, data and jobs, with its own
+services and desktop apps, and none able to change another’s software by accident.
+Converting <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> to a uv environment is the first use.</p>
+</section>
+<section id="what-happens-today">
+<h2>What happens today<a class="headerlink" href="#what-happens-today" title="Link to this heading">¶</a></h2>
+<p>Checked in the code on 2026-09-27.</p>
+<p><strong>The root is effectively hardwired.</strong> The shared argument parser
+(<code class="docutils literal notranslate"><span class="pre">seamm_util/argument_parser.py</span></code>) defaults <code class="docutils literal notranslate"><span class="pre">--root</span></code> to <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>; the only other
+source is <code class="docutils literal notranslate"><span class="pre">[SEAMM]</span> <span class="pre">root</span></code> in <code class="docutils literal notranslate"><span class="pre">~/.seamm.d/seamm.ini</span></code>, which is per user and so cannot
+differ between installations (it is commented out on Paul’s machines). Only
+<code class="docutils literal notranslate"><span class="pre">xnn_step</span></code> reads a <code class="docutils literal notranslate"><span class="pre">SEAMM_ROOT</span></code> variable.</p>
+<p><strong>Jobs never see their JobServer’s root.</strong> <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code> runs with <code class="docutils literal notranslate"><span class="pre">--root</span>
+<span class="pre">~/SEAMM_DEV</span></code> and uses it for its own queue file and the Jobs database, but it starts
+each job as <code class="docutils literal notranslate"><span class="pre">run_from_jobserver</span> <span class="pre">&lt;id&gt;</span> <span class="pre">&lt;dir&gt;</span> <span class="pre">&lt;db&gt;</span></code> with no <code class="docutils literal notranslate"><span class="pre">--root</span></code>
+(<code class="docutils literal notranslate"><span class="pre">seamm_jobserver/jobserver.py</span></code>, <code class="docutils literal notranslate"><span class="pre">_build_cmd</span></code>). The job therefore reads
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM/mopac.ini</span></code>, <code class="docutils literal notranslate"><span class="pre">lammps.ini</span></code> and so on: every step takes its code’s ini from
+<code class="docutils literal notranslate"><span class="pre">seamm_options[&quot;root&quot;]</span></code>. <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> accordingly holds Jobs, logs and the
+JobServer’s queue file, and no code ini files. The GUI started from the development
+environment also defaults to <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>.</p>
+<p><strong>The plug-ins’ installers write to ~/SEAMM.</strong> <code class="docutils literal notranslate"><span class="pre">InstallerBase.root</span></code> (shipped in
+seamm_manager) takes the root from the shared <code class="docutils literal notranslate"><span class="pre">seamm.ini</span></code> or falls back to
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, and <code class="docutils literal notranslate"><span class="pre">run_plugin_installer</span></code> does not pass the manager’s root. So
+<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--root</span> <span class="pre">X</span> <span class="pre">install</span></code> puts the Python packages in <code class="docutils literal notranslate"><span class="pre">X/venv</span></code> but the code
+ini files in <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>.</p>
+<p><strong>Some steps hardwire ~/SEAMM directly</strong>, ignoring the root option:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">vasp_step</span></code>: <code class="docutils literal notranslate"><span class="pre">~/SEAMM/Parameters/VASP</span></code> (<code class="docutils literal notranslate"><span class="pre">vasp.py</span></code>, <code class="docutils literal notranslate"><span class="pre">tk_energy.py</span></code>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dftbplus_step</span></code>: <code class="docutils literal notranslate"><span class="pre">~/SEAMM/Parameters/slako</span></code> (<code class="docutils literal notranslate"><span class="pre">slako.py</span></code>) and the installer’s
+message;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">atomic_charges_step</span></code>: default <code class="docutils literal notranslate"><span class="pre">~/SEAMM/atomic_charges/atomic_densities</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">forcefield_step</span></code> and <code class="docutils literal notranslate"><span class="pre">xnn_step</span></code>: the <code class="docutils literal notranslate"><span class="pre">local:</span></code> data directory
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM/data/Forcefields</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm</span></code>: the GUI’s default flowcharts folder <code class="docutils literal notranslate"><span class="pre">~/SEAMM/flowcharts</span></code>
+(<code class="docutils literal notranslate"><span class="pre">tk_open.py</span></code>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm_thermochemistry</span></code>: the thermochemistry database path in its docs and
+installer.</p></li>
+</ul>
+<p><strong>Credentials are chosen by the word “dev”.</strong> <code class="docutils literal notranslate"><span class="pre">seamm_exec</span></code>’s <code class="docutils literal notranslate"><span class="pre">open_datastore</span></code>
+uses the <code class="docutils literal notranslate"><span class="pre">[Dashboard:</span> <span class="pre">dev]</span></code> section of <code class="docutils literal notranslate"><span class="pre">seammrc</span></code> when the root contains “dev”.</p>
+<p><strong>The manager knows two installations, not N.</strong> Service names are <code class="docutils literal notranslate"><span class="pre">jobserver</span></code> or
+<code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>, apps <code class="docutils literal notranslate"><span class="pre">SEAMM</span></code> or <code class="docutils literal notranslate"><span class="pre">SEAMM-dev</span></code>, service bundles
+<code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer</span></code> or <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer-dev</span></code>, all keyed on <code class="docutils literal notranslate"><span class="pre">--development</span></code> rather
+than the root. <code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">~/SEAMM_NEW</span> <span class="pre">services</span> <span class="pre">create</span> <span class="pre">--force</span> <span class="pre">jobserver</span></code> would replace
+production’s JobServer, and <code class="docutils literal notranslate"><span class="pre">apps</span> <span class="pre">create</span></code> would overwrite production’s SEAMM.app.
+The web interface’s default port is 55055, or 55155 with <code class="docutils literal notranslate"><span class="pre">--development</span></code>.</p>
+<p><strong>Every installation shares the codes’ conda environments.</strong> <code class="docutils literal notranslate"><span class="pre">seamm-lammps</span></code>,
+<code class="docutils literal notranslate"><span class="pre">seamm-mopac</span></code> and the others have fixed names. A second installation’s <code class="docutils literal notranslate"><span class="pre">install</span></code>
+or <code class="docutils literal notranslate"><span class="pre">update</span></code> runs the plug-ins’ installers against those same environments – which
+is how production’s torch and xnns were changed on 2026-09-27 (see
+<code class="docutils literal notranslate"><span class="pre">../2026-09-25/NOTES_phase4.rst</span></code>).</p>
+<p><strong>Finding commands.</strong> The JobServer finds <code class="docutils literal notranslate"><span class="pre">run_from_jobserver</span></code> beside its own
+interpreter; services and apps use absolute paths; external codes come from the ini
+files. These are already correct per installation once the root is. The user’s shell
+is different: <code class="docutils literal notranslate"><span class="pre">seamm</span></code>, <code class="docutils literal notranslate"><span class="pre">run_flowchart</span></code> and the <code class="docutils literal notranslate"><span class="pre">#!/usr/bin/env</span> <span class="pre">run_flowchart</span></code>
+line of flowcharts resolve through <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, so whichever venv is first wins.</p>
+</section>
+<section id="design">
+<h2>Design<a class="headerlink" href="#design" title="Link to this heading">¶</a></h2>
+<p><strong>D1. The root comes from the installation.</strong> The default for <code class="docutils literal notranslate"><span class="pre">--root</span></code> becomes, in
+order: the command-line option; <code class="docutils literal notranslate"><span class="pre">SEAMM_ROOT</span></code> if set; the directory holding the
+running venv when it looks like a SEAMM root (<code class="docutils literal notranslate"><span class="pre">sys.prefix</span></code> is <code class="docutils literal notranslate"><span class="pre">&lt;X&gt;/venv</span></code> and <code class="docutils literal notranslate"><span class="pre">X</span></code>
+holds <code class="docutils literal notranslate"><span class="pre">Jobs</span></code> or <code class="docutils literal notranslate"><span class="pre">*.ini</span></code>); otherwise <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>. So anything run from
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv</span></code> – GUI, <code class="docutils literal notranslate"><span class="pre">run_flowchart</span></code>, JobServer, jobs, installers –
+defaults to <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> with no configuration. <code class="docutils literal notranslate"><span class="pre">[SEAMM]</span> <span class="pre">root</span></code> in the per-user
+<code class="docutils literal notranslate"><span class="pre">seamm.ini</span></code> is no longer honoured (one value cannot serve several installations); a
+warning says so if it is set. <code class="docutils literal notranslate"><span class="pre">~/.seamm.d</span></code> stays shared on purpose: credentials,
+personal data (<code class="docutils literal notranslate"><span class="pre">personal:</span></code> forcefields and models) and user preferences.</p>
+<p><strong>D2. The JobServer passes its root to every job</strong>, adding <code class="docutils literal notranslate"><span class="pre">--root</span></code> to the
+<code class="docutils literal notranslate"><span class="pre">run_from_jobserver</span></code> command, so a job can never disagree with the JobServer that
+started it, whatever D1 infers.</p>
+<p><strong>D3. The manager tells the plug-ins’ installers its root</strong>, through <code class="docutils literal notranslate"><span class="pre">SEAMM_ROOT</span></code> in
+their environment, and <code class="docutils literal notranslate"><span class="pre">InstallerBase.root</span></code> uses it. The code ini files then land in
+the installation being worked on.</p>
+<p><strong>D4. No hardwired ~/SEAMM in the steps.</strong> Each place listed above takes the root
+option instead (the <code class="docutils literal notranslate"><span class="pre">local:</span></code> data source becomes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/data</span></code>, and so on).</p>
+<p><strong>D5. Names follow the installation.</strong> The installation’s <em>tag</em> is empty for
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> and otherwise the root’s directory name (<code class="docutils literal notranslate"><span class="pre">SEAMM_DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">SEAMM_NEW</span></code>),
+overridable with <code class="docutils literal notranslate"><span class="pre">--name</span></code>. Services become <code class="docutils literal notranslate"><span class="pre">jobserver</span></code> / <code class="docutils literal notranslate"><span class="pre">jobserver-seamm_new</span></code>,
+apps <code class="docutils literal notranslate"><span class="pre">SEAMM</span></code> / <code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">(SEAMM_NEW)</span></code>, bundles <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer</span></code> /
+<code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer-SEAMM_NEW</span></code>, and the manager’s window title shows the tag.
+<code class="docutils literal notranslate"><span class="pre">--development</span></code> stays as shorthand for <code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">~/SEAMM_DEV</span></code> plus the development
+tools, and the existing <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>, <code class="docutils literal notranslate"><span class="pre">dev_webui</span></code> and <code class="docutils literal notranslate"><span class="pre">SEAMM-dev</span></code> names are
+kept for <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> so nothing already set up breaks. <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">status</span> <span class="pre">--all</span></code>
+lists every installation’s services.</p>
+<p><strong>D6. A code-environment policy per installation</strong>, recorded in
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/seamm.ini</span></code> (<code class="docutils literal notranslate"><span class="pre">[SEAMM]</span> <span class="pre">code-environments</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">own</span></code> – the plug-ins create and update the codes’ environments as now. The
+default for <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shared</span></code> – the installers never create or update a conda environment; they write
+ini files pointing at the existing ones (copying <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>’s ini as the template)
+and report a code that is missing. The default for any other new root, so a trial
+installation cannot change production’s codes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prefixed</span></code> – own copies named <code class="docutils literal notranslate"><span class="pre">seamm-&lt;tag&gt;-lammps</span></code> and so on, for testing new
+versions of the codes themselves.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">InstallerBase</span></code> enforces it, in one place for every plug-in.</p>
+<p><strong>D7. Ports per installation.</strong> <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span> <span class="pre">webui</span></code> picks the first free port
+from 55055 upwards unless <code class="docutils literal notranslate"><span class="pre">--port</span></code> is given, and records it in the service
+definition as now.</p>
+<p><strong>D8. Credentials by installation.</strong> <code class="docutils literal notranslate"><span class="pre">open_datastore</span></code> looks for <code class="docutils literal notranslate"><span class="pre">[Dashboard:</span>
+<span class="pre">&lt;tag&gt;]</span></code> (then <code class="docutils literal notranslate"><span class="pre">localhost</span></code> and the host name as now) instead of testing for “dev”.</p>
+<p><strong>D9. Shells.</strong> The documentation recommends putting no SEAMM venv on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>
+permanently, and using <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&lt;root&gt;/venv/bin/activate</span></code> for a terminal that should
+use a particular installation; the apps and services never depend on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>.
+The manager’s <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">show</span></code> prints the activation command.</p>
+</section>
+<section id="phases">
+<h2>Phases<a class="headerlink" href="#phases" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Root</strong> (seamm_util, seamm_jobserver, seamm_manager): D1, D2, D3. Tests for the
+precedence order, including a venv that is not in a SEAMM root. Release the three;
+production behaviour is unchanged because <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code> infers <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>.</p></li>
+<li><p><strong>Steps</strong> (vasp_step, dftbplus_step, atomic_charges_step, forcefield_step,
+xnn_step, seamm, seamm_thermochemistry, seamm_exec): D4 and D8. Each a small
+release; each plug-in considered on its own (its data layout and installer), not a
+blanket search-and-replace.</p></li>
+<li><p><strong>Manager naming and ports</strong> (seamm_manager): D5, D7, including the GUI’s Shortcuts
+and Services tabs. Tests that two roots produce distinct service, app and bundle
+names, and that <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> keeps its legacy names.</p></li>
+<li><p><strong>Code-environment policy</strong> (seamm_manager’s <code class="docutils literal notranslate"><span class="pre">InstallerBase</span></code>): D6, with tests
+that a <code class="docutils literal notranslate"><span class="pre">shared</span></code> installation’s install and update never call conda to create or
+update an environment.</p></li>
+<li><p><strong>Convert ~/SEAMM_DEV</strong> on the Mac: <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--development</span> <span class="pre">install</span> <span class="pre">--all</span>
+<span class="pre">development</span></code>; copy the code ini files from <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> (policy <code class="docutils literal notranslate"><span class="pre">shared</span></code>, the
+same conda environments); <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code> the working checkouts into
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv</span></code>; recreate <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code> and <code class="docutils literal notranslate"><span class="pre">dev_webui</span></code> through the
+manager; run a job through the development JobServer and check it reads
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code>’s ini files. Retire the conda <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code> environment when
+satisfied.</p></li>
+<li><p><strong>Trial installation</strong>: create <code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW</span></code> on paul.local, run jobs against
+production’s codes, remove it (<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code>, <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">delete</span></code>, <code class="docutils literal notranslate"><span class="pre">apps</span>
+<span class="pre">delete</span></code>) and check production is untouched throughout. Then document the pattern
+in the user guide (“Trying a new release beside production”).</p></li>
+</ol>
+<p>Phases 1 and 2 fix the root cause and are useful on their own; 3 and 4 are what make a
+third installation safe. Phase 5 needs 1 and 3 (and 2 for VASP, DFTB+ and the atomic
+densities); phase 6 needs everything.</p>
+</section>
+<section id="risks">
+<h2>Risks<a class="headerlink" href="#risks" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Inference picks the wrong root.</strong> A venv outside any SEAMM root (a developer’s
+test venv) must fall back to <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, not guess; D2 makes jobs immune regardless.
+The marker test (<code class="docutils literal notranslate"><span class="pre">Jobs</span></code> or <code class="docutils literal notranslate"><span class="pre">*.ini</span></code> beside <code class="docutils literal notranslate"><span class="pre">venv</span></code>) is deliberately strict.</p></li>
+<li><p><strong>Users relying on ``[SEAMM] root``</strong> in <code class="docutils literal notranslate"><span class="pre">seamm.ini</span></code>. Keep honouring it for one
+release with a deprecation warning, then drop it; <code class="docutils literal notranslate"><span class="pre">SEAMM_ROOT</span></code> replaces it.</p></li>
+<li><p><strong>Older plug-ins</strong> still hardwiring <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> after phase 1 behave as today (they
+read production’s data), which is no worse; phase 2 fixes them.</p></li>
+<li><p><strong>ChemAI</strong> runs its production as the <code class="docutils literal notranslate"><span class="pre">seamm</span></code> user with a single root and shared
+code environments that other work also uses. Nothing here changes a single-root
+installation, and it stays hands-off until Paul asks.</p></li>
+</ul>
+</section>
+<section id="open-questions">
+<h2>Open questions<a class="headerlink" href="#open-questions" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>The default policy for new non-default roots: <code class="docutils literal notranslate"><span class="pre">shared</span></code> (proposed) or ask at
+install time?</p></li>
+<li><p>Tag format for names: the directory name as is (<code class="docutils literal notranslate"><span class="pre">SEAMM_NEW</span></code>), or lower-case
+(<code class="docutils literal notranslate"><span class="pre">seamm_new</span></code>) for service labels and as is for apps?</p></li>
+<li><p>Keep <code class="docutils literal notranslate"><span class="pre">--development</span></code> long term, or replace it with <code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">~/SEAMM_DEV</span></code> plus
+<code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">development</span></code>?</p></li>
+<li><p>Should <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> refuse to run the plug-ins’ installers in a <code class="docutils literal notranslate"><span class="pre">shared</span></code>
+installation at all, or run them in check-only mode to report missing codes?</p></li>
+</ol>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">2026-09-27 – Several SEAMM installations side by side</a><ul>
+<li><a class="reference internal" href="#goal">Goal</a></li>
+<li><a class="reference internal" href="#what-happens-today">What happens today</a></li>
+<li><a class="reference internal" href="#design">Design</a></li>
+<li><a class="reference internal" href="#phases">Phases</a></li>
+<li><a class="reference internal" href="#risks">Risks</a></li>
+<li><a class="reference internal" href="#open-questions">Open questions</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../2026-09-25/NOTES_phase4.html"
+                          title="previous chapter">Phase 4 notes – rolling out seamm-manager (started 2026-09-26)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../../../history.html"
+                          title="next chapter">History</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/developer_guide/campaigns/2026-09-27/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../history.html" title="History"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

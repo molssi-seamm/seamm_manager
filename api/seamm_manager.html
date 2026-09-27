@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.3 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=b1c6ff6e"></script>
+    <script src="../_static/documentation_options.js?v=7a4f6fa3"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -973,7 +973,13 @@ VASP, … are licensed manual installations) has no
 <dl class="py property">
 <dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.root">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">root</span></span><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.root" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The root of the SEAMM installation being worked on.</p>
+<p>In order: <code class="docutils literal notranslate"><span class="pre">SEAMM_ROOT</span></code>, which seamm-manager sets for the installation it is
+working on; <code class="docutils literal notranslate"><span class="pre">root</span></code> in the <code class="docutils literal notranslate"><span class="pre">[SEAMM]</span></code> section of the per-user seamm.ini
+(deprecated, since every installation shares that file); the installation this
+Python belongs to (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code>); <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>. The codes’ <code class="docutils literal notranslate"><span class="pre">.ini</span></code> files are
+written here.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.run">
@@ -2341,7 +2347,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
