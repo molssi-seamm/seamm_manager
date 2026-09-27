@@ -1,10 +1,16 @@
 2026-09-27 -- Several SEAMM installations side by side
 ======================================================
 
-Status (2026-09-27): **plan, not started.** Written after the conda-to-uv migration
-(``../2026-09-25``) left ``~/SEAMM_DEV`` as the last conda-based installation on the
-Mac. Nothing here has been implemented; the decisions under *Open questions* are
-Paul's.
+Status (2026-09-27): **phase 1 in review.** PRs open, CI green, each verified on
+paul.local: seamm_util#73 (D1, default root), seamm_jobserver#23 (D2, ``--root`` to
+jobs), seamm_manager#12 (D3, root to the installers). The decisions under *Open
+questions* are Paul's and are needed before phase 3.
+
+**Caution for the release of seamm_jobserver#23:** a JobServer whose root has no code
+``.ini`` files will make its jobs fail once it passes ``--root``. On the Mac that is
+``dev_jobserver`` (``--root ~/SEAMM_DEV``, conda ``seamm-dev``), which must not get the
+new JobServer until ``~/SEAMM_DEV`` holds the code ``.ini`` files (phase 5). The
+single-root installations (``~/SEAMM`` everywhere, ChemAI, MolSSI10) are unaffected.
 
 Goal
 ----
