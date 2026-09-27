@@ -2,12 +2,11 @@
 ======================================================
 
 Status (2026-09-27): **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
-2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 in
-progress:** seamm_util#74 (``current_root``, ``installation_path``) and seamm_exec#32
-(D8) are open with CI green; the step changes are committed locally and wait for
-seamm_util 2026.9.27.1, which they require: seamm (data path, dashboards.ini, Open
-dialog), vasp_step, forcefield_step, xnn_step (branch ``phase2-root``, a worktree, as
-``dev`` holds another session's work) and seamm_thermochemistry.
+2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 released** (2026-09-27): seamm_util 2026.9.27.1 (``current_root``,
+``installation_path``), seamm_exec 2026.9.27 (D8), seamm 2026.9.27 (data path,
+dashboards.ini, Open dialog), vasp_step 2026.9.27, forcefield_step 2026.9.27,
+xnn_step 2026.9.27.1 and seamm_thermochemistry 2026.9.27. Phases 3 and 4 need the
+answers to the open questions below.
 
 **Phase 2 decision:** reference data follows the rule *the installation's own copy
 under its root if it has one, else the default installation's in ~/SEAMM*
