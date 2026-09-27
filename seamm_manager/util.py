@@ -150,19 +150,38 @@ def retire_installer(specs, installed):
 def pypi_latest(package, timeout=10):
     """The newest release of ``package`` on PyPI, or None if it cannot be found.
 
-    Asks PyPI's JSON API directly, so a release made after the nightly package
-    list is visible at once. Network problems, an unknown project or an odd
-    response give None rather than an error: the caller falls back to the
-    package list.
+    Asks PyPI's simple index (the JSON form of PEP 691) -- the index uv installs
+    from -- so a release made after the nightly package list is visible at once and
+    is certainly installable. (PyPI's JSON API was used before, but its CDN served a
+    stale copy to Python's requests while the simple index already had the release.)
+    Pre-releases and yanked files are ignored. Network problems, an unknown project
+    or an odd response give None: the caller falls back to the package list.
     """
-    url = f"https://pypi.org/pypi/{package}/json"
+    url = f"https://pypi.org/simple/{package}/"
+    headers = {
+        "Accept": "application/vnd.pypi.simple.v1+json",
+        "Cache-Control": "no-cache",
+    }
     try:
-        response = requests.get(url, timeout=timeout)
+        response = requests.get(url, headers=headers, timeout=timeout)
         if response.status_code != 200:
             return None
-        version = response.json()["info"]["version"]
-        Version(version)  # a sanity check that it parses
-        return version
+        data = response.json()
+        yanked = {}
+        for item in data.get("files", []):
+            filename = item.get("filename", "")
+            for version in data.get("versions", []):
+                if f"-{version}-" in filename or f"-{version}.tar" in filename:
+                    yanked.setdefault(version, []).append(bool(item.get("yanked")))
+        candidates = []
+        for version in data.get("versions", []):
+            parsed = Version(version)
+            if parsed.is_prerelease:
+                continue
+            if version in yanked and all(yanked[version]):
+                continue
+            candidates.append(parsed)
+        return str(max(candidates)) if candidates else None
     except Exception:
         return None
 

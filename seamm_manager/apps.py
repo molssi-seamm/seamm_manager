@@ -9,6 +9,7 @@ import platform
 from tabulate import tabulate
 
 from . import my
+from .naming import app_name as installation_app_name
 
 system = platform.system()
 if system in ("Darwin",):
@@ -112,7 +113,7 @@ def create():
     for app in my.options.apps:
         app_lower = app.lower()
         app = app_names[app_lower]
-        app_name = f"{app}-dev" if my.development else app
+        app_name = installation_app_name(app)
         packages = my.uv.list()
         package = app_package[app_lower]
         if package in packages:
@@ -181,7 +182,7 @@ def delete():
     for app in my.options.apps:
         app_lower = app.lower()
         app = app_names[app_lower]
-        app_name = f"{app}-dev" if my.development else app
+        app_name = installation_app_name(app)
         if app_name in apps:
             delete_app(app_name, missing_ok=True)
             print(f"Deleted the app '{app_name}'.")
@@ -196,7 +197,7 @@ def show():
     for app in my.options.apps:
         app_lower = app.lower()
         app = app_names[app_lower]
-        app_name = f"{app}-dev" if my.development else app
+        app_name = installation_app_name(app)
         if app_name in apps:
             path = apps[app_name]
             if path.is_relative_to(Path.home()):
@@ -218,7 +219,7 @@ def update():
     for app in my.options.apps:
         app_lower = app.lower()
         app = app_names[app_lower]
-        app_name = f"{app}-dev" if my.development else app
+        app_name = installation_app_name(app)
         package = app_package[app_lower]
         if app_name in apps:
             if package in packages:
@@ -248,7 +249,7 @@ def refresh_apps():
     packages = my.uv.list()
     refreshed = []
     for app_lower, app in app_names.items():
-        app_name = f"{app}-dev" if my.development else app
+        app_name = installation_app_name(app)
         package = app_package[app_lower]
         if app_name in apps and package in packages:
             update_app(app_name, str(packages[package]["version"]), missing_ok=True)

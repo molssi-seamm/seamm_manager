@@ -60,6 +60,40 @@ def test_latest_falls_back_when_pypi_unreachable(monkeypatch, tmp_path):
     assert uv.calls == []
 
 
+def test_pypi_latest_uses_the_simple_index(monkeypatch):
+    import requests
+
+    seen = {}
+
+    class _R:
+        def __init__(self, status, data):
+            self.status_code = status
+            self._data = data
+
+        def json(self):
+            return self._data
+
+    def fake_get(url, headers, timeout):
+        seen["url"], seen["headers"] = url, headers
+        return _R(
+            200,
+            {
+                "versions": ["2026.9.20", "2026.9.27", "2026.9.28rc1", "2026.9.29"],
+                "files": [
+                    {"filename": "x-2026.9.27-py3-none-any.whl", "yanked": False},
+                    {"filename": "x-2026.9.29-py3-none-any.whl", "yanked": "bad"},
+                ],
+            },
+        )
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    # the pre-release and the yanked 2026.9.29 are skipped
+    assert pypi_latest("x") == "2026.9.27"
+    assert seen["url"] == "https://pypi.org/simple/x/"
+    assert seen["headers"]["Accept"] == "application/vnd.pypi.simple.v1+json"
+    assert seen["headers"]["Cache-Control"] == "no-cache"
+
+
 def test_pypi_latest_handles_failures(monkeypatch):
     import requests
 
@@ -69,20 +103,11 @@ def test_pypi_latest_handles_failures(monkeypatch):
         def json(self):
             return {}
 
-    monkeypatch.setattr(requests, "get", lambda url, timeout: _R())
+    monkeypatch.setattr(requests, "get", lambda url, headers, timeout: _R())
     assert pypi_latest("no-such-seamm-package") is None
 
-    def boom(url, timeout):
+    def boom(url, headers, timeout):
         raise OSError("offline")
 
     monkeypatch.setattr(requests, "get", boom)
     assert pypi_latest("seamm") is None
-
-    class _OK:
-        status_code = 200
-
-        def json(self):
-            return {"info": {"version": "2026.9.27"}}
-
-    monkeypatch.setattr(requests, "get", lambda url, timeout: _OK())
-    assert pypi_latest("seamm") == "2026.9.27"

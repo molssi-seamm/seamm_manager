@@ -5,11 +5,13 @@
 import argparse
 from pathlib import Path
 import logging
+import os
 import sys
 
 import seamm_manager
 from . import cli
 from . import my
+from .naming import compute_tag
 from . import util
 from .uv import Uv
 
@@ -50,7 +52,17 @@ def run():
         default=None,
         help=(
             "The SEAMM root directory, holding the environment, jobs and "
-            "configuration. Default ~/SEAMM, or ~/SEAMM_DEV with --development."
+            "configuration. Default ~/SEAMM_DEV with --development, else "
+            "$SEAMM_ROOT if set, else ~/SEAMM."
+        ),
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help=(
+            "The installation's name in its services and apps. Default: none for "
+            "~/SEAMM, else the root's directory name (e.g. SEAMM_DEV)."
         ),
     )
 
@@ -69,9 +81,14 @@ def run():
     my.environment = "seamm-dev" if my.development else "seamm"
     root = my.options.root
     if root is None:
-        root = "~/SEAMM_DEV" if my.development else "~/SEAMM"
+        if my.development:
+            root = "~/SEAMM_DEV"
+        else:
+            root = os.environ.get("SEAMM_ROOT", "").strip() or "~/SEAMM"
     my.root = Path(root).expanduser()
     my.root.mkdir(parents=True, exist_ok=True)
+    # The installation's tag, used in its services', apps' and bundles' names
+    my.tag = compute_tag(my.root, my.options.name)
 
     # The uv-managed environment, and conda for the codes' own environments
     my.uv = Uv(my.root)

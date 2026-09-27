@@ -10,6 +10,7 @@ from . import datastore
 from . import environment
 from .metadata import development_packages, standalone_packages
 from . import my
+from .naming import service_name as installation_service_name
 from .util import (
     constraints,
     find_packages,
@@ -259,8 +260,9 @@ def install_packages(
         if package == "seamm-datastore":
             datastore.update()
         elif package == "seamm-jobserver":
-            service = f"dev_{package}" if my.development else package
-            mgr.restart(service, ignore_errors=True)
+            # (The service is "jobserver", not the package's name, which this
+            # used to restart -- a service that never exists.)
+            mgr.restart(installation_service_name("jobserver"), ignore_errors=True)
 
         # See if the package has an installer
         if not metadata["gui-only"] and not gui_only:

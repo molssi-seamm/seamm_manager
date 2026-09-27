@@ -1,9 +1,33 @@
 2026-09-27 -- Several SEAMM installations side by side
 ======================================================
 
-Status (2026-09-27): **phase 1 in review.** PRs open, CI green, each verified on
-paul.local: seamm_util#73 (D1, default root), seamm_jobserver#23 (D2, ``--root`` to
-jobs), seamm_manager#12 (D3, root to the installers). The decisions under *Open
+Status (2026-09-27): **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
+2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 released** (2026-09-27): seamm_util 2026.9.27.1 (``current_root``,
+``installation_path``), seamm_exec 2026.9.27 (D8), seamm 2026.9.27 (data path,
+dashboards.ini, Open dialog), vasp_step 2026.9.27, forcefield_step 2026.9.27,
+xnn_step 2026.9.27.1 and seamm_thermochemistry 2026.9.27. Phases 3 and 4 need the
+decisions below. **Phase 3 in review** (seamm_manager 2026.9.27.5): D5 names, D7
+ports, same-root replacement, ``status --all``, the GUI's window title and Services
+tab (now sharing ``create_service``), and the ``--latest`` simple-index fix; verified
+on paul.local with a bare trial root ``~/SEAMM_P3TEST`` beside production (removed
+afterwards). Loose end: ``datastore.ensure()`` skips a database file that exists but
+was never seeded (a JobServer started before seamm-datastore was installed creates an
+empty ``seamm.db``); it should seed an empty database.
+
+**Phase 2 decision:** reference data follows the rule *the installation's own copy
+under its root if it has one, else the default installation's in ~/SEAMM*
+(``seamm_util.installation_path``), so a second installation works without copying
+the VASP potentials, forcefields, models or the thermochemistry database, and can
+still override any of them. Left as they are, after checking: dftbplus_step (its
+``~/SEAMM`` path is only a maintainer script's default; the Slater-Koster files ship
+in the package); atomic_charges_step (the directory is used only if it holds the
+DDEC6 densities, else the chargemol conda environment's copy); comments and messages
+in lammps_step and orca_step; seamm_webui's own ``--root`` default (its services always
+pass ``--root``). Found beyond the plan: seamm's ``Flowchart.data_path`` and
+``dashboards.ini`` lookup, spelled ``Path.home() / "SEAMM"`` rather than ``~/SEAMM``.
+Loose end: seamm_thermochemistry's installer ``update`` re-downloads the Zenodo
+database over the configured file without checking for local changes (it overwrote
+the Mac's curated copy on 2026-09-27; Paul chose to keep the Zenodo version). The decisions under *Open
 questions* are Paul's and are needed before phase 3.
 
 **Caution for the release of seamm_jobserver#23:** a JobServer whose root has no code
@@ -107,14 +131,17 @@ the installation being worked on.
 option instead (the ``local:`` data source becomes ``<root>/data``, and so on).
 
 **D5. Names follow the installation.** The installation's *tag* is empty for
-``~/SEAMM`` and otherwise the root's directory name (``SEAMM_DEV``, ``SEAMM_NEW``),
-overridable with ``--name``. Services become ``jobserver`` / ``jobserver-seamm_new``,
-apps ``SEAMM`` / ``SEAMM (SEAMM_NEW)``, bundles ``SEAMM-JobServer`` /
-``SEAMM-JobServer-SEAMM_NEW``, and the manager's window title shows the tag.
-``--development`` stays as shorthand for ``--root ~/SEAMM_DEV`` plus the development
-tools, and the existing ``dev_jobserver``, ``dev_webui`` and ``SEAMM-dev`` names are
-kept for ``~/SEAMM_DEV`` so nothing already set up breaks. ``services status --all``
-lists every installation's services.
+``~/SEAMM`` and otherwise the root's directory name, case kept (``SEAMM_DEV``,
+``SEAMM_NEW``), overridable with ``--name``. Services become ``jobserver`` /
+``jobserver-SEAMM_NEW``, apps ``SEAMM`` / ``SEAMM (SEAMM_NEW)``, bundles
+``SEAMM-JobServer`` / ``SEAMM-JobServer-SEAMM_NEW``, and the manager's window title
+shows the tag. ``--development`` stays, as shorthand for ``--root ~/SEAMM_DEV`` plus
+the development tools; ``~/SEAMM_DEV`` gets the same naming as any other root (no
+legacy ``dev_jobserver`` / ``SEAMM-dev`` names -- nothing outside the manager uses
+them). Instead, creating a service stops and replaces any existing SEAMM service
+started with the same ``--root``, whatever its name, so an old ``dev_jobserver`` (or
+a hand-made one) can never run beside the new one on the same datastore.
+``services status --all`` lists every installation's services.
 
 **D6. A code-environment policy per installation**, recorded in
 ``<root>/seamm.ini`` (``[SEAMM] code-environments``):
@@ -188,14 +215,19 @@ Risks
   code environments that other work also uses. Nothing here changes a single-root
   installation, and it stays hands-off until Paul asks.
 
-Open questions
---------------
+Decisions (Paul, 2026-09-27)
+----------------------------
 
-1. The default policy for new non-default roots: ``shared`` (proposed) or ask at
-   install time?
-2. Tag format for names: the directory name as is (``SEAMM_NEW``), or lower-case
-   (``seamm_new``) for service labels and as is for apps?
-3. Keep ``--development`` long term, or replace it with ``--root ~/SEAMM_DEV`` plus
-   ``install development``?
-4. Should ``update --all`` refuse to run the plug-ins' installers in a ``shared``
-   installation at all, or run them in check-only mode to report missing codes?
+1. New non-default roots default to the ``shared`` code-environment policy.
+2. Tags keep the directory's case (``SEAMM_NEW``) in service, app and bundle names.
+3. ``--development`` stays.
+4. ``update --all`` in a ``shared`` installation runs the plug-ins' installers in a
+   report-only mode: it reports missing codes and never creates or updates a conda
+   environment.
+5. No legacy ``dev_`` names; replace any service with the same ``--root`` instead
+   (D5).
+
+Also for phase 3's manager release: ``update --latest`` asked PyPI's JSON API, which
+on 2026-09-27 returned a stale CDN copy to Python's ``requests`` (``X-Cache: MISS,
+HIT, HIT``) while curl and the simple index saw the new release. Use the simple
+(PEP 691) index that uv installs from instead, with ``Cache-Control: no-cache``.
