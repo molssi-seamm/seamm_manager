@@ -1,6 +1,15 @@
 =======
 History
 =======
+2026.9.27.3 -- Bugfix: services restart now restarts the services
+    * ``seamm-manager services restart`` did nothing: it ran the start command, which
+      reported that the service was already running. It now stops and starts each
+      service, on macOS and Linux. (The restart that ``update`` does after upgrading the
+      JobServer was not affected.)
+    * When starting, stopping or restarting a service failed, the command and the
+      manager's Services tab crashed with an AttributeError instead of showing what
+      went wrong. They now print the error.
+
 2026.9.27.2 -- The Mac services show up by name, with the SEAMM icon
     * On macOS the JobServer and the web interface showed up in Activity Monitor and
       ``ps`` as ``python3.12``. They now run as ``SEAMM-JobServer`` and ``SEAMM-WebUI``

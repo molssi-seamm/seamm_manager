@@ -1131,10 +1131,8 @@ class GUI(collections.abc.MutableMapping):
                 else:
                     try:
                         mgr.start(service_name)
-                    except RuntimeError as e:
-                        print(e.text)
-                    except NotImplementedError as e:
-                        print(e.text)
+                    except (RuntimeError, NotImplementedError) as e:
+                        print(e)
                     else:
                         print(f"The service '{service_name}' has been started.")
         self._clear_services_selection()
@@ -1148,10 +1146,8 @@ class GUI(collections.abc.MutableMapping):
                 if mgr.is_running(service_name):
                     try:
                         mgr.stop(service_name)
-                    except RuntimeError as e:
-                        print(e.text)
-                    except NotImplementedError as e:
-                        print(e.text)
+                    except (RuntimeError, NotImplementedError) as e:
+                        print(e)
                     else:
                         print(f"The service '{service_name}' has been stopped.")
                 else:

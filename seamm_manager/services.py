@@ -108,7 +108,7 @@ def setup(parser):
 
     # restart
     tmp_parser = subparser.add_parser("restart")
-    tmp_parser.set_defaults(func=start)
+    tmp_parser.set_defaults(func=restart)
     tmp_parser.add_argument(
         "services",
         nargs="*",
@@ -331,10 +331,8 @@ def restart():
         service_name = f"dev_{service}" if my.development else service
         try:
             mgr.restart(service_name)
-        except RuntimeError as e:
-            print(e.text)
-        except NotImplementedError as e:
-            print(e.text)
+        except (RuntimeError, NotImplementedError) as e:
+            print(e)
         else:
             print(f"The service '{service_name}' was restarted.")
 
@@ -368,10 +366,8 @@ def start():
         else:
             try:
                 mgr.start(service)
-            except RuntimeError as e:
-                print(e.text)
-            except NotImplementedError as e:
-                print(e.text)
+            except (RuntimeError, NotImplementedError) as e:
+                print(e)
             else:
                 print(f"The service '{service}' has been started.")
 
@@ -413,10 +409,8 @@ def stop():
         if mgr.is_running(service_name):
             try:
                 mgr.stop(service_name)
-            except RuntimeError as e:
-                print(e.text)
-            except NotImplementedError as e:
-                print(e.text)
+            except (RuntimeError, NotImplementedError) as e:
+                print(e)
             else:
                 print(f"The service '{service_name}' has been stopped.")
         else:
