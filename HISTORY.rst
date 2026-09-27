@@ -1,6 +1,16 @@
 =======
 History
 =======
+2026.9.27.4 -- Bugfix: plug-in installers use the installation being worked on
+    * The plug-ins' installers always wrote their code's ``.ini`` file (``mopac.ini``,
+      ``lammps.ini``, ...) into ``~/SEAMM``, even for ``seamm-manager --root X`` or
+      ``--development``. The manager now tells them its root, so the files go into the
+      installation being installed or updated.
+    * An installer run by hand from an installation's environment
+      (``<root>/venv/bin/<plug-in>-installer``) works on that installation. ``root`` in
+      the per-user ``seamm.ini`` is still honoured but deprecated, as it is shared by
+      every installation.
+
 2026.9.27.3 -- Bugfix: services restart now restarts the services
     * ``seamm-manager services restart`` did nothing: it ran the start command, which
       reported that the service was already running. It now stops and starts each

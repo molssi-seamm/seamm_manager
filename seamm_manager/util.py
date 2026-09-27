@@ -4,6 +4,7 @@
 
 from datetime import datetime
 import json
+import os
 from packaging.version import Version
 import requests
 from pathlib import Path
@@ -281,7 +282,12 @@ def run_plugin_installer(package, *args, verbose=True):
     else:
         if verbose:
             print(f"   Running the plug-in specific installer for {package}.")
-        result = subprocess.run([str(installer), *args], capture_output=True, text=True)
+        # Tell the installer which installation it is working on, so the code's
+        # .ini file goes into this root rather than ~/SEAMM.
+        env = {**os.environ, "SEAMM_ROOT": str(my.root)}
+        result = subprocess.run(
+            [str(installer), *args], capture_output=True, text=True, env=env
+        )
         my.logger.info(f"    ran the local installer: {result}")
         # An installer that failed used to fail silently: its output was only
         # logged, so e.g. "conda not found" left the code uninstalled with no
