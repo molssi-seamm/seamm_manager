@@ -99,6 +99,35 @@ The plug-ins' installers honour it through the seamm-manager in the installation
 own environment; if that copy is too old to know about policies, the manager skips
 their install, update and uninstall steps rather than risk the shared environments.
 
+Trying a new release beside production
+--------------------------------------
+
+To try new versions of SEAMM and the plug-ins without touching the installation you
+use, make a second one, use it, and remove it::
+
+    $ seamm-manager --root ~/SEAMM_NEW install --all
+    $ seamm-manager --root ~/SEAMM_NEW update --all --latest    # today's releases
+    $ seamm-manager --root ~/SEAMM_NEW install seamm-webui
+    $ seamm-manager --root ~/SEAMM_NEW services create jobserver
+    $ seamm-manager --root ~/SEAMM_NEW services create webui --webui-host 127.0.0.1
+    $ seamm-manager --root ~/SEAMM_NEW apps create
+
+The new installation shares ``~/SEAMM``'s codes (it copies their ``.ini`` files and
+never creates or updates a conda environment), gets its own JobServer
+(``jobserver-SEAMM_NEW``), web interface on the next free port (55056 beside
+production's 55055) and apps (``SEAMM (SEAMM_NEW)``), and keeps its jobs in
+``~/SEAMM_NEW/Jobs``. Submit jobs to it through its own web interface or app.
+
+To remove it::
+
+    $ seamm-manager --root ~/SEAMM_NEW services delete jobserver webui
+    $ seamm-manager --root ~/SEAMM_NEW apps delete
+    $ seamm-manager --root ~/SEAMM_NEW environment remove
+    $ rm -rf ~/SEAMM_NEW
+
+``environment remove`` removes only the Python environment; the last command removes
+the rest (jobs, logs, configuration, the web interface's environment).
+
 Where things are
 ----------------
 
