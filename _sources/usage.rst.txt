@@ -42,7 +42,10 @@ every dependency that resolved together -- are published nightly to Zenodo by
 ``seamm_packaging``. ``install`` and ``update`` pass that lock to ``uv`` as
 constraints, so what you get is the tested set, and two installations made the same
 day are identical. ``--no-constraints`` opts out and takes the newest releases that
-resolve. The one exception is the manager itself: since the list is refreshed
+resolve. Because the list is refreshed nightly, a release made today is invisible to
+``update`` until tomorrow; ``update --latest`` asks PyPI for each package's newest
+release instead, pins it exactly, and skips the lock (which would pin yesterday's
+version). The one exception is the manager itself: since the list is refreshed
 nightly, after an install or update the manager makes sure the environment holds
 the same release it is running, so the plug-ins' installers never run on an older
 one. After every change the manager writes ``<root>/environments/<timestamp>_*.txt``

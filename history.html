@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=981a2b89"></script>
+    <script src="_static/documentation_options.js?v=09c3d259"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="authors.html" title="Credits"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,16 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.27 – update –latest picks up a same-day release from PyPI</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">update</span></code> takes the available version of each package from the
+package list published nightly, so a release made today was reported as
+“Everything is up to date” until the next day, and <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code> did not
+help. The new <code class="docutils literal notranslate"><span class="pre">--latest</span></code> option asks PyPI for each package’s newest release,
+pins it exactly when it is newer than the list’s, and updates without the lock
+file (which would pin yesterday’s version). If PyPI cannot be reached the
+package list is used as before.</p></li>
+</ul>
+</dd>
 <dt>2026.9.26.6 – Bugfix: environment files no longer upgrade a machine’s torch</dt><dd><ul class="simple">
 <li><p>Applying a plug-in’s environment file to an existing conda environment no
 longer upgrades bare pip requirements. Conda runs a file’s <code class="docutils literal notranslate"><span class="pre">pip:</span></code> section
@@ -179,7 +189,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="authors.html" title="Credits"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

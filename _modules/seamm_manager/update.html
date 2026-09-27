@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=981a2b89"></script>
+    <script src="../../_static/documentation_options.js?v=09c3d259"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -56,6 +56,7 @@
     <span class="n">sync_manager</span><span class="p">,</span>
     <span class="n">get_metadata</span><span class="p">,</span>
     <span class="n">package_info</span><span class="p">,</span>
+    <span class="n">pypi_latest</span><span class="p">,</span>
     <span class="n">run_plugin_installer</span><span class="p">,</span>
     <span class="n">write_environment_snapshot</span><span class="p">,</span>
 <span class="p">)</span>
@@ -105,6 +106,16 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--latest"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Ask PyPI for the newest release of each package rather than trusting "</span>
+            <span class="s2">"the nightly package list, so a release made today is picked up. "</span>
+            <span class="s2">"Implies --no-constraints, since the lock file pins yesterday's "</span>
+            <span class="s2">"versions."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"modules"</span><span class="p">,</span>
         <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -133,10 +144,11 @@
     <span class="n">service_packages</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"seamm-datastore"</span><span class="p">,</span> <span class="s2">"seamm-jobserver"</span><span class="p">)</span>
     <span class="n">initial_version</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">package_info</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">service_packages</span><span class="p">}</span>
 
+    <span class="n">latest</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"latest"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
-        <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+        <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">update_packages</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">)</span>
+        <span class="n">update_packages</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
         <span class="n">update_development_environment</span><span class="p">()</span>
@@ -170,8 +182,17 @@
 
 <div class="viewcode-block" id="update_packages">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_packages">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">update_packages</span><span class="p">(</span><span class="n">to_update</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update_text</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Update SEAMM components and plug-ins."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_packages</span><span class="p">(</span>
+    <span class="n">to_update</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update_text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Update SEAMM components and plug-ins.</span>
+
+<span class="sd">    The version to update to normally comes from the nightly package list, and</span>
+<span class="sd">    the install is constrained to the matching lock file. With ``latest`` each</span>
+<span class="sd">    package's newest release on PyPI is used when it is newer than the list's,</span>
+<span class="sd">    pinned exactly, and the lock is not applied (it would pin the older</span>
+<span class="sd">    version); PyPI being unreachable falls back to the list for that package.</span>
+<span class="sd">    """</span>
     <span class="n">metadata</span> <span class="o">=</span> <span class="n">get_metadata</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -205,6 +226,13 @@
 
         <span class="n">installed_version</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
         <span class="n">pinned</span> <span class="o">=</span> <span class="s2">"pinned"</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">]</span> <span class="ow">and</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"pinned"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">latest</span><span class="p">:</span>
+            <span class="n">on_pypi</span> <span class="o">=</span> <span class="n">pypi_latest</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">on_pypi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not reach PyPI for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">; using the package list."</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">Version</span><span class="p">(</span><span class="n">on_pypi</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">available</span><span class="p">:</span>
+                <span class="n">available</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">on_pypi</span><span class="p">)</span>
+                <span class="n">pinned</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">==</span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">pinned</span> <span class="k">else</span> <span class="n">package</span>
 
         <span class="n">ptype</span> <span class="o">=</span> <span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span>
@@ -220,8 +248,10 @@
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">retire_installer</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
-        <span class="n">lock</span> <span class="o">=</span> <span class="n">constraints</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">lock</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lock</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">latest</span> <span class="k">else</span> <span class="n">constraints</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">latest</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating with uv, unconstrained (--latest)."</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">lock</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating with uv (no constraints)."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating with uv, constrained to the published lock </span><span class="si">{</span><span class="n">lock</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
@@ -290,7 +320,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>

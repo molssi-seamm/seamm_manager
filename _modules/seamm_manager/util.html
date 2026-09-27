@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
+    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=981a2b89"></script>
+    <script src="../../_static/documentation_options.js?v=09c3d259"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>
@@ -43,6 +43,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
@@ -201,6 +202,29 @@
         <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">uninstall</span><span class="p">(</span><span class="s2">"seamm-installer"</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="pypi_latest">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.pypi_latest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pypi_latest</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The newest release of ``package`` on PyPI, or None if it cannot be found.</span>
+
+<span class="sd">    Asks PyPI's JSON API directly, so a release made after the nightly package</span>
+<span class="sd">    list is visible at once. Network problems, an unknown project or an odd</span>
+<span class="sd">    response give None rather than an error: the caller falls back to the</span>
+<span class="sd">    package list.</span>
+<span class="sd">    """</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://pypi.org/pypi/</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">/json"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">"info"</span><span class="p">][</span><span class="s2">"version"</span><span class="p">]</span>
+        <span class="n">Version</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>  <span class="c1"># a sanity check that it parses</span>
+        <span class="k">return</span> <span class="n">version</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 
 
@@ -403,7 +427,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=981a2b89"></script>
+    <script src="../_static/documentation_options.js?v=09c3d259"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -1563,8 +1563,13 @@ uninstallers (for the external codes) have run.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.update.update_packages">
-<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_packages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_update</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gui_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_packages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_packages" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_packages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_update</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gui_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_packages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_packages" title="Link to this definition">¶</a></dt>
 <dd><p>Update SEAMM components and plug-ins.</p>
+<p>The version to update to normally comes from the nightly package list, and
+the install is constrained to the matching lock file. With <code class="docutils literal notranslate"><span class="pre">latest</span></code> each
+package’s newest release on PyPI is used when it is newer than the list’s,
+pinned exactly, and the lock is not applied (it would pin the older
+version); PyPI being unreachable falls back to the list for that package.</p>
 </dd></dl>
 
 </section>
@@ -1674,6 +1679,16 @@ installers report it when they need it.</p>
 <dd class="field-odd"><p>(str, str)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.util.pypi_latest">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.util.</span></span><span class="sig-name descname"><span class="pre">pypi_latest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/util.html#pypi_latest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.util.pypi_latest" title="Link to this definition">¶</a></dt>
+<dd><p>The newest release of <code class="docutils literal notranslate"><span class="pre">package</span></code> on PyPI, or None if it cannot be found.</p>
+<p>Asks PyPI’s JSON API directly, so a release made after the nightly package
+list is visible at once. Network problems, an unknown project or an odd
+response give None rather than an error: the caller falls back to the
+package list.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2151,6 +2166,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.util.get_metadata"><code class="docutils literal notranslate"><span class="pre">get_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.util.initialize"><code class="docutils literal notranslate"><span class="pre">initialize()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.util.package_info"><code class="docutils literal notranslate"><span class="pre">package_info()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.util.pypi_latest"><code class="docutils literal notranslate"><span class="pre">pypi_latest()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.util.retire_installer"><code class="docutils literal notranslate"><span class="pre">retire_installer()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.util.run_plugin_installer"><code class="docutils literal notranslate"><span class="pre">run_plugin_installer()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.util.set_metadata"><code class="docutils literal notranslate"><span class="pre">set_metadata()</span></code></a></li>
@@ -2235,7 +2251,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
