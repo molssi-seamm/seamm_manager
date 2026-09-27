@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.27.2 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.27.3 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=15be7b77"></script>
+    <script src="_static/documentation_options.js?v=b1c6ff6e"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,16 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.27.3 – Bugfix: services restart now restarts the services</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">services</span> <span class="pre">restart</span></code> did nothing: it ran the start command, which
+reported that the service was already running. It now stops and starts each
+service, on macOS and Linux. (The restart that <code class="docutils literal notranslate"><span class="pre">update</span></code> does after upgrading the
+JobServer was not affected.)</p></li>
+<li><p>When starting, stopping or restarting a service failed, the command and the
+manager’s Services tab crashed with an AttributeError instead of showing what
+went wrong. They now print the error.</p></li>
+</ul>
+</dd>
 <dt>2026.9.27.2 – The Mac services show up by name, with the SEAMM icon</dt><dd><ul class="simple">
 <li><p>On macOS the JobServer and the web interface showed up in Activity Monitor and
 <code class="docutils literal notranslate"><span class="pre">ps</span></code> as <code class="docutils literal notranslate"><span class="pre">python3.12</span></code>. They now run as <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer</span></code> and <code class="docutils literal notranslate"><span class="pre">SEAMM-WebUI</span></code>
@@ -217,7 +227,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
