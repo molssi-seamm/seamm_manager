@@ -15,3 +15,4 @@ package_metadata = {}
 # The published lock file for the package list, as a local path once fetched
 lock = None
 root = None
+tag = ""  # the installation's tag (see naming.py)

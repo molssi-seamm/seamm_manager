@@ -7,6 +7,7 @@ import platform
 import subprocess
 
 from . import my
+from .naming import service_name as installation_service_name
 
 system = platform.system()
 if system in ("Darwin",):
@@ -137,7 +138,7 @@ def update():
         if version == latest:
             print(f"The database at '{db_path}' is already up-to-date.")
         else:
-            service_name = "dev_jobserver" if my.development else "jobserver"
+            service_name = installation_service_name("jobserver")
             restart = mgr.is_running(service_name)
             if restart:
                 print(f"Stopping the service {service_name}")

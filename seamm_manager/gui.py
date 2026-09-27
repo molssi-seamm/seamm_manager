@@ -20,6 +20,8 @@ from .util import (
     run_plugin_installer,
 )
 from .services import known_services
+from .naming import app_name as installation_app_name
+from .naming import service_name as installation_service_name, tag
 from .install import install_packages, install_development_environment
 from .uninstall import uninstall_packages
 from .update import update_packages, update_development_environment
@@ -172,7 +174,7 @@ class GUI(collections.abc.MutableMapping):
         root = tk.Tk()
         Pmw.initialise(root)
 
-        app_name = "SEAMM Manager (Development)" if my.development else "SEAMM Manager"
+        app_name = "SEAMM Manager" + (f" ({tag()})" if tag() else "")
         root.title(app_name)
 
         # This can't be done until the root window is created....
@@ -770,7 +772,7 @@ class GUI(collections.abc.MutableMapping):
         for app_lower, var in self._selected_apps.items():
             if var.get() == 1:
                 app = apps.app_names[app_lower]
-                app_name = f"{app}-dev" if my.development else app
+                app_name = installation_app_name(app)
                 packages = my.uv.list()
                 package = apps.app_package[app_lower]
                 if package in packages:
@@ -856,7 +858,7 @@ class GUI(collections.abc.MutableMapping):
         for app_lower, var in self._selected_apps.items():
             if var.get() == 1:
                 app = apps.app_names[app_lower]
-                app_name = f"{app}-dev" if my.development else app
+                app_name = installation_app_name(app)
                 if app_name in installed_apps:
                     delete_app(app_name, missing_ok=True)
                     print(f"Deleted the shortcut '{app_name}'.")
@@ -886,7 +888,7 @@ class GUI(collections.abc.MutableMapping):
         for app in apps.known_apps:
             app_lower = app.lower()
             app = apps.app_names[app_lower]
-            app_name = f"{app}-dev" if my.development else app
+            app_name = installation_app_name(app)
             if app_name in applications:
                 path = applications[app_name]
                 if path.is_relative_to(Path.home()):
@@ -936,7 +938,7 @@ class GUI(collections.abc.MutableMapping):
 
         data = self.service_data = {}
         for service in known_services:
-            service_name = f"dev_{service}" if my.development else service
+            service_name = installation_service_name(service)
 
             if service_name in services:
                 path = Path(mgr.file_path(service_name))
@@ -1014,64 +1016,20 @@ class GUI(collections.abc.MutableMapping):
         self.root.update()
 
     def _create_services(self):
-        port = 55155 if my.development else 55055
-        root = str(my.root)
-        tmp = platform.node()
-        if tmp == "":
-            tmp = "Dashboard"
-        name = tmp + " Development" if my.development else tmp
-        services = mgr.list()
+        """Create the selected services, replacing any that exist."""
+        from .services import create_service, free_port
+
+        name = platform.node() or "Dashboard"
+        if tag():
+            name = f"{name} ({tag()})"
         for service, var in self._selected_services.items():
             if var.get() == 1:
+                port = None
                 if service == "dashboard":
-                    port, name = self._dashboard_parameters(port, name)
-                service_name = f"dev_{service}" if my.development else service
-                if service_name in services:
-                    if my.options.force:
-                        mgr.delete(service_name)
-                    else:
-                        continue
-                # Proceed to creating the service.
-                exe_path = my.uv.which(f"seamm-{service}")
-                if exe_path is None:
-                    exe_path = my.uv.which(service)
-                if exe_path is None:
-                    print(
-                        f"Could not find seamm-{service} or {service}. Is it installed?"
+                    port, name = self._dashboard_parameters(
+                        free_port(exclude=[installation_service_name(service)]), name
                     )
-                    print()
-                    continue
-
-                stderr_path = Path(f"{root}/logs/{service}.out").expanduser()
-                stdout_path = Path(f"{root}/logs/{service}.out").expanduser()
-
-                if service == "dashboard":
-                    mgr.create(
-                        service_name,
-                        exe_path,
-                        "--port",
-                        port,
-                        "--root",
-                        root,
-                        "--dashboard-name",
-                        name,
-                        stderr_path=str(stderr_path),
-                        stdout_path=str(stdout_path),
-                    )
-                else:
-                    mgr.create(
-                        service_name,
-                        exe_path,
-                        "--root",
-                        root,
-                        "JobServer",
-                        "--no-windows",
-                        stderr_path=str(stderr_path),
-                        stdout_path=str(stdout_path),
-                    )
-                # And start it up
-                mgr.start(service_name)
-                print(f"Created and started the service {service_name}")
+                create_service(service, force=True, port=port, dashboard_name=name)
         self._clear_services_selection()
         self.refresh_services()
         self.layout_services()
@@ -1115,7 +1073,7 @@ class GUI(collections.abc.MutableMapping):
     def _remove_services(self):
         for service, var in self._selected_services.items():
             if var.get() == 1:
-                service_name = f"dev_{service}" if my.development else service
+                service_name = installation_service_name(service)
                 mgr.delete(service_name)
                 print(f"The service {service_name} was deleted.")
         self._clear_services_selection()
@@ -1125,7 +1083,7 @@ class GUI(collections.abc.MutableMapping):
     def _start_services(self):
         for service, var in self._selected_services.items():
             if var.get() == 1:
-                service_name = f"dev_{service}" if my.development else service
+                service_name = installation_service_name(service)
                 if mgr.is_running(service_name):
                     print(f"The service '{service_name}' was already running.")
                 else:
@@ -1142,7 +1100,7 @@ class GUI(collections.abc.MutableMapping):
     def _stop_services(self):
         for service, var in self._selected_services.items():
             if var.get() == 1:
-                service_name = f"dev_{service}" if my.development else service
+                service_name = installation_service_name(service)
                 if mgr.is_running(service_name):
                     try:
                         mgr.stop(service_name)

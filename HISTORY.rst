@@ -1,6 +1,28 @@
 =======
 History
 =======
+2026.9.27.5 -- Several installations side by side; update --latest fixed
+    * The services, desktop apps and macOS service bundles of an installation other
+      than ``~/SEAMM`` now carry its name, which is the root's directory name unless
+      the new ``--name`` option gives another: ``jobserver-SEAMM_NEW``,
+      ``SEAMM (SEAMM_NEW)``, ``SEAMM-JobServer-SEAMM_NEW``. Before, any root other than
+      ``~/SEAMM`` and ``~/SEAMM_DEV`` used the same names as ``~/SEAMM``, so creating
+      its services replaced production's. ``~/SEAMM_DEV`` now follows the same rule
+      (``jobserver-SEAMM_DEV`` rather than ``dev_jobserver``).
+    * ``services create`` stops and replaces any other SEAMM service of the same kind
+      started with the same root, whatever its name, so two JobServers never share one
+      datastore. It gives the web interface the service's existing port, or else the
+      first free port from 55055, so a second installation's web interface does not
+      clash with the first's.
+    * ``services status --all`` and ``services show --all`` list every installation's
+      services, with their roots. The manager's window shows which installation it is
+      working on, and its Services tab can now create the web interface service.
+    * The root defaults to ``$SEAMM_ROOT`` when set.
+    * ``update --latest`` asked PyPI's JSON API, which could return a stale copy
+      shortly after a release; it now asks the simple index that uv installs from.
+    * Bugfix: after installing seamm-jobserver, the manager restarted a service named
+      after the package, which never exists, so the JobServer was not restarted.
+
 2026.9.27.4 -- Bugfix: plug-in installers use the installation being worked on
     * The plug-ins' installers always wrote their code's ``.ini`` file (``mopac.ini``,
       ``lammps.ini``, ...) into ``~/SEAMM``, even for ``seamm-manager --root X`` or

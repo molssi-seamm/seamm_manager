@@ -11,6 +11,7 @@ from packaging.version import Version
 from .datastore import update as update_datastore
 from .metadata import development_packages
 from . import my
+from .naming import service_name as installation_service_name
 from .util import (
     constraints,
     find_packages,
@@ -128,7 +129,7 @@ def update():
 
     final_version = {p: package_info(p)[0] for p in service_packages}
     # And restart any services that need it
-    service_name = "dev_jobserver" if my.development else "jobserver"
+    service_name = installation_service_name("jobserver")
     if (
         initial_version["seamm-datastore"] is not None
         and final_version["seamm-datastore"] is not None

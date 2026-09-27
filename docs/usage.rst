@@ -4,9 +4,10 @@ Usage
 
 ``seamm-manager`` is a command with sub-commands; ``seamm-manager --help`` lists them
 and ``seamm-manager <command> --help`` the options of each. Global options come first:
-``--root DIR`` chooses the SEAMM root (default ``~/SEAMM``), ``--development`` uses
-``~/SEAMM_DEV``, ``--log-level`` controls verbosity. With no command the graphical
-installer opens.
+``--root DIR`` chooses the SEAMM root (default ``$SEAMM_ROOT`` if set, else
+``~/SEAMM``), ``--development`` uses ``~/SEAMM_DEV`` and adds the development tools,
+``--name`` sets the installation's name in its services and apps, and ``--log-level``
+controls verbosity. With no command the graphical installer opens.
 
 ===================================== ==========================================================
 Command                               What it does
@@ -50,6 +51,31 @@ nightly, after an install or update the manager makes sure the environment holds
 the same release it is running, so the plug-ins' installers never run on an older
 one. After every change the manager writes ``<root>/environments/<timestamp>_*.txt``
 with the full ``pip freeze`` of the environment as a record.
+
+Several installations
+---------------------
+
+Any number of installations can live side by side, e.g. production in ``~/SEAMM``,
+development in ``~/SEAMM_DEV`` and a trial of a new release in ``~/SEAMM_NEW``. Each
+has its own environment, configuration, data and jobs; SEAMM finds the installation
+from the environment it runs in, so nothing needs ``--root`` once installed.
+
+The default installation ``~/SEAMM`` has the plain names: services ``jobserver`` and
+``webui``, the app ``SEAMM``. Any other installation carries its name, which is the
+root's directory name unless ``--name`` gives another: ``jobserver-SEAMM_NEW``,
+``SEAMM (SEAMM_NEW).app``, and on macOS the process ``SEAMM-JobServer-SEAMM_NEW``.
+``seamm-manager services status --all`` lists every installation's services.
+
+``services create`` gives the web interface the service's existing port, or else
+the first free port from 55055, so a second installation's web interface does not
+clash with the first's; ``--port`` chooses one. It also stops and replaces any other
+SEAMM service of the same kind started with the same root, whatever its name (such
+as an older ``dev_jobserver``), so two JobServers never share one datastore.
+
+Reference data -- VASP potentials, ``local:`` forcefields and models, the
+thermochemistry database, ``dashboards.ini`` -- is taken from the installation's own
+root if it has a copy, else from ``~/SEAMM``, so a new installation works without
+copying it. The codes' conda environments are shared by name between installations.
 
 Where things are
 ----------------
