@@ -1,6 +1,14 @@
 =======
 History
 =======
+(unreleased)
+    * A plug-in's own installer no longer updates a conda environment it does not
+      own. When a code's ``.ini`` points at another plug-in's environment (xnn.ini at
+      ``seamm-lammps`` on ChemAI, so the MLFF engine runs beside LAMMPS), applying the
+      plug-in's environment file to it upgraded torch -- conda's ``env update`` runs pip
+      with ``-U`` -- to a CUDA 13 build the driver cannot run. Such an environment is now
+      left alone with a message.
+
 2026.9.26.5 -- Bugfix: the manager's release was only synced alongside other updates
     * The step added in 2026.9.26.4 that puts the running manager's release into the
       environment ran only when some other package was being installed or updated, so

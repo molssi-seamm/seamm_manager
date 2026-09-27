@@ -751,6 +751,19 @@ class InstallerBase(object):
             environment = self.environment
             if "conda-environment" in data and data["conda-environment"] != "":
                 environment = data["conda-environment"]
+            if environment != self.environment:
+                # A shared environment (e.g. xnn.ini pointing at seamm-lammps
+                # so the MLFF engine runs beside LAMMPS): applying this
+                # plug-in's environment file to it upgrades packages the
+                # other plug-in depends on -- conda's env update runs pip
+                # with -U -- and has broken CUDA torch twice. Only the
+                # environment this plug-in owns is ever updated here.
+                print(
+                    f"    The configured environment '{environment}' is not this "
+                    f"plug-in's own ('{self.environment}'); it is shared and is "
+                    "left alone. Update it by hand if needed."
+                )
+                return
             print(
                 f"    Updating Conda environment '{environment}'. This may "
                 "take a minute or two."
