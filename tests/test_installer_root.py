@@ -58,7 +58,12 @@ def test_root_from_ini_then_installation_then_default(tmp_path, monkeypatch):
     (root / "venv").mkdir(parents=True)
     (root / "Jobs").mkdir()
     monkeypatch.setattr(sys, "prefix", str(root / "venv"))
-    assert _installer(tmp_path).root == root
+    import seamm_util
+
+    if hasattr(seamm_util, "installation_root"):  # seamm-util 2026.9.27 or later
+        assert _installer(tmp_path).root == root
+    else:  # older seamm-util: no inference, the default as before
+        assert _installer(tmp_path).root == Path("~/SEAMM").expanduser()
 
     monkeypatch.setattr(sys, "prefix", str(tmp_path / "elsewhere"))
     assert _installer(tmp_path).root == Path("~/SEAMM").expanduser()
