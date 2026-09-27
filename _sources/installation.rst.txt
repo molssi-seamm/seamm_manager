@@ -106,6 +106,8 @@ Development installation
 
     $ seamm-manager --development install --all development
 
-uses ``~/SEAMM_DEV`` and adds the development tooling. To work on a package, install
+uses ``~/SEAMM_DEV`` and adds the development tooling. Its services and apps carry
+the installation's name (``jobserver-SEAMM_DEV``, ``SEAMM (SEAMM_DEV).app``); see
+*Several installations* in the usage guide. To work on a package, install
 your checkout into the environment with ``~/SEAMM_DEV/venv/bin/pip install -e .`` or
 the package's ``make install`` with that environment activated.

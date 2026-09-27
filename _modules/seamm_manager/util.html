@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>
@@ -211,19 +211,38 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">pypi_latest</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The newest release of ``package`` on PyPI, or None if it cannot be found.</span>
 
-<span class="sd">    Asks PyPI's JSON API directly, so a release made after the nightly package</span>
-<span class="sd">    list is visible at once. Network problems, an unknown project or an odd</span>
-<span class="sd">    response give None rather than an error: the caller falls back to the</span>
-<span class="sd">    package list.</span>
+<span class="sd">    Asks PyPI's simple index (the JSON form of PEP 691) -- the index uv installs</span>
+<span class="sd">    from -- so a release made after the nightly package list is visible at once and</span>
+<span class="sd">    is certainly installable. (PyPI's JSON API was used before, but its CDN served a</span>
+<span class="sd">    stale copy to Python's requests while the simple index already had the release.)</span>
+<span class="sd">    Pre-releases and yanked files are ignored. Network problems, an unknown project</span>
+<span class="sd">    or an odd response give None: the caller falls back to the package list.</span>
 <span class="sd">    """</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://pypi.org/pypi/</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">/json"</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://pypi.org/simple/</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">/"</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"Accept"</span><span class="p">:</span> <span class="s2">"application/vnd.pypi.simple.v1+json"</span><span class="p">,</span>
+        <span class="s2">"Cache-Control"</span><span class="p">:</span> <span class="s2">"no-cache"</span><span class="p">,</span>
+    <span class="p">}</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">version</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">"info"</span><span class="p">][</span><span class="s2">"version"</span><span class="p">]</span>
-        <span class="n">Version</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>  <span class="c1"># a sanity check that it parses</span>
-        <span class="k">return</span> <span class="n">version</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">yanked</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"files"</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"filename"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"versions"</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="k">if</span> <span class="sa">f</span><span class="s2">"-</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">-"</span> <span class="ow">in</span> <span class="n">filename</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"-</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">.tar"</span> <span class="ow">in</span> <span class="n">filename</span><span class="p">:</span>
+                    <span class="n">yanked</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"yanked"</span><span class="p">)))</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"versions"</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">is_prerelease</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">yanked</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">yanked</span><span class="p">[</span><span class="n">version</span><span class="p">]):</span>
+                <span class="k">continue</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span> <span class="k">if</span> <span class="n">candidates</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -433,7 +452,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>

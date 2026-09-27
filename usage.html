@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="_static/documentation_options.js?v=de37ebba"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -47,9 +47,10 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> is a command with sub-commands; <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--help</span></code> lists them
 and <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">&lt;command&gt;</span> <span class="pre">--help</span></code> the options of each. Global options come first:
-<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">DIR</span></code> chooses the SEAMM root (default <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>), <code class="docutils literal notranslate"><span class="pre">--development</span></code> uses
-<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">--log-level</span></code> controls verbosity. With no command the graphical
-installer opens.</p>
+<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">DIR</span></code> chooses the SEAMM root (default <code class="docutils literal notranslate"><span class="pre">$SEAMM_ROOT</span></code> if set, else
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>), <code class="docutils literal notranslate"><span class="pre">--development</span></code> uses <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> and adds the development tools,
+<code class="docutils literal notranslate"><span class="pre">--name</span></code> sets the installation’s name in its services and apps, and <code class="docutils literal notranslate"><span class="pre">--log-level</span></code>
+controls verbosity. With no command the graphical installer opens.</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Command</p></th>
@@ -116,6 +117,27 @@ the same release it is running, so the plug-ins’ installers never run on an ol
 one. After every change the manager writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/environments/&lt;timestamp&gt;_*.txt</span></code>
 with the full <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">freeze</span></code> of the environment as a record.</p>
 </section>
+<section id="several-installations">
+<h2>Several installations<a class="headerlink" href="#several-installations" title="Link to this heading">¶</a></h2>
+<p>Any number of installations can live side by side, e.g. production in <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>,
+development in <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> and a trial of a new release in <code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW</span></code>. Each
+has its own environment, configuration, data and jobs; SEAMM finds the installation
+from the environment it runs in, so nothing needs <code class="docutils literal notranslate"><span class="pre">--root</span></code> once installed.</p>
+<p>The default installation <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> has the plain names: services <code class="docutils literal notranslate"><span class="pre">jobserver</span></code> and
+<code class="docutils literal notranslate"><span class="pre">webui</span></code>, the app <code class="docutils literal notranslate"><span class="pre">SEAMM</span></code>. Any other installation carries its name, which is the
+root’s directory name unless <code class="docutils literal notranslate"><span class="pre">--name</span></code> gives another: <code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_NEW</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">(SEAMM_NEW).app</span></code>, and on macOS the process <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer-SEAMM_NEW</span></code>.
+<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">services</span> <span class="pre">status</span> <span class="pre">--all</span></code> lists every installation’s services.</p>
+<p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span></code> gives the web interface the service’s existing port, or else
+the first free port from 55055, so a second installation’s web interface does not
+clash with the first’s; <code class="docutils literal notranslate"><span class="pre">--port</span></code> chooses one. It also stops and replaces any other
+SEAMM service of the same kind started with the same root, whatever its name (such
+as an older <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>), so two JobServers never share one datastore.</p>
+<p>Reference data – VASP potentials, <code class="docutils literal notranslate"><span class="pre">local:</span></code> forcefields and models, the
+thermochemistry database, <code class="docutils literal notranslate"><span class="pre">dashboards.ini</span></code> – is taken from the installation’s own
+root if it has a copy, else from <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, so a new installation works without
+copying it. The codes’ conda environments are shared by name between installations.</p>
+</section>
 <section id="where-things-are">
 <h2>Where things are<a class="headerlink" href="#where-things-are" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">~/</span><span class="n">SEAMM</span><span class="o">/</span>                 <span class="n">the</span> <span class="n">root</span> <span class="p">(</span><span class="o">--</span><span class="n">root</span><span class="p">)</span>
@@ -148,6 +170,7 @@ import it there.</p>
     <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#versions-and-the-lock-file">Versions and the lock file</a></li>
+<li><a class="reference internal" href="#several-installations">Several installations</a></li>
 <li><a class="reference internal" href="#where-things-are">Where things are</a></li>
 </ul>
 </li>
@@ -200,7 +223,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

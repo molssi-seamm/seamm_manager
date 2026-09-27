@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="_static/documentation_options.js?v=de37ebba"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,29 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.27.5 – Several installations side by side; update –latest fixed</dt><dd><ul class="simple">
+<li><p>The services, desktop apps and macOS service bundles of an installation other
+than <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> now carry its name, which is the root’s directory name unless
+the new <code class="docutils literal notranslate"><span class="pre">--name</span></code> option gives another: <code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_NEW</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">(SEAMM_NEW)</span></code>, <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer-SEAMM_NEW</span></code>. Before, any root other than
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> and <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> used the same names as <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, so creating
+its services replaced production’s. <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> now follows the same rule
+(<code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_DEV</span></code> rather than <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span></code> stops and replaces any other SEAMM service of the same kind
+started with the same root, whatever its name, so two JobServers never share one
+datastore. It gives the web interface the service’s existing port, or else the
+first free port from 55055, so a second installation’s web interface does not
+clash with the first’s.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">status</span> <span class="pre">--all</span></code> and <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">show</span> <span class="pre">--all</span></code> list every installation’s
+services, with their roots. The manager’s window shows which installation it is
+working on, and its Services tab can now create the web interface service.</p></li>
+<li><p>The root defaults to <code class="docutils literal notranslate"><span class="pre">$SEAMM_ROOT</span></code> when set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code> asked PyPI’s JSON API, which could return a stale copy
+shortly after a release; it now asks the simple index that uv installs from.</p></li>
+<li><p>Bugfix: after installing seamm-jobserver, the manager restarted a service named
+after the package, which never exists, so the JobServer was not restarted.</p></li>
+</ul>
+</dd>
 <dt>2026.9.27.4 – Bugfix: plug-in installers use the installation being worked on</dt><dd><ul class="simple">
 <li><p>The plug-ins’ installers always wrote their code’s <code class="docutils literal notranslate"><span class="pre">.ini</span></code> file (<code class="docutils literal notranslate"><span class="pre">mopac.ini</span></code>,
 <code class="docutils literal notranslate"><span class="pre">lammps.ini</span></code>, …) into <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, even for <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--root</span> <span class="pre">X</span></code> or
@@ -238,7 +261,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

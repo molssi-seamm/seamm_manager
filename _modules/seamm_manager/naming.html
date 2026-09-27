@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.naming &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.naming</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.naming</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Names of an installation's services, apps and service bundles.</span>
+
+<span class="sd">Several SEAMM installations can live on one machine (``~/SEAMM``, ``~/SEAMM_DEV``,</span>
+<span class="sd">``~/SEAMM_NEW``, ...). Each is identified by a *tag*: empty for the default</span>
+<span class="sd">installation ``~/SEAMM``, otherwise the root's directory name with its case kept</span>
+<span class="sd">(or the ``--name`` given to the manager). The default installation keeps the plain</span>
+<span class="sd">names (``jobserver``, ``SEAMM``); any other gets the tag in its names</span>
+<span class="sd">(``jobserver-SEAMM_DEV``, ``SEAMM (SEAMM_DEV)``), so installations never collide.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+
+<span class="n">DEFAULT_ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"~/SEAMM"</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="compute_tag">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.compute_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_tag</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The tag for the installation at `root`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    root : str or pathlib.Path</span>
+<span class="sd">        The installation's root.</span>
+<span class="sd">    name : str = None</span>
+<span class="sd">        An explicit name for the installation, which wins.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        "" for the default installation ~/SEAMM.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">==</span> <span class="n">DEFAULT_ROOT</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s2">""</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">name</span></div>
+
+
+
+<div class="viewcode-block" id="tag">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tag</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The current installation's tag."""</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="p">,</span> <span class="s2">"tag"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span></div>
+
+
+
+<div class="viewcode-block" id="service_name">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.service_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The service's name for this installation, e.g. jobserver-SEAMM_DEV."""</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">tag</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">service</span> <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">""</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="app_name">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.app_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">app_name</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The desktop app's name for this installation, e.g. SEAMM (SEAMM_DEV)."""</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">tag</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">app</span> <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">""</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<div class="viewcode-block" id="bundle_name">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.bundle_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bundle_name</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A service bundle's name for this installation, e.g. SEAMM-JobServer-SEAMM_DEV."""</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">tag</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">base</span> <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">""</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
+<div class="viewcode-block" id="service_kind">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.service_kind">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">service_kind</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The kind of a SEAMM service from its name: jobserver, webui or dashboard.</span>
+
+<span class="sd">    Handles the current names (``jobserver``, ``jobserver-SEAMM_NEW``) and the older</span>
+<span class="sd">    development names (``dev_jobserver``).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"dev_"</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"-"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="same_root">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.naming.same_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">same_root</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether two root paths name the same directory."""</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">==</span> <span class="n">Path</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.naming</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

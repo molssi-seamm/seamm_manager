@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="../_static/documentation_options.js?v=de37ebba"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -1423,6 +1423,74 @@ restarts), False if it was current or the bundle is not a service bundle.</p>
 <span id="seamm-manager-my-module"></span><h2>seamm_manager.my module<a class="headerlink" href="#module-seamm_manager.my" title="Link to this heading">¶</a></h2>
 <p>Global module for passing around objects and constants.</p>
 </section>
+<section id="module-seamm_manager.naming">
+<span id="seamm-manager-naming-module"></span><h2>seamm_manager.naming module<a class="headerlink" href="#module-seamm_manager.naming" title="Link to this heading">¶</a></h2>
+<p>Names of an installation’s services, apps and service bundles.</p>
+<p>Several SEAMM installations can live on one machine (<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code>,
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW</span></code>, …). Each is identified by a <em>tag</em>: empty for the default
+installation <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, otherwise the root’s directory name with its case kept
+(or the <code class="docutils literal notranslate"><span class="pre">--name</span></code> given to the manager). The default installation keeps the plain
+names (<code class="docutils literal notranslate"><span class="pre">jobserver</span></code>, <code class="docutils literal notranslate"><span class="pre">SEAMM</span></code>); any other gets the tag in its names
+(<code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">(SEAMM_DEV)</span></code>), so installations never collide.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.app_name">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">app_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#app_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.app_name" title="Link to this definition">¶</a></dt>
+<dd><p>The desktop app’s name for this installation, e.g. SEAMM (SEAMM_DEV).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.bundle_name">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">bundle_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#bundle_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.bundle_name" title="Link to this definition">¶</a></dt>
+<dd><p>A service bundle’s name for this installation, e.g. SEAMM-JobServer-SEAMM_DEV.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.compute_tag">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">compute_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#compute_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.compute_tag" title="Link to this definition">¶</a></dt>
+<dd><p>The tag for the installation at <cite>root</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – The installation’s root.</p></li>
+<li><p><strong>name</strong> (<em>str = None</em>) – An explicit name for the installation, which wins.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“” for the default installation ~/SEAMM.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.same_root">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">same_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#same_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.same_root" title="Link to this definition">¶</a></dt>
+<dd><p>Whether two root paths name the same directory.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.service_kind">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">service_kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#service_kind"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.service_kind" title="Link to this definition">¶</a></dt>
+<dd><p>The kind of a SEAMM service from its name: jobserver, webui or dashboard.</p>
+<p>Handles the current names (<code class="docutils literal notranslate"><span class="pre">jobserver</span></code>, <code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_NEW</span></code>) and the older
+development names (<code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.service_name">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">service_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#service_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.service_name" title="Link to this definition">¶</a></dt>
+<dd><p>The service’s name for this installation, e.g. jobserver-SEAMM_DEV.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.naming.tag">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.naming.</span></span><span class="sig-name descname"><span class="pre">tag</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/naming.html#tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.naming.tag" title="Link to this definition">¶</a></dt>
+<dd><p>The current installation’s tag.</p>
+</dd></dl>
+
+</section>
 <section id="module-seamm_manager.pip">
 <span id="seamm-manager-pip-module"></span><h2>seamm_manager.pip module<a class="headerlink" href="#module-seamm_manager.pip" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -1526,9 +1594,40 @@ restarts), False if it was current or the bundle is not a service bundle.</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.services.create_service">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">create_service</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dashboard_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">webui_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.0.0.0'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#create_service"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.create_service" title="Link to this definition">¶</a></dt>
+<dd><p>Create and start one of this installation’s services.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>service</strong> (<em>str</em>) – “jobserver”, “webui” or “dashboard”.</p></li>
+<li><p><strong>force</strong> (<em>bool = False</em>) – Recreate the service if it exists.</p></li>
+<li><p><strong>port</strong> (<em>int = None</em>) – The web interface’s or dashboard’s port. Default: the service’s current port,
+else that of a same-root service it replaces, else the first free port from
+55055.</p></li>
+<li><p><strong>dashboard_name</strong> (<em>str = None</em>) – The dashboard’s name. Default: the host name, plus the installation’s tag.</p></li>
+<li><p><strong>webui_host</strong> (<em>str = &quot;0.0.0.0&quot;</em>) – The address the web interface listens on.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the service was created.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.services.delete">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.delete" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.services.free_port">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">free_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">55055</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#free_port"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.free_port" title="Link to this definition">¶</a></dt>
+<dd><p>The first port from <cite>start</cite> that no other SEAMM service uses and is free.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.services.refresh_service_bundles">
@@ -1543,6 +1642,15 @@ run directly as <code class="docutils literal notranslate"><span class="pre">pyt
 <dt class="sig sig-object py" id="seamm_manager.services.restart">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.restart" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.services.same_root_services">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">same_root_services</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#same_root_services"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.same_root_services" title="Link to this definition">¶</a></dt>
+<dd><p>Other SEAMM services of this kind started with this installation’s root.</p>
+<p>Whatever their names – the older <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code>, or one made by hand – two
+services of one kind on one root would share a datastore, so creating a service
+replaces them.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.services.setup">
@@ -1775,10 +1883,12 @@ installers report it when they need it.</p>
 <dt class="sig sig-object py" id="seamm_manager.util.pypi_latest">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.util.</span></span><span class="sig-name descname"><span class="pre">pypi_latest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/util.html#pypi_latest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.util.pypi_latest" title="Link to this definition">¶</a></dt>
 <dd><p>The newest release of <code class="docutils literal notranslate"><span class="pre">package</span></code> on PyPI, or None if it cannot be found.</p>
-<p>Asks PyPI’s JSON API directly, so a release made after the nightly package
-list is visible at once. Network problems, an unknown project or an odd
-response give None rather than an error: the caller falls back to the
-package list.</p>
+<p>Asks PyPI’s simple index (the JSON form of PEP 691) – the index uv installs
+from – so a release made after the nightly package list is visible at once and
+is certainly installable. (PyPI’s JSON API was used before, but its CDN served a
+stale copy to Python’s requests while the simple index already had the release.)
+Pre-releases and yanked files are ignored. Network problems, an unknown project
+or an odd response give None: the caller falls back to the package list.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2206,6 +2316,16 @@ The installer/updater for SEAMM.</p>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.metadata">seamm_manager.metadata module</a></li>
 <li><a class="reference internal" href="#module-seamm_manager.my">seamm_manager.my module</a></li>
+<li><a class="reference internal" href="#module-seamm_manager.naming">seamm_manager.naming module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.naming.app_name"><code class="docutils literal notranslate"><span class="pre">app_name()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.bundle_name"><code class="docutils literal notranslate"><span class="pre">bundle_name()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.compute_tag"><code class="docutils literal notranslate"><span class="pre">compute_tag()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.same_root"><code class="docutils literal notranslate"><span class="pre">same_root()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.service_kind"><code class="docutils literal notranslate"><span class="pre">service_kind()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.service_name"><code class="docutils literal notranslate"><span class="pre">service_name()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.naming.tag"><code class="docutils literal notranslate"><span class="pre">tag()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-seamm_manager.pip">seamm_manager.pip module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.pip.Pip"><code class="docutils literal notranslate"><span class="pre">Pip</span></code></a><ul>
 <li><a class="reference internal" href="#seamm_manager.pip.Pip.install"><code class="docutils literal notranslate"><span class="pre">Pip.install()</span></code></a></li>
@@ -2220,9 +2340,12 @@ The installer/updater for SEAMM.</p>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.services">seamm_manager.services module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.services.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.services.create_service"><code class="docutils literal notranslate"><span class="pre">create_service()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.services.free_port"><code class="docutils literal notranslate"><span class="pre">free_port()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.refresh_service_bundles"><code class="docutils literal notranslate"><span class="pre">refresh_service_bundles()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.restart"><code class="docutils literal notranslate"><span class="pre">restart()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.services.same_root_services"><code class="docutils literal notranslate"><span class="pre">same_root_services()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.start"><code class="docutils literal notranslate"><span class="pre">start()</span></code></a></li>
@@ -2347,7 +2470,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

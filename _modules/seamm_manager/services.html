@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>
@@ -49,6 +49,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">datastore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.naming</span><span class="w"> </span><span class="kn">import</span> <span class="n">bundle_name</span><span class="p">,</span> <span class="n">same_root</span><span class="p">,</span> <span class="n">service_kind</span><span class="p">,</span> <span class="n">service_name</span><span class="p">,</span> <span class="n">tag</span>
 
 <span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
 <span class="k">if</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Darwin"</span><span class="p">,):</span>
@@ -90,14 +91,16 @@
         <span class="s2">"-p"</span><span class="p">,</span>
         <span class="s2">"--port"</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">55155</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="mi">55055</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The port for the web interface (or dashboard). Default: the service's "</span>
+            <span class="s2">"current port if it exists, else the first free port from 55055."</span>
+        <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">host</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">host</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
-        <span class="n">host</span> <span class="o">=</span> <span class="s2">"unknown"</span>
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--dashboard-name"</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2"> Development"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">host</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"The dashboard's name. Default: the host name, plus the installation."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--webui-host"</span><span class="p">,</span>
@@ -162,7 +165,7 @@
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--all"</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"Show both the normal and development services."</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"List the services of every SEAMM installation on this machine."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"services"</span><span class="p">,</span>
@@ -177,7 +180,7 @@
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--all"</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"Show the status of both normal and development services."</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"List the services of every SEAMM installation on this machine."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"services"</span><span class="p">,</span>
@@ -210,7 +213,7 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">exe_path</span><span class="p">),</span> <span class="p">[],</span> <span class="kc">None</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.mac</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_service_bundle</span>
 
-    <span class="n">name</span> <span class="o">=</span> <span class="n">bundle_names</span><span class="p">[</span><span class="n">service</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="s2">"-dev"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">bundle_name</span><span class="p">(</span><span class="n">bundle_names</span><span class="p">[</span><span class="n">service</span><span class="p">])</span>
     <span class="n">icons</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"seamm_manager"</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"data"</span> <span class="o">/</span> <span class="s2">"SEAMM.icns"</span>
     <span class="k">with</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">as_file</span><span class="p">(</span><span class="n">icons</span><span class="p">)</span> <span class="k">as</span> <span class="n">icons_path</span><span class="p">:</span>
         <span class="n">program</span> <span class="o">=</span> <span class="n">create_service_bundle</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"services"</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">python</span><span class="p">,</span> <span class="n">icons_path</span><span class="p">)</span>
@@ -242,8 +245,7 @@
 
     <span class="n">old_style</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">bundle_names</span><span class="p">:</span>
-        <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-        <span class="n">entry</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="k">try</span><span class="p">:</span>
@@ -263,106 +265,174 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_port_available</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether nothing is listening on the port on this machine."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+
+    <span class="k">with</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s2">"127.0.0.1"</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="free_port">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.free_port">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">free_port</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">55055</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The first port from `start` that no other SEAMM service uses and is free."""</span>
+    <span class="n">used</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">used</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"port"</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">pass</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="k">while</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">used</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_port_available</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+        <span class="n">port</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">port</span></div>
+
+
+
+<div class="viewcode-block" id="same_root_services">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.same_root_services">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">same_root_services</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Other SEAMM services of this kind started with this installation's root.</span>
+
+<span class="sd">    Whatever their names -- the older ``dev_jobserver``, or one made by hand -- two</span>
+<span class="sd">    services of one kind on one root would share a datastore, so creating a service</span>
+<span class="sd">    replaces them.</span>
+<span class="sd">    """</span>
+    <span class="n">this</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">this</span> <span class="ow">or</span> <span class="n">service_kind</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">service</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">same_root</span><span class="p">(</span><span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"root"</span><span class="p">),</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="create_service">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.create_service">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_service</span><span class="p">(</span>
+    <span class="n">service</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dashboard_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">webui_host</span><span class="o">=</span><span class="s2">"0.0.0.0"</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Create and start one of this installation's services.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    service : str</span>
+<span class="sd">        "jobserver", "webui" or "dashboard".</span>
+<span class="sd">    force : bool = False</span>
+<span class="sd">        Recreate the service if it exists.</span>
+<span class="sd">    port : int = None</span>
+<span class="sd">        The web interface's or dashboard's port. Default: the service's current port,</span>
+<span class="sd">        else that of a same-root service it replaces, else the first free port from</span>
+<span class="sd">        55055.</span>
+<span class="sd">    dashboard_name : str = None</span>
+<span class="sd">        The dashboard's name. Default: the host name, plus the installation's tag.</span>
+<span class="sd">    webui_host : str = "0.0.0.0"</span>
+<span class="sd">        The address the web interface listens on.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        Whether the service was created.</span>
+<span class="sd">    """</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+    <span class="n">services</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">services</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' already exists! Use --force to recreate the "</span>
+            <span class="s2">"service from scratch."</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Find the program before changing anything.</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"webui"</span><span class="p">:</span>
+        <span class="c1"># Lives in its own dedicated environment (venv-webui), not the main</span>
+        <span class="c1"># one -- see install.py's install_seamm_webui().</span>
+        <span class="n">exe_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"venv-webui"</span> <span class="o">/</span> <span class="s2">"bin"</span> <span class="o">/</span> <span class="s2">"seamm-webui"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exe_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"Could not find seamm-webui in the venv-webui environment. "</span>
+                <span class="s2">"Run 'seamm-manager install seamm-webui' first."</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">exe_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exe_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exe_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seamm-</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exe_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find seamm-</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">. Is it installed?"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># The port: keep this service's, or take over a replaced one's, or a free one.</span>
+    <span class="n">replaced</span> <span class="o">=</span> <span class="n">same_root_services</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"webui"</span><span class="p">,</span> <span class="s2">"dashboard"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="p">([</span><span class="n">name</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">services</span> <span class="k">else</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">replaced</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"port"</span><span class="p">))</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="n">free_port</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">replaced</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">replaced</span><span class="p">:</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removed the service '</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">', which also ran this installation."</span><span class="p">)</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">stderr_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"logs"</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">.out"</span>
+    <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"logs"</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">.out"</span>
+
+    <span class="n">program</span><span class="p">,</span> <span class="n">leading</span><span class="p">,</span> <span class="n">environment</span> <span class="o">=</span> <span class="n">_launch</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="s2">"environment"</span><span class="p">:</span> <span class="n">environment</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"dashboard"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dashboard_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"unknown"</span>
+            <span class="n">dashboard_name</span> <span class="o">=</span> <span class="n">host</span> <span class="k">if</span> <span class="n">tag</span><span class="p">()</span> <span class="o">==</span> <span class="s2">""</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">tag</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="s2">"--port"</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="s2">"--dashboard-name"</span><span class="p">,</span> <span class="n">dashboard_name</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"webui"</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="s2">"--port"</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="s2">"--host"</span><span class="p">,</span> <span class="n">webui_host</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="s2">"JobServer"</span><span class="p">,</span> <span class="s2">"--no-windows"</span><span class="p">]</span>
+    <span class="n">mgr</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">program</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">leading</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">stderr_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stderr_path</span><span class="p">),</span>
+        <span class="n">stdout_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stdout_path</span><span class="p">),</span>
+        <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># The services need the datastore; create it if this is a fresh root.</span>
+    <span class="n">datastore</span><span class="o">.</span><span class="n">ensure</span><span class="p">()</span>
+    <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" on port </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">service</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"webui"</span><span class="p">,</span> <span class="s2">"dashboard"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created and started the service </span><span class="si">{</span><span class="n">name</span><span class="si">}{</span><span class="n">where</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
 <div class="viewcode-block" id="create">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.create">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">():</span>
-    <span class="n">services</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-        <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-        <span class="k">if</span> <span class="n">service_name</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">force</span><span class="p">:</span>
-                <span class="n">mgr</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">' already exists! Use --force to "</span>
-                    <span class="s2">"recreate the service from scratch."</span>
-                <span class="p">)</span>
-                <span class="k">continue</span>
-        <span class="c1"># Proceed to creating the service.</span>
-        <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"webui"</span><span class="p">:</span>
-            <span class="c1"># Lives in its own dedicated environment (venv-webui), not the main</span>
-            <span class="c1"># one -- see install.py's install_seamm_webui() -- so it can't</span>
-            <span class="c1"># be found with shutil.which() against the current PATH like</span>
-            <span class="c1"># dashboard/jobserver, which share the main environment.</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">exe_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"venv-webui"</span> <span class="o">/</span> <span class="s2">"bin"</span> <span class="o">/</span> <span class="s2">"seamm-webui"</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="n">exe_path</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">exe_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">exe_path</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="s2">"Could not find seamm-webui in the venv-webui environment. "</span>
-                    <span class="s2">"Run 'seamm-manager install seamm-webui' first."</span>
-                <span class="p">)</span>
-                <span class="nb">print</span><span class="p">()</span>
-                <span class="k">continue</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">exe_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seamm-</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">exe_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">exe_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">exe_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find seamm-</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">. Is it installed?"</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">()</span>
-                <span class="k">continue</span>
-
-        <span class="c1"># str(my.root) already defaults to ~/SEAMM_DEV or ~/SEAMM based on</span>
-        <span class="c1"># development mode (see __main__.py) but also respects an explicit</span>
-        <span class="c1"># --root override -- use it directly rather than re-deriving a</span>
-        <span class="c1"># hardcoded value here, which silently ignored --root entirely.</span>
-        <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
-        <span class="n">stderr_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"logs"</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">.out"</span>
-        <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"logs"</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">.out"</span>
-
-        <span class="n">program</span><span class="p">,</span> <span class="n">leading</span><span class="p">,</span> <span class="n">environment</span> <span class="o">=</span> <span class="n">_launch</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
-        <span class="n">extra</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="s2">"environment"</span><span class="p">:</span> <span class="n">environment</span><span class="p">}</span>
-
-        <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"dashboard"</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">service_name</span><span class="p">,</span>
-                <span class="n">program</span><span class="p">,</span>
-                <span class="o">*</span><span class="n">leading</span><span class="p">,</span>
-                <span class="s2">"--root"</span><span class="p">,</span>
-                <span class="n">root</span><span class="p">,</span>
-                <span class="s2">"--port"</span><span class="p">,</span>
-                <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
-                <span class="s2">"--dashboard-name"</span><span class="p">,</span>
-                <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">dashboard_name</span><span class="p">,</span>
-                <span class="n">stderr_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stderr_path</span><span class="p">),</span>
-                <span class="n">stdout_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stdout_path</span><span class="p">),</span>
-                <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"webui"</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">service_name</span><span class="p">,</span>
-                <span class="n">program</span><span class="p">,</span>
-                <span class="o">*</span><span class="n">leading</span><span class="p">,</span>
-                <span class="s2">"--root"</span><span class="p">,</span>
-                <span class="n">root</span><span class="p">,</span>
-                <span class="s2">"--port"</span><span class="p">,</span>
-                <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
-                <span class="s2">"--host"</span><span class="p">,</span>
-                <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">webui_host</span><span class="p">,</span>
-                <span class="n">stderr_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stderr_path</span><span class="p">),</span>
-                <span class="n">stdout_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stdout_path</span><span class="p">),</span>
-                <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">service_name</span><span class="p">,</span>
-                <span class="n">program</span><span class="p">,</span>
-                <span class="o">*</span><span class="n">leading</span><span class="p">,</span>
-                <span class="s2">"--root"</span><span class="p">,</span>
-                <span class="n">root</span><span class="p">,</span>
-                <span class="s2">"JobServer"</span><span class="p">,</span>
-                <span class="s2">"--no-windows"</span><span class="p">,</span>
-                <span class="n">stderr_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stderr_path</span><span class="p">),</span>
-                <span class="n">stdout_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">stdout_path</span><span class="p">),</span>
-                <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="c1"># Both services need the datastore; create it if this is a fresh root.</span>
-        <span class="n">datastore</span><span class="o">.</span><span class="n">ensure</span><span class="p">()</span>
-        <span class="c1"># And start it up</span>
-        <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created and started the service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+        <span class="n">create_service</span><span class="p">(</span>
+            <span class="n">service</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">force</span><span class="p">,</span>
+            <span class="n">port</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+            <span class="n">dashboard_name</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">dashboard_name</span><span class="p">,</span>
+            <span class="n">webui_host</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">webui_host</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 
@@ -370,9 +440,9 @@
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.delete">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-        <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-        <span class="n">mgr</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> was deleted."</span><span class="p">)</span></div>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> was deleted."</span><span class="p">)</span></div>
 
 
 
@@ -380,14 +450,21 @@
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.restart">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">restart</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-        <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">' was restarted."</span><span class="p">)</span></div>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' was restarted."</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_names_to_list</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The service names to show: this installation's, or with --all every one."""</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span> <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="show">
@@ -395,18 +472,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">():</span>
     <span class="n">services</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="n">table</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">development</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span> <span class="k">else</span> <span class="p">[</span><span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">]:</span>
-        <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-            <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-            <span class="k">if</span> <span class="n">service_name</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()):</span>
-                    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">())</span>
-                    <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">service_name</span><span class="p">,</span> <span class="s2">"~/"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">service_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_names_to_list</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()):</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="s2">"~/"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()))))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">service_name</span><span class="p">,</span> <span class="s2">"not found"</span><span class="p">))</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="s2">"not found"</span><span class="p">))</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Found no services."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -418,7 +492,7 @@
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.start">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-        <span class="n">service</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
+        <span class="n">service</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">' was already running."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -436,25 +510,23 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">():</span>
     <span class="n">services</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="n">table</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">development</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span> <span class="k">else</span> <span class="p">[</span><span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">]:</span>
-        <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-            <span class="n">service</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-            <span class="k">if</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
-                <span class="n">status</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
-                <span class="n">row</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">service</span><span class="p">,</span>
-                    <span class="s2">"running"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"running"</span><span class="p">]</span> <span class="k">else</span> <span class="s2">"not running"</span><span class="p">,</span>
-                    <span class="s2">"---"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"root"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"root"</span><span class="p">],</span>
-                    <span class="s2">"---"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"port"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"port"</span><span class="p">],</span>
-                    <span class="p">(</span>
-                        <span class="s2">"---"</span>
-                        <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"dashboard name"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
-                        <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"dashboard name"</span><span class="p">]</span>
-                    <span class="p">),</span>
-                <span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">service</span><span class="p">,</span> <span class="s2">"not created"</span><span class="p">]</span>
-            <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_names_to_list</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="s2">"running"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"running"</span><span class="p">]</span> <span class="k">else</span> <span class="s2">"not running"</span><span class="p">,</span>
+                <span class="s2">"---"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"root"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"root"</span><span class="p">],</span>
+                <span class="s2">"---"</span> <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"port"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"port"</span><span class="p">],</span>
+                <span class="p">(</span>
+                    <span class="s2">"---"</span>
+                    <span class="k">if</span> <span class="n">status</span><span class="p">[</span><span class="s2">"dashboard name"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">status</span><span class="p">[</span><span class="s2">"dashboard name"</span><span class="p">]</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="s2">"not created"</span><span class="p">]</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span>
         <span class="n">tabulate</span><span class="p">(</span>
             <span class="n">table</span><span class="p">,</span>
@@ -469,16 +541,16 @@
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.stop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
-        <span class="n">service_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"dev_</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="n">service</span>
-        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+                <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">' has been stopped."</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' has been stopped."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">' was not running."</span><span class="p">)</span></div>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' was not running."</span><span class="p">)</span></div>
 
 </pre></div>
 
@@ -511,7 +583,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>

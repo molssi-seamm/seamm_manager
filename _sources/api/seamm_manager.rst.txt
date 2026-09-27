@@ -116,6 +116,14 @@ seamm\_manager.my module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.naming module
+----------------------------
+
+.. automodule:: seamm_manager.naming
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.pip module
 -------------------------
 

@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.27.4 documentation</title>
+    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=7a4f6fa3"></script>
+    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
@@ -45,6 +45,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.naming</span><span class="w"> </span><span class="kn">import</span> <span class="n">service_name</span> <span class="k">as</span> <span class="n">installation_service_name</span>
 
 <span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
 <span class="k">if</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Darwin"</span><span class="p">,):</span>
@@ -189,7 +190,7 @@
         <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="n">latest</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database at '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' is already up-to-date."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">service_name</span> <span class="o">=</span> <span class="s2">"dev_jobserver"</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="s2">"jobserver"</span>
+            <span class="n">service_name</span> <span class="o">=</span> <span class="n">installation_service_name</span><span class="p">(</span><span class="s2">"jobserver"</span><span class="p">)</span>
             <span class="n">restart</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">restart</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Stopping the service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -320,7 +321,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
