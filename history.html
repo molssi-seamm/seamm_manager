@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.26.4 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.26.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=0b9a25fa"></script>
+    <script src="_static/documentation_options.js?v=afe2a1e3"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="authors.html" title="Credits"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,13 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.26.5 – Bugfix: the manager’s release was only synced alongside other updates</dt><dd><ul class="simple">
+<li><p>The step added in 2026.9.26.4 that puts the running manager’s release into the
+environment ran only when some other package was being installed or updated, so
+an environment with nothing else to update kept the older manager. It now runs
+every time.</p></li>
+</ul>
+</dd>
 <dt>2026.9.26.4 – The environment keeps the manager’s own release; manual codes</dt><dd><ul class="simple">
 <li><p>After installing or updating, the manager puts its own release into the
 environment if the package list still names an older one. The list is refreshed
@@ -160,7 +167,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="authors.html" title="Credits"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
