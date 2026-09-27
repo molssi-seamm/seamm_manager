@@ -440,6 +440,10 @@ Communicate:
   | sh``; ``uv tool install seamm-manager``; ``seamm-manager install --all``) and the
   migration guide from seamm_manager's installation docs.
 - A migration announcement to users.
+- Docs site PR molssi-seamm.github.io#56 (2026-09-27) rewrote the installation section,
+  tutorials and how-tos. Still to do there: *Managing the Dashboard* shows the old
+  Dashboard's screens and the queue how-to runs ``seamm-dashboard``; both need the web
+  interface's equivalents. The graphical page reuses the SEAMM Installer screenshots.
 
 Loose ends found along the way:
 
@@ -454,6 +458,11 @@ Loose ends found along the way:
 - MolSSI10 has a stale ``calpoly`` login session (root ``loginctl terminate-user``).
 - ``update --all`` reruns every plug-in's ``conda env update`` even when the environment
   file is unchanged, which is slow; skip unchanged files.
+- When Zenodo is slow or down, ``show`` (and anything else that fetches the package
+  list) prints the raw exception chain from ``find_packages``. It should say that Zenodo
+  is unavailable and fall back to the cached list. Seen 2026-09-27 (15 s responses).
+- GitHub Pages was never enabled for seamm_manager, so its documentation 404'd; enabled
+  2026-09-27 from the existing ``gh-pages`` branch.
 
 Later by design:
 
