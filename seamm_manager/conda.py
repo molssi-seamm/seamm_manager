@@ -4,10 +4,14 @@ import shutil
 import logging
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
+import tempfile
 import sys
 import warnings
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,37 @@ def find_conda():
                 )
                 return str(candidate)
     return None
+
+
+def split_environment_file(environment_file):
+    """Split a conda environment file into its conda part and its pip part.
+
+    Returns
+    -------
+    (str, [str], [str])
+        The YAML text of the file without its ``pip:`` entry; the pip
+        requirements that are bare names (``torch``); and those carrying a
+        version specifier or other qualification (``xnns>=0.3.0``,
+        ``e3nn==0.4.4``, a URL, ``pkg[extra]``).
+    """
+    text = Path(environment_file).read_text()
+    data = yaml.safe_load(text) or {}
+    deps = data.get("dependencies") or []
+    conda_deps, bare, specified = [], [], []
+    for item in deps:
+        if isinstance(item, dict) and "pip" in item:
+            for req in item["pip"] or []:
+                req = str(req).strip()
+                if req == "" or req.startswith("-"):
+                    continue  # options such as --index-url are not requirements
+                if re.match(r"^[A-Za-z0-9][A-Za-z0-9._-]*$", req):
+                    bare.append(req)
+                else:
+                    specified.append(req)
+        else:
+            conda_deps.append(item)
+    data["dependencies"] = conda_deps
+    return yaml.safe_dump(data, sort_keys=False), bare, specified
 
 
 class Conda(object):
@@ -685,8 +720,10 @@ class Conda(object):
 
         self._execute(command, progress=progress, update=update)
 
-    def update_environment(self, environment_file, name=None, update=None):
-        """Update a Conda environment.
+    def update_environment(
+        self, environment_file, name=None, update=None, pip_policy="conservative"
+    ):
+        """Update a Conda environment from an environment file.
 
         Parameters
         ----------
@@ -694,26 +731,59 @@ class Conda(object):
             The name or path to the environment file.
         name : str = None
             The name of the environment. Defaults to the current environment.
+        pip_policy : str = "conservative"
+            How the file's ``pip:`` section is applied. ``"conda"`` lets conda
+            do it, which runs ``pip install -U`` and so upgrades every pip
+            package, including a bare ``torch`` that a machine may hold at a
+            driver-matched build. ``"conservative"`` (the default) applies the
+            conda part with conda, then bare pip names without upgrading (they
+            must merely be present) and requirements with a version specifier
+            with ``-U`` (kept current within their spec).
         """
         if isinstance(environment_file, Path):
             path = str(environment_file)
         else:
             path = environment_file
-
-        command = f"'{self.conda_exe}' env update --file '{path}'"
+        prefix = None
         if name is not None:
             # Using the name leads to odd paths, so be explicit.
-            # command += f" --name '{name}'"
-            path = self._resolve_environment_path(name)
-            command += f" --prefix '{str(path)}'"
-        print(f"command = {command}")
+            prefix = self._resolve_environment_path(name)
+
+        bare, specified = [], []
+        tmp = None
+        if pip_policy == "conservative":
+            conda_text, bare, specified = split_environment_file(path)
+            tmp = tempfile.NamedTemporaryFile("w", suffix=".yml", delete=False)
+            tmp.write(conda_text)
+            tmp.close()
+            path = tmp.name
+
+        command = f"'{self.conda_exe}' env update --file '{path}'"
+        if prefix is not None:
+            command += f" --prefix '{str(prefix)}'"
         self.logger.debug(f"command = {command}")
         try:
             self._execute(command, update=update)
+            if bare:
+                self._pip_in_environment(prefix, bare, upgrade=False, update=update)
+            if specified:
+                self._pip_in_environment(prefix, specified, upgrade=True, update=update)
         except subprocess.CalledProcessError as e:
             self.logger.warning(f"Calling conda, returncode = {e.returncode}")
             self.logger.warning(f"Output:\n\n{e.output}\n\n")
             raise
+        finally:
+            if tmp is not None:
+                Path(tmp.name).unlink(missing_ok=True)
+
+    def _pip_in_environment(self, prefix, requirements, upgrade=False, update=None):
+        """Run pip in the environment for the given requirements."""
+        target = "" if prefix is None else f" -p '{str(prefix)}'"
+        flag = " --upgrade" if upgrade else ""
+        reqs = " ".join(f"'{r}'" for r in requirements)
+        command = f"'{self.conda_exe}' run{target} pip install{flag} {reqs}"
+        self.logger.debug(f"command = {command}")
+        self._execute(command, update=update)
 
     def _execute(
         self, command, poll_interval=2, progress=True, newline=True, update=None

@@ -1,6 +1,17 @@
 =======
 History
 =======
+2026.9.26.6 -- Bugfix: environment files no longer upgrade a machine's torch
+    * Applying a plug-in's environment file to an existing conda environment no
+      longer upgrades bare pip requirements. Conda runs a file's ``pip:`` section
+      with ``pip install -U``, so ``torch`` in xnn_step's file was upgraded, in the
+      ``seamm-lammps`` environment that xnn.ini on ChemAI shares with LAMMPS, to a
+      CUDA 13 build the driver cannot run. Now a bare name is installed only if
+      missing, while a requirement with a version specifier (``xnns>=0.3.0``,
+      ``e3nn==0.4.4``) is kept current within it. The plug-in that adds the MLFF
+      engine to LAMMPS's environment keeps doing so; the machine's driver-matched
+      torch is left alone.
+
 2026.9.26.5 -- Bugfix: the manager's release was only synced alongside other updates
     * The step added in 2026.9.26.4 that puts the running manager's release into the
       environment ran only when some other package was being installed or updated, so

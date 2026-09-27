@@ -76,6 +76,12 @@ Psi4, DFTB+, LAMMPS, xTB, Packmol, ... -- install the code into a conda environm
 its own, so conda (Miniforge is recommended) is needed on a machine where you install
 one of those. The plug-in's installer tells you if it is missing.
 
+When a plug-in updates its code environment from its environment file, pip
+packages named without a version (``torch``) are installed only if missing and
+otherwise left as they are, while those with a version specifier are kept current
+within it. So a torch build you installed by hand for your GPU driver survives
+updates; to change it, reinstall it by hand in that environment.
+
 Migrating from seamm-installer
 ------------------------------
 
