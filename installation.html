@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.9.26.5 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=afe2a1e3"></script>
+    <script src="_static/documentation_options.js?v=981a2b89"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -104,6 +104,11 @@ manager, the services and the apps all use its interpreter directly.</p>
 Psi4, DFTB+, LAMMPS, xTB, Packmol, … – install the code into a conda environment of
 its own, so conda (Miniforge is recommended) is needed on a machine where you install
 one of those. The plug-in’s installer tells you if it is missing.</p>
+<p>When a plug-in updates its code environment from its environment file, pip
+packages named without a version (<code class="docutils literal notranslate"><span class="pre">torch</span></code>) are installed only if missing and
+otherwise left as they are, while those with a version specifier are kept current
+within it. So a torch build you installed by hand for your GPU driver survives
+updates; to change it, reinstall it by hand in that environment.</p>
 </section>
 <section id="migrating-from-seamm-installer">
 <h2>Migrating from seamm-installer<a class="headerlink" href="#migrating-from-seamm-installer" title="Link to this heading">¶</a></h2>
@@ -196,7 +201,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

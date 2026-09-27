@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.5 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=afe2a1e3"></script>
+    <script src="../_static/documentation_options.js?v=981a2b89"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -371,13 +371,20 @@ environment file.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.conda.Conda.update_environment">
-<span class="sig-name descname"><span class="pre">update_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.update_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.update_environment" title="Link to this definition">¶</a></dt>
-<dd><p>Update a Conda environment.</p>
+<span class="sig-name descname"><span class="pre">update_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pip_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'conservative'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.update_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.update_environment" title="Link to this definition">¶</a></dt>
+<dd><p>Update a Conda environment from an environment file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>environment_file</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – The name or path to the environment file.</p></li>
 <li><p><strong>name</strong> (<em>str = None</em>) – The name of the environment. Defaults to the current environment.</p></li>
+<li><p><strong>pip_policy</strong> (<em>str = &quot;conservative&quot;</em>) – How the file’s <code class="docutils literal notranslate"><span class="pre">pip:</span></code> section is applied. <code class="docutils literal notranslate"><span class="pre">&quot;conda&quot;</span></code> lets conda
+do it, which runs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span></code> and so upgrades every pip
+package, including a bare <code class="docutils literal notranslate"><span class="pre">torch</span></code> that a machine may hold at a
+driver-matched build. <code class="docutils literal notranslate"><span class="pre">&quot;conservative&quot;</span></code> (the default) applies the
+conda part with conda, then bare pip names without upgrading (they
+must merely be present) and requirements with a version specifier
+with <code class="docutils literal notranslate"><span class="pre">-U</span></code> (kept current within their spec).</p></li>
 </ul>
 </dd>
 </dl>
@@ -393,6 +400,23 @@ environment file.</p></li>
 PATH, then the usual installation directories. When found somewhere
 other than the PATH, its directory is added to the PATH so that
 sub-processes (<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">run</span></code>, the plug-in installers) find it too.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.conda.split_environment_file">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.conda.</span></span><span class="sig-name descname"><span class="pre">split_environment_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#split_environment_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.split_environment_file" title="Link to this definition">¶</a></dt>
+<dd><p>Split a conda environment file into its conda part and its pip part.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The YAML text of the file without its <code class="docutils literal notranslate"><span class="pre">pip:</span></code> entry; the pip
+requirements that are bare names (<code class="docutils literal notranslate"><span class="pre">torch</span></code>); and those carrying a
+version specifier or other qualification (<code class="docutils literal notranslate"><span class="pre">xnns&gt;=0.3.0</span></code>,
+<code class="docutils literal notranslate"><span class="pre">e3nn==0.4.4</span></code>, a URL, <code class="docutils literal notranslate"><span class="pre">pkg[extra]</span></code>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>(str, [str], [str])</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -1931,6 +1955,7 @@ The installer/updater for SEAMM.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#seamm_manager.conda.find_conda"><code class="docutils literal notranslate"><span class="pre">find_conda()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.conda.split_environment_file"><code class="docutils literal notranslate"><span class="pre">split_environment_file()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.configuration">seamm_manager.configuration module</a><ul>
@@ -2210,7 +2235,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.26.5 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.26.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=afe2a1e3"></script>
+    <script src="_static/documentation_options.js?v=981a2b89"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="authors.html" title="Credits"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,18 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.26.6 – Bugfix: environment files no longer upgrade a machine’s torch</dt><dd><ul class="simple">
+<li><p>Applying a plug-in’s environment file to an existing conda environment no
+longer upgrades bare pip requirements. Conda runs a file’s <code class="docutils literal notranslate"><span class="pre">pip:</span></code> section
+with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span></code>, so <code class="docutils literal notranslate"><span class="pre">torch</span></code> in xnn_step’s file was upgraded, in the
+<code class="docutils literal notranslate"><span class="pre">seamm-lammps</span></code> environment that xnn.ini on ChemAI shares with LAMMPS, to a
+CUDA 13 build the driver cannot run. Now a bare name is installed only if
+missing, while a requirement with a version specifier (<code class="docutils literal notranslate"><span class="pre">xnns&gt;=0.3.0</span></code>,
+<code class="docutils literal notranslate"><span class="pre">e3nn==0.4.4</span></code>) is kept current within it. The plug-in that adds the MLFF
+engine to LAMMPS’s environment keeps doing so; the machine’s driver-matched
+torch is left alone.</p></li>
+</ul>
+</dd>
 <dt>2026.9.26.5 – Bugfix: the manager’s release was only synced alongside other updates</dt><dd><ul class="simple">
 <li><p>The step added in 2026.9.26.4 that puts the running manager’s release into the
 environment ran only when some other package was being installed or updated, so
@@ -167,7 +179,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="authors.html" title="Credits"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.26.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
