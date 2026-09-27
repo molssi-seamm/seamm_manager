@@ -234,3 +234,23 @@ def update():
             print(f"Updated the app '{app_name}' to version {version}.")
         else:
             print(f"App '{app_name}' was not installed.")
+
+
+def refresh_apps():
+    """Bring the installed apps up to date after an update.
+
+    Sets each app's version to its package's and, on macOS, replaces the shell
+    script launcher of bundles made by older versions with the compiled one
+    (a script makes Apple Silicon Macs without Rosetta ask to install it).
+    Apps that are not installed are left alone. Returns the names refreshed.
+    """
+    apps = get_apps()
+    packages = my.uv.list()
+    refreshed = []
+    for app_lower, app in app_names.items():
+        app_name = f"{app}-dev" if my.development else app
+        package = app_package[app_lower]
+        if app_name in apps and package in packages:
+            update_app(app_name, str(packages[package]["version"]), missing_ok=True)
+            refreshed.append(app_name)
+    return refreshed

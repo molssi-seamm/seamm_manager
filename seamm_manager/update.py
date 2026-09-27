@@ -110,6 +110,14 @@ def update():
     if my.development:
         update_development_environment()
 
+    # Keep the desktop apps current (version, and the macOS launcher)
+    try:
+        from .apps import refresh_apps
+
+        refresh_apps()
+    except Exception as e:
+        print(f"Could not refresh the desktop apps: {e}")
+
     final_version = {p: package_info(p)[0] for p in service_packages}
     # And restart any services that need it
     service_name = "dev_jobserver" if my.development else "jobserver"
