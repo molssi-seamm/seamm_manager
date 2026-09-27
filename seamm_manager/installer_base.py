@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import os
 from pathlib import Path
 import shutil
 
@@ -131,15 +132,26 @@ class InstallerBase(object):
 
     @property
     def root(self):
+        """The root of the SEAMM installation being worked on.
+
+        In order: ``SEAMM_ROOT``, which seamm-manager sets for the installation it is
+        working on; ``root`` in the ``[SEAMM]`` section of the per-user seamm.ini
+        (deprecated, since every installation shares that file); the installation this
+        Python belongs to (``<root>/venv``); ``~/SEAMM``. The codes' ``.ini`` files are
+        written here.
+        """
         if self._root is None:
-            if self.configuration.section_exists("SEAMM"):
-                tmp = self.configuration.get_values("SEAMM")
-                if "root" in tmp:
-                    self._root = Path(tmp["root"]).expanduser()
-                else:
-                    self._root = Path("~/SEAMM").expanduser()
-            else:
-                self._root = Path("~/SEAMM").expanduser()
+            value = os.environ.get("SEAMM_ROOT", "").strip()
+            if value == "" and self.configuration.section_exists("SEAMM"):
+                value = self.configuration.get_values("SEAMM").get("root", "") or ""
+            if value == "":
+                try:
+                    from seamm_util import installation_root
+                except ImportError:  # seamm-util older than 2026.9.27
+                    installation_root = None
+                root = installation_root() if installation_root else None
+                value = str(root) if root is not None else "~/SEAMM"
+            self._root = Path(value).expanduser()
         return self._root
 
     def ask_yes_no(self, text, default=None):
