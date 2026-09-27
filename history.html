@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.27.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=2246f11d"></script>
+    <script src="_static/documentation_options.js?v=15be7b77"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,22 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.27.2 – The Mac services show up by name, with the SEAMM icon</dt><dd><ul class="simple">
+<li><p>On macOS the JobServer and the web interface showed up in Activity Monitor and
+<code class="docutils literal notranslate"><span class="pre">ps</span></code> as <code class="docutils literal notranslate"><span class="pre">python3.12</span></code>. They now run as <code class="docutils literal notranslate"><span class="pre">SEAMM-JobServer</span></code> and <code class="docutils literal notranslate"><span class="pre">SEAMM-WebUI</span></code>
+with the SEAMM icon: <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span></code> puts the environment’s Python
+interpreter in a small background app under <code class="docutils literal notranslate"><span class="pre">~/SEAMM/services</span></code> (a hard link,
+so no extra disk space) and runs the service with it. Jobs are started exactly as
+before.</p></li>
+<li><p>Existing services keep working as they are. <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">update</span></code> says how to
+convert them (<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">services</span> <span class="pre">create</span> <span class="pre">--force</span> <span class="pre">jobserver</span> <span class="pre">webui</span></code>, when no
+jobs are running), and keeps the bundles’ interpreter in step with the
+environment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create</span> <span class="pre">--force</span></code> sometimes left the new service stopped, without any
+message: launchd was still removing the old one when it was started. Stopping a
+service now waits until launchd has finished.</p></li>
+</ul>
+</dd>
 <dt>2026.9.27.1 – Bugfix: the Mac apps no longer ask for Rosetta</dt><dd><ul class="simple">
 <li><p>On an Apple Silicon Mac without Rosetta, starting SEAMM or SEAMM-Manager from its
 app showed a dialog asking to install Rosetta. The app’s executable was a shell
@@ -201,7 +217,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

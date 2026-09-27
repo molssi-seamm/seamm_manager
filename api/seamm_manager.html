@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.27.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=2246f11d"></script>
+    <script src="../_static/documentation_options.js?v=15be7b77"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -1196,7 +1196,7 @@ nothing to do.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.mac.ServiceManager.create">
-<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exe_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_agent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exist_ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#ServiceManager.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.ServiceManager.create" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exe_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_agent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exist_ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#ServiceManager.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.ServiceManager.create" title="Link to this definition">¶</a></dt>
 <dd><p>Create a service on MacOS.</p>
 <p>The Mac supports three types of services. This function uses <cite>user_agent</cite> and
 <cite>user_only</cite> to control which is selected.</p>
@@ -1222,6 +1222,7 @@ Only affects user agents, not daemons which are always system-wide.</p></li>
 <li><p><strong>stderr_path</strong> (<em>pathlib.Path</em><em> or </em><em>str = None</em>) – The file to direct stderr. Defaults to “~/SEAMM/logs/&lt;name&gt;.out”</p></li>
 <li><p><strong>stdout_path</strong> (<em>pathlib.Path</em><em> or </em><em>str = None</em>) – The file to direct stdout. Defaults to “~/SEAMM/logs/&lt;name&gt;.out”</p></li>
 <li><p><strong>exist_ok</strong> (<em>bool = False</em>) – If True overwrite an existing file.</p></li>
+<li><p><strong>environment</strong> (<em>dict</em><em>(</em><em>str</em><em>, </em><em>str</em><em>) </em><em>= None</em>) – Environment variables to set for the service.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1310,6 +1311,36 @@ Only affects user agents, not daemons which are always system-wide.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.mac.create_service_bundle">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">create_service_bundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">python</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icons</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#create_service_bundle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.create_service_bundle" title="Link to this definition">¶</a></dt>
+<dd><p>Make an app bundle whose executable is the Python interpreter itself.</p>
+<p>A service run as <code class="docutils literal notranslate"><span class="pre">&lt;venv&gt;/bin/seamm-jobserver</span></code> shows up everywhere on macOS
+as <code class="docutils literal notranslate"><span class="pre">python3.12</span></code>, because the process is named after the program file that
+runs, the interpreter. With the interpreter inside <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.app</span></code> the process
+is called <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;</span></code> and Activity Monitor shows the bundle’s icon. uv’s
+Python is a single statically linked file, so a hard link is enough.</p>
+<p>The service must set <code class="docutils literal notranslate"><span class="pre">__PYVENV_LAUNCHER__</span></code> to the venv’s <code class="docutils literal notranslate"><span class="pre">bin/python</span></code> so
+that the interpreter uses the venv (CPython reads it at startup on macOS,
+as the python.org launcher does, and removes it from the environment).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> (<em>pathlib.Path</em>) – Where to put the bundle, e.g. <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/services</span></code>.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The bundle’s name, which is also the process name, e.g. SEAMM-JobServer.</p></li>
+<li><p><strong>python</strong> (<em>pathlib.Path</em><em> or </em><em>str</em>) – The venv’s <code class="docutils literal notranslate"><span class="pre">bin/python</span></code>; the interpreter it resolves to is linked.</p></li>
+<li><p><strong>icons</strong> (<em>pathlib.Path</em><em> or </em><em>str</em>) – The icns file for the bundle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The bundle’s executable, to run in place of <code class="docutils literal notranslate"><span class="pre">python</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.mac.delete_app">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">delete_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing_ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#delete_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.delete_app" title="Link to this definition">¶</a></dt>
 <dd><p>Delete the app given.</p>
@@ -1352,6 +1383,14 @@ launcher shipped in <code class="docutils literal notranslate"><span class="pre"
 <dt class="sig sig-object py" id="seamm_manager.mac.is_macho">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">is_macho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#is_macho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.is_macho" title="Link to this definition">¶</a></dt>
 <dd><p>Whether the file is a compiled Mach-O program (not a script).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.mac.refresh_service_bundle">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.mac.</span></span><span class="sig-name descname"><span class="pre">refresh_service_bundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/mac.html#refresh_service_bundle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.mac.refresh_service_bundle" title="Link to this definition">¶</a></dt>
+<dd><p>Re-link a service bundle’s interpreter if its environment’s has changed.</p>
+<p>Returns True if the link was remade (the service picks it up when it next
+restarts), False if it was current or the bundle is not a service bundle.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1484,6 +1523,15 @@ launcher shipped in <code class="docutils literal notranslate"><span class="pre"
 <dt class="sig sig-object py" id="seamm_manager.services.delete">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.delete" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.services.refresh_service_bundles">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">refresh_service_bundles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#refresh_service_bundles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.refresh_service_bundles" title="Link to this definition">¶</a></dt>
+<dd><p>Keep the macOS service bundles in step with their environments.</p>
+<p>Re-links a bundle’s interpreter when its environment’s Python has changed
+(effective at the service’s next restart), and points out services still
+run directly as <code class="docutils literal notranslate"><span class="pre">python3.12</span></code>. Returns the bundles re-linked.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.services.restart">
@@ -2141,10 +2189,12 @@ The installer/updater for SEAMM.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#seamm_manager.mac.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.mac.create_service_bundle"><code class="docutils literal notranslate"><span class="pre">create_service_bundle()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.delete_app"><code class="docutils literal notranslate"><span class="pre">delete_app()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.get_apps"><code class="docutils literal notranslate"><span class="pre">get_apps()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.install_launcher"><code class="docutils literal notranslate"><span class="pre">install_launcher()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.is_macho"><code class="docutils literal notranslate"><span class="pre">is_macho()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.mac.refresh_service_bundle"><code class="docutils literal notranslate"><span class="pre">refresh_service_bundle()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.mac.update_app"><code class="docutils literal notranslate"><span class="pre">update_app()</span></code></a></li>
 </ul>
 </li>
@@ -2165,6 +2215,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#module-seamm_manager.services">seamm_manager.services module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.services.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.services.refresh_service_bundles"><code class="docutils literal notranslate"><span class="pre">refresh_service_bundles()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.restart"><code class="docutils literal notranslate"><span class="pre">restart()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
@@ -2290,7 +2341,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

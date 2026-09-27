@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.mac &#8212; SEAMM Manager Step 2026.9.27.1 documentation</title>
+    <title>seamm_manager.mac &#8212; SEAMM Manager Step 2026.9.27.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=2246f11d"></script>
+    <script src="../../_static/documentation_options.js?v=15be7b77"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.mac</a></li> 
       </ul>
@@ -128,6 +128,107 @@
     <span class="k">with</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">as_file</span><span class="p">(</span><span class="n">launcher</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
     <span class="n">exe_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_link_interpreter</span><span class="p">(</span><span class="n">python</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Hard-link (or, across file systems, copy) the real interpreter to exe_path.</span>
+
+<span class="sd">    Returns True if the file was (re)made, False if it was already current.</span>
+<span class="sd">    """</span>
+    <span class="n">real</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">python</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">exe_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">exe_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_ino</span> <span class="o">==</span> <span class="n">real</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_ino</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">exe_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># A hard link shares the interpreter's mode, and its owner may not be us</span>
+        <span class="c1"># (e.g. root for a system Python), so it must not be chmod-ed.</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
+        <span class="n">exe_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o755</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="create_service_bundle">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.mac.create_service_bundle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_service_bundle</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">python</span><span class="p">,</span> <span class="n">icons</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make an app bundle whose executable is the Python interpreter itself.</span>
+
+<span class="sd">    A service run as ``&lt;venv&gt;/bin/seamm-jobserver`` shows up everywhere on macOS</span>
+<span class="sd">    as ``python3.12``, because the process is named after the program file that</span>
+<span class="sd">    runs, the interpreter. With the interpreter inside ``&lt;name&gt;.app`` the process</span>
+<span class="sd">    is called ``&lt;name&gt;`` and Activity Monitor shows the bundle's icon. uv's</span>
+<span class="sd">    Python is a single statically linked file, so a hard link is enough.</span>
+
+<span class="sd">    The service must set ``__PYVENV_LAUNCHER__`` to the venv's ``bin/python`` so</span>
+<span class="sd">    that the interpreter uses the venv (CPython reads it at startup on macOS,</span>
+<span class="sd">    as the python.org launcher does, and removes it from the environment).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    directory : pathlib.Path</span>
+<span class="sd">        Where to put the bundle, e.g. ``&lt;root&gt;/services``.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The bundle's name, which is also the process name, e.g. SEAMM-JobServer.</span>
+<span class="sd">    python : pathlib.Path or str</span>
+<span class="sd">        The venv's ``bin/python``; the interpreter it resolves to is linked.</span>
+<span class="sd">    icons : pathlib.Path or str</span>
+<span class="sd">        The icns file for the bundle.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pathlib.Path</span>
+<span class="sd">        The bundle's executable, to run in place of ``python``.</span>
+<span class="sd">    """</span>
+    <span class="n">contents_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.app"</span> <span class="o">/</span> <span class="s2">"Contents"</span>
+    <span class="n">macos_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"MacOS"</span>
+    <span class="n">resources_path</span> <span class="o">=</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"Resources"</span>
+    <span class="n">macos_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">resources_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">exe_path</span> <span class="o">=</span> <span class="n">macos_path</span> <span class="o">/</span> <span class="n">name</span>
+    <span class="n">_link_interpreter</span><span class="p">(</span><span class="n">python</span><span class="p">,</span> <span class="n">exe_path</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">icons</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(),</span> <span class="n">resources_path</span> <span class="o">/</span> <span class="s2">"SEAMM.icns"</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"CFBundleIdentifier"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"org.molssi.seamm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"CFBundleName"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">"CFBundleExecutable"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">"CFBundleIconFile"</span><span class="p">:</span> <span class="s2">"SEAMM.icns"</span><span class="p">,</span>
+        <span class="s2">"CFBundlePackageType"</span><span class="p">:</span> <span class="s2">"APPL"</span><span class="p">,</span>
+        <span class="s2">"CFBundleDevelopmentRegion"</span><span class="p">:</span> <span class="s2">"en"</span><span class="p">,</span>
+        <span class="c1"># A background agent: never in the Dock or the app switcher</span>
+        <span class="s2">"LSUIElement"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="c1"># Which environment this interpreter serves, for refresh_service_bundle</span>
+        <span class="s2">"SEAMMPython"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">python</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">with</span> <span class="p">(</span><span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"Info.plist"</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+        <span class="n">plistlib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">exe_path</span></div>
+
+
+
+<div class="viewcode-block" id="refresh_service_bundle">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.mac.refresh_service_bundle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh_service_bundle</span><span class="p">(</span><span class="n">bundle_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Re-link a service bundle's interpreter if its environment's has changed.</span>
+
+<span class="sd">    Returns True if the link was remade (the service picks it up when it next</span>
+<span class="sd">    restarts), False if it was current or the bundle is not a service bundle.</span>
+<span class="sd">    """</span>
+    <span class="n">contents_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">bundle_path</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"Contents"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="p">(</span><span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"Info.plist"</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">plistlib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">plistlib</span><span class="o">.</span><span class="n">InvalidFileException</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">python</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SEAMMPython"</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"CFBundleExecutable"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">python</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">python</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">_link_interpreter</span><span class="p">(</span><span class="n">python</span><span class="p">,</span> <span class="n">contents_path</span> <span class="o">/</span> <span class="s2">"MacOS"</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span></div>
 
 
 
@@ -339,6 +440,7 @@
         <span class="n">stderr_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">stdout_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">environment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Create a service on MacOS.</span>
 
@@ -373,6 +475,8 @@
 <span class="sd">            The file to direct stdout. Defaults to "~/SEAMM/logs/&lt;name&gt;.out"</span>
 <span class="sd">        exist_ok : bool = False</span>
 <span class="sd">            If True overwrite an existing file.</span>
+<span class="sd">        environment : dict(str, str) = None</span>
+<span class="sd">            Environment variables to set for the service.</span>
 <span class="sd">        """</span>
         <span class="n">identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">"."</span> <span class="o">+</span> <span class="n">name</span>
 
@@ -409,6 +513,8 @@
             <span class="s2">"StandardErrorPath"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">stderr_path</span><span class="p">),</span>
             <span class="s2">"StandardOutPath"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">stdout_path</span><span class="p">),</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="n">environment</span><span class="p">:</span>
+            <span class="n">plist</span><span class="p">[</span><span class="s2">"EnvironmentVariables"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">environment</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
         <span class="c1"># System-wide daemons need the username</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">user_agent</span><span class="p">:</span>
@@ -576,6 +682,20 @@
         <span class="k">return</span> <span class="n">status</span></div>
 
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wait_until_gone</span><span class="p">(</span><span class="n">service_target</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">15.0</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Wait for launchd to finish removing a job; True if it is gone."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+        <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout</span>
+        <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"launchctl print </span><span class="si">{</span><span class="n">service_target</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
 <div class="viewcode-block" id="ServiceManager.stop">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.mac.ServiceManager.stop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">service</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -587,7 +707,10 @@
                 <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"launchctl bootout </span><span class="si">{</span><span class="n">service_target</span><span class="si">}</span><span class="s2">"</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">pass</span>
+                    <span class="c1"># bootout returns before launchd has removed the job. Wait,</span>
+                    <span class="c1"># or an immediate start (services create --force) sees it</span>
+                    <span class="c1"># as still running and silently does nothing.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_wait_until_gone</span><span class="p">(</span><span class="n">service_target</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="ow">not</span> <span class="n">ignore_errors</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not stop the service '</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">':"</span><span class="p">)</span></div>
 </div>
@@ -623,7 +746,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.mac</a></li> 
       </ul>

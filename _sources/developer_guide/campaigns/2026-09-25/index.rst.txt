@@ -435,13 +435,10 @@ Retire the conda-era pieces, once the venv installations are trusted:
 
 Communicate:
 
-- The main docs site (molssi-seamm.github.io): replace the seamm-installer/conda
-  installation pages with the uv bootstrap (``curl -LsSf https://astral.sh/uv/install.sh
-  | sh``; ``uv tool install seamm-manager``; ``seamm-manager install --all``) and the
-  migration guide from seamm_manager's installation docs.
+- DONE 2026-09-27: the main docs site (molssi-seamm.github.io, PR #56, live) describes
+  the uv bootstrap and the SEAMM Manager, with a migration page.
 - A migration announcement to users.
-- Docs site PR molssi-seamm.github.io#56 (2026-09-27) rewrote the installation section,
-  tutorials and how-tos. Still to do there: *Managing the Dashboard* shows the old
+- Still to do on the docs site: *Managing the Dashboard* shows the old
   Dashboard's screens and the queue how-to runs ``seamm-dashboard``; both need the web
   interface's equivalents. The graphical page reuses the SEAMM Installer screenshots.
 
@@ -463,6 +460,8 @@ Loose ends found along the way:
   is unavailable and fall back to the cached list. Seen 2026-09-27 (15 s responses).
 - GitHub Pages was never enabled for seamm_manager, so its documentation 404'd; enabled
   2026-09-27 from the existing ``gh-pages`` branch.
+- DONE 2026-09-27 (seamm-manager 2026.9.27.1): the Mac apps' shell-script executable made
+  Apple Silicon Macs without Rosetta ask for it; replaced by a compiled universal launcher.
 
 Later by design:
 
