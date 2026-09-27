@@ -12,7 +12,24 @@ tab (now sharing ``create_service``), and the ``--latest`` simple-index fix; ver
 on paul.local with a bare trial root ``~/SEAMM_P3TEST`` beside production (removed
 afterwards). Loose end: ``datastore.ensure()`` skips a database file that exists but
 was never seeded (a JobServer started before seamm-datastore was installed creates an
-empty ``seamm.db``); it should seed an empty database.
+empty ``seamm.db``); it should seed an empty database. **Phase 5 done** (2026-09-27, this Mac): ``~/SEAMM_DEV`` runs from
+``~/SEAMM_DEV/venv`` with today's releases, the development tools, and gaussian_step
+and seamm_bsse (editable) from their checkouts; policy ``shared``, so its code ``.ini``
+files are copies of ``~/SEAMM``'s. Its database had never been stamped by alembic (its
+schema was exactly revision 7b24598d1fee): backed up to
+``seamm.db.bak-2026-09-27-before-uv-conversion``, stamped, then migrated to head by the
+install (2,075 jobs and 980 flowcharts, unchanged). ``jobserver-SEAMM_DEV`` and
+``webui-SEAMM_DEV`` (port 55155, 127.0.0.1) replaced ``dev_jobserver`` and ``dev_webui``
+through the same-root check; the conda-era ``dev_dashboard`` (port 55066) was restarted
+and still runs from ``seamm-dev``. Test job 3976 (From SMILES + MOPAC, local queue) ran
+as ``run_from_jobserver ... --root /Users/psaxe/SEAMM_DEV`` and finished. No shared
+conda environment, ``~/SEAMM`` ini file or database changed. Left for Paul: removing
+conda ``seamm-dev`` and the old ``SEAMM-dev.app`` / ``SEAMM-Installer-dev.app``; the
+other session's xnn_step working tree was not installed (it would replace today's
+release with an older base). Loose ends found: the macOS service listing counts
+LaunchAgents files that do not end in ``.plist`` (an editor backup showed up as a
+service); ``datastore.update`` should stamp an unversioned database whose schema
+matches a known revision instead of migrating it from scratch.
 
 **Phase 2 decision:** reference data follows the rule *the installation's own copy
 under its root if it has one, else the default installation's in ~/SEAMM*
