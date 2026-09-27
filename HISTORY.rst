@@ -1,7 +1,7 @@
 =======
 History
 =======
-(unreleased)
+2026.9.26.6 -- Bugfix: environment files no longer upgrade a machine's torch
     * Applying a plug-in's environment file to an existing conda environment no
       longer upgrades bare pip requirements. Conda runs a file's ``pip:`` section
       with ``pip install -U``, so ``torch`` in xnn_step's file was upgraded, in the
