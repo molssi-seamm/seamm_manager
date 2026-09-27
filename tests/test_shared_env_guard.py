@@ -15,6 +15,7 @@ class _Conda:
 class _Config:
     def __init__(self, data):
         self._data = data
+        self.path = "/nonexistent/test.ini"
 
     def get_values(self, section):
         return dict(self._data)
