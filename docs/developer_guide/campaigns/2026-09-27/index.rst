@@ -125,14 +125,17 @@ the installation being worked on.
 option instead (the ``local:`` data source becomes ``<root>/data``, and so on).
 
 **D5. Names follow the installation.** The installation's *tag* is empty for
-``~/SEAMM`` and otherwise the root's directory name (``SEAMM_DEV``, ``SEAMM_NEW``),
-overridable with ``--name``. Services become ``jobserver`` / ``jobserver-seamm_new``,
-apps ``SEAMM`` / ``SEAMM (SEAMM_NEW)``, bundles ``SEAMM-JobServer`` /
-``SEAMM-JobServer-SEAMM_NEW``, and the manager's window title shows the tag.
-``--development`` stays as shorthand for ``--root ~/SEAMM_DEV`` plus the development
-tools, and the existing ``dev_jobserver``, ``dev_webui`` and ``SEAMM-dev`` names are
-kept for ``~/SEAMM_DEV`` so nothing already set up breaks. ``services status --all``
-lists every installation's services.
+``~/SEAMM`` and otherwise the root's directory name, case kept (``SEAMM_DEV``,
+``SEAMM_NEW``), overridable with ``--name``. Services become ``jobserver`` /
+``jobserver-SEAMM_NEW``, apps ``SEAMM`` / ``SEAMM (SEAMM_NEW)``, bundles
+``SEAMM-JobServer`` / ``SEAMM-JobServer-SEAMM_NEW``, and the manager's window title
+shows the tag. ``--development`` stays, as shorthand for ``--root ~/SEAMM_DEV`` plus
+the development tools; ``~/SEAMM_DEV`` gets the same naming as any other root (no
+legacy ``dev_jobserver`` / ``SEAMM-dev`` names -- nothing outside the manager uses
+them). Instead, creating a service stops and replaces any existing SEAMM service
+started with the same ``--root``, whatever its name, so an old ``dev_jobserver`` (or
+a hand-made one) can never run beside the new one on the same datastore.
+``services status --all`` lists every installation's services.
 
 **D6. A code-environment policy per installation**, recorded in
 ``<root>/seamm.ini`` (``[SEAMM] code-environments``):
@@ -206,14 +209,19 @@ Risks
   code environments that other work also uses. Nothing here changes a single-root
   installation, and it stays hands-off until Paul asks.
 
-Open questions
---------------
+Decisions (Paul, 2026-09-27)
+----------------------------
 
-1. The default policy for new non-default roots: ``shared`` (proposed) or ask at
-   install time?
-2. Tag format for names: the directory name as is (``SEAMM_NEW``), or lower-case
-   (``seamm_new``) for service labels and as is for apps?
-3. Keep ``--development`` long term, or replace it with ``--root ~/SEAMM_DEV`` plus
-   ``install development``?
-4. Should ``update --all`` refuse to run the plug-ins' installers in a ``shared``
-   installation at all, or run them in check-only mode to report missing codes?
+1. New non-default roots default to the ``shared`` code-environment policy.
+2. Tags keep the directory's case (``SEAMM_NEW``) in service, app and bundle names.
+3. ``--development`` stays.
+4. ``update --all`` in a ``shared`` installation runs the plug-ins' installers in a
+   report-only mode: it reports missing codes and never creates or updates a conda
+   environment.
+5. No legacy ``dev_`` names; replace any service with the same ``--root`` instead
+   (D5).
+
+Also for phase 3's manager release: ``update --latest`` asked PyPI's JSON API, which
+on 2026-09-27 returned a stale CDN copy to Python's ``requests`` (``X-Cache: MISS,
+HIT, HIT``) while curl and the simple index saw the new release. Use the simple
+(PEP 691) index that uv installs from instead, with ``Cache-Control: no-cache``.
