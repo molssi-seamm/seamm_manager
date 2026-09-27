@@ -1,6 +1,21 @@
 =======
 History
 =======
+2026.9.27.2 -- The Mac services show up by name, with the SEAMM icon
+    * On macOS the JobServer and the web interface showed up in Activity Monitor and
+      ``ps`` as ``python3.12``. They now run as ``SEAMM-JobServer`` and ``SEAMM-WebUI``
+      with the SEAMM icon: ``services create`` puts the environment's Python
+      interpreter in a small background app under ``~/SEAMM/services`` (a hard link,
+      so no extra disk space) and runs the service with it. Jobs are started exactly as
+      before.
+    * Existing services keep working as they are. ``seamm-manager update`` says how to
+      convert them (``seamm-manager services create --force jobserver webui``, when no
+      jobs are running), and keeps the bundles' interpreter in step with the
+      environment.
+    * ``services create --force`` sometimes left the new service stopped, without any
+      message: launchd was still removing the old one when it was started. Stopping a
+      service now waits until launchd has finished.
+
 2026.9.27.1 -- Bugfix: the Mac apps no longer ask for Rosetta
     * On an Apple Silicon Mac without Rosetta, starting SEAMM or SEAMM-Manager from its
       app showed a dialog asking to install Rosetta. The app's executable was a shell

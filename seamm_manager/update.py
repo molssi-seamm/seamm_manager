@@ -118,6 +118,14 @@ def update():
     except Exception as e:
         print(f"Could not refresh the desktop apps: {e}")
 
+    # And the macOS service bundles (their interpreter, and old-style services)
+    try:
+        from .services import refresh_service_bundles
+
+        refresh_service_bundles()
+    except Exception as e:
+        print(f"Could not refresh the service bundles: {e}")
+
     final_version = {p: package_info(p)[0] for p in service_packages}
     # And restart any services that need it
     service_name = "dev_jobserver" if my.development else "jobserver"

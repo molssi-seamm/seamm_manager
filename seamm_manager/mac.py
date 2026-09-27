@@ -87,6 +87,101 @@ def install_launcher(contents_path, name, script):
     exe_path.chmod(0o755)
 
 
+def _link_interpreter(python, exe_path):
+    """Hard-link (or, across file systems, copy) the real interpreter to exe_path.
+
+    Returns True if the file was (re)made, False if it was already current.
+    """
+    real = Path(python).resolve()
+    if exe_path.exists():
+        if exe_path.stat().st_ino == real.stat().st_ino:
+            return False
+        exe_path.unlink()
+    try:
+        # A hard link shares the interpreter's mode, and its owner may not be us
+        # (e.g. root for a system Python), so it must not be chmod-ed.
+        os.link(real, exe_path)
+    except OSError:
+        shutil.copy2(real, exe_path)
+        exe_path.chmod(0o755)
+    return True
+
+
+def create_service_bundle(directory, name, python, icons):
+    """Make an app bundle whose executable is the Python interpreter itself.
+
+    A service run as ``<venv>/bin/seamm-jobserver`` shows up everywhere on macOS
+    as ``python3.12``, because the process is named after the program file that
+    runs, the interpreter. With the interpreter inside ``<name>.app`` the process
+    is called ``<name>`` and Activity Monitor shows the bundle's icon. uv's
+    Python is a single statically linked file, so a hard link is enough.
+
+    The service must set ``__PYVENV_LAUNCHER__`` to the venv's ``bin/python`` so
+    that the interpreter uses the venv (CPython reads it at startup on macOS,
+    as the python.org launcher does, and removes it from the environment).
+
+    Parameters
+    ----------
+    directory : pathlib.Path
+        Where to put the bundle, e.g. ``<root>/services``.
+    name : str
+        The bundle's name, which is also the process name, e.g. SEAMM-JobServer.
+    python : pathlib.Path or str
+        The venv's ``bin/python``; the interpreter it resolves to is linked.
+    icons : pathlib.Path or str
+        The icns file for the bundle.
+
+    Returns
+    -------
+    pathlib.Path
+        The bundle's executable, to run in place of ``python``.
+    """
+    contents_path = Path(directory) / f"{name}.app" / "Contents"
+    macos_path = contents_path / "MacOS"
+    resources_path = contents_path / "Resources"
+    macos_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+    resources_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+    exe_path = macos_path / name
+    _link_interpreter(python, exe_path)
+    shutil.copyfile(Path(icons).expanduser(), resources_path / "SEAMM.icns")
+
+    data = {
+        "CFBundleIdentifier": f"org.molssi.seamm.{name}",
+        "CFBundleName": name,
+        "CFBundleExecutable": name,
+        "CFBundleIconFile": "SEAMM.icns",
+        "CFBundlePackageType": "APPL",
+        "CFBundleDevelopmentRegion": "en",
+        # A background agent: never in the Dock or the app switcher
+        "LSUIElement": True,
+        # Which environment this interpreter serves, for refresh_service_bundle
+        "SEAMMPython": str(python),
+    }
+    with (contents_path / "Info.plist").open(mode="wb") as fd:
+        plistlib.dump(data, fd)
+    return exe_path
+
+
+def refresh_service_bundle(bundle_path):
+    """Re-link a service bundle's interpreter if its environment's has changed.
+
+    Returns True if the link was remade (the service picks it up when it next
+    restarts), False if it was current or the bundle is not a service bundle.
+    """
+    contents_path = Path(bundle_path) / "Contents"
+    try:
+        with (contents_path / "Info.plist").open(mode="rb") as fd:
+            data = plistlib.load(fd)
+    except (OSError, plistlib.InvalidFileException):
+        return False
+    python = data.get("SEAMMPython")
+    name = data.get("CFBundleExecutable")
+    if python is None or name is None or not Path(python).exists():
+        return False
+    return _link_interpreter(python, contents_path / "MacOS" / name)
+
+
 def create_app(
     exe_path,
     *args,
@@ -279,6 +374,7 @@ class ServiceManager:
         stderr_path=None,
         stdout_path=None,
         exist_ok=False,
+        environment=None,
     ):
         """Create a service on MacOS.
 
@@ -313,6 +409,8 @@ class ServiceManager:
             The file to direct stdout. Defaults to "~/SEAMM/logs/<name>.out"
         exist_ok : bool = False
             If True overwrite an existing file.
+        environment : dict(str, str) = None
+            Environment variables to set for the service.
         """
         identifier = self.prefix + "." + name
 
@@ -349,6 +447,8 @@ class ServiceManager:
             "StandardErrorPath": str(stderr_path),
             "StandardOutPath": str(stdout_path),
         }
+        if environment:
+            plist["EnvironmentVariables"] = {k: str(v) for k, v in environment.items()}
 
         # System-wide daemons need the username
         if not user_agent:
@@ -491,6 +591,20 @@ class ServiceManager:
             status["exists"] = False
         return status
 
+    @staticmethod
+    def _wait_until_gone(service_target, timeout=15.0, interval=0.2):
+        """Wait for launchd to finish removing a job; True if it is gone."""
+        import time
+
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            cmd = f"launchctl print {service_target}"
+            result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+            if result.returncode != 0:
+                return True
+            time.sleep(interval)
+        return False
+
     def stop(self, service, ignore_errors=False):
         services = self.list()
         if service in services:
@@ -500,6 +614,9 @@ class ServiceManager:
                 cmd = f"launchctl bootout {service_target}"
                 result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
                 if result.returncode == 0:
-                    pass
+                    # bootout returns before launchd has removed the job. Wait,
+                    # or an immediate start (services create --force) sees it
+                    # as still running and silently does nothing.
+                    self._wait_until_gone(service_target)
                 elif not ignore_errors:
                     raise RuntimeError(f"Could not stop the service '{service}':")
