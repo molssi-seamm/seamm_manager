@@ -1,6 +1,15 @@
 =======
 History
 =======
+2026.9.27 -- update --latest picks up a same-day release from PyPI
+    * ``seamm-manager update`` takes the available version of each package from the
+      package list published nightly, so a release made today was reported as
+      "Everything is up to date" until the next day, and ``--no-constraints`` did not
+      help. The new ``--latest`` option asks PyPI for each package's newest release,
+      pins it exactly when it is newer than the list's, and updates without the lock
+      file (which would pin yesterday's version). If PyPI cannot be reached the
+      package list is used as before.
+
 2026.9.26.6 -- Bugfix: environment files no longer upgrade a machine's torch
     * Applying a plug-in's environment file to an existing conda environment no
       longer upgrades bare pip requirements. Conda runs a file's ``pip:`` section

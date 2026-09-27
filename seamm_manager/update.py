@@ -18,6 +18,7 @@ from .util import (
     sync_manager,
     get_metadata,
     package_info,
+    pypi_latest,
     run_plugin_installer,
     write_environment_snapshot,
 )
@@ -65,6 +66,16 @@ def setup(parser):
         ),
     )
     subparser.add_argument(
+        "--latest",
+        action="store_true",
+        help=(
+            "Ask PyPI for the newest release of each package rather than trusting "
+            "the nightly package list, so a release made today is picked up. "
+            "Implies --no-constraints, since the lock file pins yesterday's "
+            "versions."
+        ),
+    )
+    subparser.add_argument(
         "modules",
         nargs="*",
         default=None,
@@ -90,10 +101,11 @@ def update():
     service_packages = ("seamm-datastore", "seamm-jobserver")
     initial_version = {p: package_info(p)[0] for p in service_packages}
 
+    latest = getattr(my.options, "latest", False)
     if my.options.all:
-        update_packages("all", gui_only=my.options.gui_only)
+        update_packages("all", gui_only=my.options.gui_only, latest=latest)
     else:
-        update_packages(my.options.modules, gui_only=my.options.gui_only)
+        update_packages(my.options.modules, gui_only=my.options.gui_only, latest=latest)
 
     if my.development:
         update_development_environment()
@@ -124,8 +136,17 @@ def update():
     return 0
 
 
-def update_packages(to_update, gui_only=False, progress=None, update_text=None):
-    """Update SEAMM components and plug-ins."""
+def update_packages(
+    to_update, gui_only=False, progress=None, update_text=None, latest=False
+):
+    """Update SEAMM components and plug-ins.
+
+    The version to update to normally comes from the nightly package list, and
+    the install is constrained to the matching lock file. With ``latest`` each
+    package's newest release on PyPI is used when it is newer than the list's,
+    pinned exactly, and the lock is not applied (it would pin the older
+    version); PyPI being unreachable falls back to the list for that package.
+    """
     metadata = get_metadata()
 
     if progress is not None:
@@ -159,6 +180,13 @@ def update_packages(to_update, gui_only=False, progress=None, update_text=None):
 
         installed_version = Version(info[package]["version"])
         pinned = "pinned" in packages[package] and packages[package]["pinned"]
+        if latest:
+            on_pypi = pypi_latest(package)
+            if on_pypi is None:
+                print(f"Could not reach PyPI for {package}; using the package list.")
+            elif Version(on_pypi) > available:
+                available = Version(on_pypi)
+                pinned = True
         spec = f"{package}=={available}" if pinned else package
 
         ptype = packages[package]["type"]
@@ -174,8 +202,10 @@ def update_packages(to_update, gui_only=False, progress=None, update_text=None):
 
     if len(specs) > 0:
         retire_installer(specs, info)
-        lock = constraints()
-        if lock is None:
+        lock = None if latest else constraints()
+        if latest:
+            print("Updating with uv, unconstrained (--latest).")
+        elif lock is None:
             print("Updating with uv (no constraints).")
         else:
             print(f"Updating with uv, constrained to the published lock {lock.name}.")

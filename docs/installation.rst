@@ -53,7 +53,8 @@ Updating
 
 updates the manager itself, every installed SEAMM package (to the versions in the
 current lock file), and restarts the JobServer if it needs to be. ``--no-constraints``
-ignores the lock and takes the newest releases.
+ignores the lock and takes the newest releases. ``--latest`` also asks PyPI directly, so
+a release made today is picked up rather than waiting for the nightly list.
 
 The environment
 ---------------

@@ -5,6 +5,7 @@
 from datetime import datetime
 import json
 from packaging.version import Version
+import requests
 from pathlib import Path
 import subprocess
 
@@ -143,6 +144,26 @@ def retire_installer(specs, installed):
         my.uv.uninstall("seamm-installer")
         return True
     return False
+
+
+def pypi_latest(package, timeout=10):
+    """The newest release of ``package`` on PyPI, or None if it cannot be found.
+
+    Asks PyPI's JSON API directly, so a release made after the nightly package
+    list is visible at once. Network problems, an unknown project or an odd
+    response give None rather than an error: the caller falls back to the
+    package list.
+    """
+    url = f"https://pypi.org/pypi/{package}/json"
+    try:
+        response = requests.get(url, timeout=timeout)
+        if response.status_code != 200:
+            return None
+        version = response.json()["info"]["version"]
+        Version(version)  # a sanity check that it parses
+        return version
+    except Exception:
+        return None
 
 
 def constraints():
