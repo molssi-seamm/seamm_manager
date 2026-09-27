@@ -1,10 +1,28 @@
 2026-09-27 -- Several SEAMM installations side by side
 ======================================================
 
-Status (2026-09-27): **phase 1 mostly released.** seamm_util 2026.9.27 (D1, default
-root) and seamm_manager 2026.9.27.4 (D3, root to the installers) are released;
-seamm_jobserver#23 (D2, ``--root`` to jobs) is in review. Each was verified on
-paul.local. The decisions under *Open
+Status (2026-09-27): **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
+2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 in
+progress:** seamm_util#74 (``current_root``, ``installation_path``) and seamm_exec#32
+(D8) are open with CI green; the step changes are committed locally and wait for
+seamm_util 2026.9.27.1, which they require: seamm (data path, dashboards.ini, Open
+dialog), vasp_step, forcefield_step, xnn_step (branch ``phase2-root``, a worktree, as
+``dev`` holds another session's work) and seamm_thermochemistry.
+
+**Phase 2 decision:** reference data follows the rule *the installation's own copy
+under its root if it has one, else the default installation's in ~/SEAMM*
+(``seamm_util.installation_path``), so a second installation works without copying
+the VASP potentials, forcefields, models or the thermochemistry database, and can
+still override any of them. Left as they are, after checking: dftbplus_step (its
+``~/SEAMM`` path is only a maintainer script's default; the Slater-Koster files ship
+in the package); atomic_charges_step (the directory is used only if it holds the
+DDEC6 densities, else the chargemol conda environment's copy); comments and messages
+in lammps_step and orca_step; seamm_webui's own ``--root`` default (its services always
+pass ``--root``). Found beyond the plan: seamm's ``Flowchart.data_path`` and
+``dashboards.ini`` lookup, spelled ``Path.home() / "SEAMM"`` rather than ``~/SEAMM``.
+Loose end: seamm_thermochemistry's installer ``update`` re-downloads the Zenodo
+database over the configured file without checking for local changes (it overwrote
+the Mac's curated copy on 2026-09-27; Paul chose to keep the Zenodo version). The decisions under *Open
 questions* are Paul's and are needed before phase 3.
 
 **Caution for the release of seamm_jobserver#23:** a JobServer whose root has no code
