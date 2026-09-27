@@ -1,9 +1,10 @@
 2026-09-27 -- Several SEAMM installations side by side
 ======================================================
 
-Status (2026-09-27): **phase 1 in review.** PRs open, CI green, each verified on
-paul.local: seamm_util#73 (D1, default root), seamm_jobserver#23 (D2, ``--root`` to
-jobs), seamm_manager#12 (D3, root to the installers). The decisions under *Open
+Status (2026-09-27): **phase 1 mostly released.** seamm_util 2026.9.27 (D1, default
+root) and seamm_manager 2026.9.27.4 (D3, root to the installers) are released;
+seamm_jobserver#23 (D2, ``--root`` to jobs) is in review. Each was verified on
+paul.local. The decisions under *Open
 questions* are Paul's and are needed before phase 3.
 
 **Caution for the release of seamm_jobserver#23:** a JobServer whose root has no code
