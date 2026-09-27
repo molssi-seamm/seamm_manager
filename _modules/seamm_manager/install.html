@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
+    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>
@@ -121,6 +121,17 @@
         <span class="n">help</span><span class="o">=</span><span class="s2">"Python version if the environment has to be created (default 3.12)"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--code-environments"</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s2">"own"</span><span class="p">,</span> <span class="s2">"shared"</span><span class="p">,</span> <span class="s2">"prefixed"</span><span class="p">),</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"How this installation gets the external codes' conda environments: "</span>
+            <span class="s2">"'shared' uses the default installation's (the default for any root "</span>
+            <span class="s2">"but ~/SEAMM), 'own' creates and updates them, 'prefixed' makes its "</span>
+            <span class="s2">"own copies named seamm-&lt;name&gt;-&lt;code&gt;."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--rerun-installers"</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
@@ -153,6 +164,33 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]:</span>
             <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">set_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+    <span class="c1"># The installation's code-environment policy, recorded before any plug-in's</span>
+    <span class="c1"># installer runs, since they honour it.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">POLICY_FILE</span><span class="p">,</span>
+        <span class="n">code_environment_policy</span><span class="p">,</span>
+        <span class="n">is_default_root</span><span class="p">,</span>
+        <span class="n">set_code_environment_policy</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">choice</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"code_environments"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">choice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">set_code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">choice</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_default_root</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="n">POLICY_FILE</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">set_code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">"shared"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="n">policy</span> <span class="o">=</span> <span class="n">code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">policy</span> <span class="o">==</span> <span class="s2">"shared"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"This installation shares the default installation's codes: plug-ins "</span>
+            <span class="s2">"will not create or update conda environments here."</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">policy</span> <span class="o">==</span> <span class="s2">"prefixed"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"This installation has its own copies of the codes' environments."</span><span class="p">)</span>
 
     <span class="n">environment</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">python</span><span class="p">)</span>
 
@@ -364,7 +402,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=de37ebba"></script>
+    <script src="_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -136,7 +136,28 @@ as an older <code class="docutils literal notranslate"><span class="pre">dev_job
 <p>Reference data – VASP potentials, <code class="docutils literal notranslate"><span class="pre">local:</span></code> forcefields and models, the
 thermochemistry database, <code class="docutils literal notranslate"><span class="pre">dashboards.ini</span></code> – is taken from the installation’s own
 root if it has a copy, else from <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, so a new installation works without
-copying it. The codes’ conda environments are shared by name between installations.</p>
+copying it.</p>
+<p>The external codes’ conda environments (<code class="docutils literal notranslate"><span class="pre">seamm-lammps</span></code>, <code class="docutils literal notranslate"><span class="pre">seamm-mopac</span></code>, …) are
+governed by the installation’s <em>code-environment policy</em>, kept in
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> and shown by <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">show</span></code>:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">own</span></code></dt><dd><p>The plug-ins create and update the codes’ environments. Always the case for
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">shared</span></code></dt><dd><p>The default for any other installation. Installing a plug-in copies <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">&lt;code&gt;.ini</span></code> into the root, so the code runs from the same environment; installing
+or updating never creates, updates or removes a conda environment, and a code that
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> lacks is reported instead. So a trial installation cannot change the
+codes production uses.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">prefixed</span></code></dt><dd><p>The installation gets its own copies, named <code class="docutils literal notranslate"><span class="pre">seamm-&lt;name&gt;-&lt;code&gt;</span></code> (e.g.
+<code class="docutils literal notranslate"><span class="pre">seamm-SEAMM_NEW-lammps</span></code>), for trying new versions of the codes themselves.</p>
+</dd>
+</dl>
+<p>Choose it with <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--root</span> <span class="pre">&lt;root&gt;</span> <span class="pre">install</span> <span class="pre">--code-environments</span> <span class="pre">&lt;policy&gt;</span></code>.
+The plug-ins’ installers honour it through the seamm-manager in the installation’s
+own environment; if that copy is too old to know about policies, the manager skips
+their install, update and uninstall steps rather than risk the shared environments.</p>
 </section>
 <section id="where-things-are">
 <h2>Where things are<a class="headerlink" href="#where-things-are" title="Link to this heading">¶</a></h2>
@@ -223,7 +244,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

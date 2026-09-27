@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>seamm_manager.util &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
+    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>
@@ -351,6 +351,30 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_installers_honour_policy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Whether the plug-ins' installers will respect this installation's policy.</span>
+
+<span class="sd">    The installers use the seamm-manager in the installation's own environment, not</span>
+<span class="sd">    this one. In an installation that does not own its codes (policy ``shared`` or</span>
+<span class="sd">    ``prefixed``), an older copy there would create or update the shared conda</span>
+<span class="sd">    environments. True for the default installation, or when that copy has the</span>
+<span class="sd">    policy code (checked by importing it, not by comparing versions).</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="n">code_environment_policy</span>
+
+    <span class="k">if</span> <span class="n">code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"own"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">python</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">python</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"import seamm_manager.policy"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span>
+
+
 <div class="viewcode-block" id="run_plugin_installer">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.util.run_plugin_installer">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_plugin_installer</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -376,6 +400,17 @@
     <span class="n">installer</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">-installer"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">installer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">my</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"    no local installer, returning None"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="n">args</span>
+        <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"install"</span><span class="p">,</span> <span class="s2">"update"</span><span class="p">,</span> <span class="s2">"uninstall"</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">_installers_honour_policy</span><span class="p">())</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"   Skipped the installer for </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">: this installation does not "</span>
+            <span class="s2">"manage its own codes, but its environment has a seamm-manager too old "</span>
+            <span class="s2">"to know that. Run 'seamm-manager update seamm-manager' for it first."</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
@@ -452,7 +487,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.util</a></li> 
       </ul>

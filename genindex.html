@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>Index &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=de37ebba"></script>
+    <script src="_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>  
@@ -106,6 +106,10 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.check_exe_configuration_file">check_exe_configuration_file() (seamm_manager.installer_base.InstallerBase method)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.code_environment_policy">code_environment_policy() (in module seamm_manager.policy)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.code_environments">code_environments (seamm_manager.installer_base.InstallerBase property)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.naming.compute_tag">compute_tag() (in module seamm_manager.naming)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda">Conda (class in seamm_manager.conda)</a>
@@ -116,10 +120,10 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.configuration">configuration (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.util.constraints">constraints() (in module seamm_manager.util)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.util.constraints">constraints() (in module seamm_manager.util)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.apps.create">create() (in module seamm_manager.apps)</a>
 
       <ul>
@@ -310,6 +314,8 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase">InstallerBase (class in seamm_manager.installer_base)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.is_default_root">is_default_root() (in module seamm_manager.policy)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.is_installed">is_installed (seamm_manager.conda.Conda property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.linux.ServiceManager.is_installed">is_installed() (seamm_manager.linux.ServiceManager method)</a>
@@ -410,6 +416,8 @@
 </li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.pip">seamm_manager.pip</a>
 </li>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.policy">seamm_manager.policy</a>
+</li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.services">seamm_manager.services</a>
 </li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.show">seamm_manager.show</a>
@@ -453,15 +461,17 @@
         <li><a href="api/seamm_manager.html#seamm_manager.mac.ServiceManager.paths">(seamm_manager.mac.ServiceManager property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.pip.Pip">Pip (class in seamm_manager.pip)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.pip">pip (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.gui.GUI.preferences">preferences() (seamm_manager.gui.GUI method)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.prefix">prefix (seamm_manager.conda.Conda property)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.prefixed_environment">prefixed_environment() (in module seamm_manager.policy)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.pypi_latest">pypi_latest() (in module seamm_manager.util)</a>
 </li>
@@ -661,6 +671,13 @@
 </li>
       </ul></li>
       <li>
+    seamm_manager.policy
+
+      <ul>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.policy">module</a>
+</li>
+      </ul></li>
+      <li>
     seamm_manager.services
 
       <ul>
@@ -726,6 +743,8 @@
         <li><a href="api/seamm_manager.html#seamm_manager.mac.ServiceManager">(class in seamm_manager.mac)</a>
 </li>
       </ul></li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.set_code_environment_policy">set_code_environment_policy() (in module seamm_manager.policy)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.set_metadata">set_metadata() (in module seamm_manager.util)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration.set_value">set_value() (seamm_manager.configuration.Configuration method)</a>
@@ -755,6 +774,8 @@
 </li>
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.setup_parser">setup_parser() (seamm_manager.installer_base.InstallerBase method)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.shared_codes">shared_codes (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.apps.show">show() (in module seamm_manager.apps)</a>
 
@@ -924,7 +945,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.policy &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.policy</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.policy</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""How an installation gets the external codes' conda environments.</span>
+
+<span class="sd">Every installation on a machine would otherwise share the codes' conda environments</span>
+<span class="sd">by name (``seamm-lammps``, ``seamm-mopac``, ...), so installing or updating plug-ins</span>
+<span class="sd">in a trial installation could change production's codes. Each installation therefore</span>
+<span class="sd">has a *code-environment policy*, kept in ``&lt;root&gt;/installation.ini``:</span>
+
+<span class="sd">own</span>
+<span class="sd">    The plug-ins create and update the codes' environments, as always. The default,</span>
+<span class="sd">    and the only choice, for the default installation ``~/SEAMM``.</span>
+<span class="sd">shared</span>
+<span class="sd">    The plug-ins never create, update or remove a conda environment. Installing a</span>
+<span class="sd">    plug-in copies the default installation's ``&lt;code&gt;.ini`` into this root, so the</span>
+<span class="sd">    code runs from the same environment, and reports a code the default installation</span>
+<span class="sd">    does not have; updating only reports. The default for any other root.</span>
+<span class="sd">prefixed</span>
+<span class="sd">    The installation has its own copies, named ``seamm-&lt;tag&gt;-&lt;code&gt;`` (e.g.</span>
+<span class="sd">    ``seamm-SEAMM_NEW-lammps``), for testing new versions of the codes themselves.</span>
+
+<span class="sd">(The file is not ``&lt;root&gt;/seamm.ini``: seamm_util still moves an old</span>
+<span class="sd">``~/SEAMM/seamm.ini`` into ``~/.seamm.d``.)</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">DEFAULT_ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"~/SEAMM"</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<span class="n">POLICY_FILE</span> <span class="o">=</span> <span class="s2">"installation.ini"</span>
+<span class="n">SECTION</span> <span class="o">=</span> <span class="s2">"installation"</span>
+<span class="n">KEY</span> <span class="o">=</span> <span class="s2">"code-environments"</span>
+<span class="n">POLICIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"own"</span><span class="p">,</span> <span class="s2">"shared"</span><span class="p">,</span> <span class="s2">"prefixed"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_default_root">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.is_default_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_default_root</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether `root` is the default installation, ~/SEAMM."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">==</span> <span class="n">DEFAULT_ROOT</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="code_environment_policy">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.code_environment_policy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">code_environment_policy</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The installation's code-environment policy: own, shared or prefixed."""</span>
+    <span class="k">if</span> <span class="n">is_default_root</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"own"</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">KEY</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">POLICIES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="s2">"shared"</span></div>
+
+
+
+<div class="viewcode-block" id="set_code_environment_policy">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.set_code_environment_policy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_code_environment_policy</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">policy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record the installation's code-environment policy."""</span>
+    <span class="k">if</span> <span class="n">policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POLICIES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The policy must be one of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">POLICIES</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_default_root</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="ow">and</span> <span class="n">policy</span> <span class="o">!=</span> <span class="s2">"own"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The default installation ~/SEAMM always manages the codes' environments "</span>
+            <span class="s2">"itself ('own')."</span>
+        <span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="n">SECTION</span><span class="p">):</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="n">SECTION</span><span class="p">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">KEY</span><span class="p">,</span> <span class="n">policy</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="prefixed_environment">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.prefixed_environment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prefixed_environment</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The installation's own copy of a code environment: seamm-&lt;tag&gt;-&lt;code&gt;."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">name</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"seamm-"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"seamm-</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'seamm-'</span><span class="p">):]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.policy</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

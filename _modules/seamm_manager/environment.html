@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=de37ebba"></script>
+    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
@@ -130,6 +130,9 @@
     <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="n">seamm</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">packages</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"seamm"</span> <span class="ow">in</span> <span class="n">k</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"molsystem"</span><span class="p">}</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Packages:    </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">packages</span><span class="p">)</span><span class="si">}</span><span class="s2"> installed, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seamm</span><span class="p">)</span><span class="si">}</span><span class="s2"> SEAMM"</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="n">code_environment_policy</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Codes:       </span><span class="si">{</span><span class="n">code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2"> conda environments"</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
@@ -196,7 +199,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>

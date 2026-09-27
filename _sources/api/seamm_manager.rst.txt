@@ -132,6 +132,14 @@ seamm\_manager.pip module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.policy module
+----------------------------
+
+.. automodule:: seamm_manager.policy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.services module
 ------------------------------
 

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>2026-09-27 – Several SEAMM installations side by side &#8212; SEAMM Manager Step 2026.9.27.5 documentation</title>
+    <title>2026-09-27 – Several SEAMM installations side by side &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../../_static/documentation_options.js?v=de37ebba"></script>
+    <script src="../../../_static/documentation_options.js?v=e9cf61d0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../index.html" accesskey="U">Campaigns</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
@@ -52,7 +52,7 @@
 <code class="docutils literal notranslate"><span class="pre">installation_path</span></code>), seamm_exec 2026.9.27 (D8), seamm 2026.9.27 (data path,
 dashboards.ini, Open dialog), vasp_step 2026.9.27, forcefield_step 2026.9.27,
 xnn_step 2026.9.27.1 and seamm_thermochemistry 2026.9.27. Phases 3 and 4 need the
-decisions below. <strong>Phase 3 in review</strong> (seamm_manager 2026.9.27.5): D5 names, D7
+decisions below. <strong>Phase 3 released</strong> (seamm_manager 2026.9.27.5, on this Mac and paul.local) <strong>Phase 4 in review</strong> (seamm_manager 2026.9.27.6, seamm_thermochemistry 2026.9.27.1): D6 with <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> (not <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/seamm.ini</span></code>, which seamm_util still migrates into <code class="docutils literal notranslate"><span class="pre">~/.seamm.d</span></code>), report-only installers in <code class="docutils literal notranslate"><span class="pre">shared</span></code> roots, and a tool-side guard when the root’s venv manager predates the policy. A first live test on paul.local ran the released manager by mistake and recreated its eight shared conda environments (repaired; see the phase 4 notes in memory); the repeated test, three runs in a trial root, left every shared environment, <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> ini file and the database unchanged.: D5 names, D7
 ports, same-root replacement, <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">--all</span></code>, the GUI’s window title and Services
 tab (now sharing <code class="docutils literal notranslate"><span class="pre">create_service</span></code>), and the <code class="docutils literal notranslate"><span class="pre">--latest</span></code> simple-index fix; verified
 on paul.local with a bare trial root <code class="docutils literal notranslate"><span class="pre">~/SEAMM_P3TEST</span></code> beside production (removed
@@ -328,7 +328,7 @@ on 2026-09-27 returned a stale CDN copy to Python’s <code class="docutils lite
         <li class="right" >
           <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
