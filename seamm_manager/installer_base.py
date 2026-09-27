@@ -154,6 +154,60 @@ class InstallerBase(object):
             self._root = Path(value).expanduser()
         return self._root
 
+    @property
+    def code_environments(self):
+        """This installation's code-environment policy: own, shared or prefixed.
+
+        See seamm_manager.policy. In a ``shared`` installation the plug-ins never
+        create, update or remove a conda environment.
+        """
+        from .policy import code_environment_policy
+
+        return code_environment_policy(self.root)
+
+    @property
+    def shared_codes(self):
+        """Whether this installation uses the default installation's codes."""
+        return self.code_environments == "shared"
+
+    def _use_shared_code(self):
+        """Point this installation at the default installation's copy of the code.
+
+        Copies ``~/SEAMM/<code>.ini`` into this root if the root has none, and
+        reports whether the conda environment it names exists. Never touches conda.
+        """
+        from .policy import DEFAULT_ROOT
+
+        name = self.init_file_name
+        own = self.root / name
+        default = DEFAULT_ROOT / name
+        if not own.exists():
+            if not default.exists():
+                print(
+                    f"    This installation shares the default installation's codes, "
+                    f"which has no {name}: install the code there first "
+                    f"(seamm-manager install {self.section}), or give this "
+                    "installation its own codes (--code-environments own or prefixed)."
+                )
+                return False
+            own.parent.mkdir(parents=True, exist_ok=True)
+            own.write_text(default.read_text())
+            print(f"    Using the default installation's configuration {default}.")
+        self.exe_config.path = own
+        data = self.exe_config.get_values("local")
+        environment = data.get("conda-environment", "")
+        if data.get("installation") == "conda" and environment:
+            if self.conda.exists(environment):
+                print(f"    Shares the Conda environment '{environment}'.")
+                return True
+            print(
+                f"!   The Conda environment '{environment}' named in {own} does not "
+                "exist. Install the code in the default installation first."
+            )
+            return False
+        print(f"    Uses the code as configured in {own}.")
+        return True
+
     def ask_yes_no(self, text, default=None):
         """Ask a simple yes/no question, returning True/False.
 
@@ -580,6 +634,16 @@ class InstallerBase(object):
         VASP, ... are licensed manual installations) has no
         ``environment_file``; say so instead of failing.
         """
+        if self.shared_codes:
+            self._use_shared_code()
+            return
+        if self.code_environments == "prefixed" and self.environment:
+            from .naming import compute_tag
+            from .policy import prefixed_environment
+
+            self.environment = prefixed_environment(
+                self.environment, compute_tag(self.root)
+            )
         environment_file = getattr(self, "environment_file", None)
         if environment_file is None or self.environment is None:
             print(
@@ -733,6 +797,12 @@ class InstallerBase(object):
 
     def uninstall(self):
         """Uninstall the Conda environment."""
+        if self.shared_codes:
+            print(
+                "    This installation shares the default installation's codes; "
+                "their Conda environment is left alone."
+            )
+            return
         # See if the executables are already registered in the configuration file
         data = self.exe_config.get_values("local")
         if "installation" in data and data["installation"] == "conda":
@@ -756,7 +826,14 @@ class InstallerBase(object):
                 print("    Done!\n")
 
     def update(self):
-        """Update the installation, if possible."""
+        """Update the installation, if possible.
+
+        In a ``shared`` installation this only reports: the default installation
+        keeps the codes up to date.
+        """
+        if self.shared_codes:
+            self._use_shared_code()
+            return
         # See if the executables are already registered in the configuration file
         data = self.exe_config.get_values("local")
         if "installation" in data and data["installation"] == "conda":
