@@ -1,6 +1,19 @@
 =======
 History
 =======
+2026.9.28.1 -- Bugfix: updates respect every installed package's requirements
+    * ``update --latest`` and ``--no-constraints`` resolved only the packages being
+      updated and their dependencies, ignoring what the other installed packages
+      require: updating seamm-thermochemistry moved pint to 0.26.1, breaking mendeleev,
+      which needs ``pint<0.25``. Updates without the lock now resolve the whole
+      installation at once -- the packages being updated, their dependencies and the
+      requirements of everything else installed -- so dependencies are still brought
+      up to date as far as every package allows, and if no set of versions satisfies
+      them all the update stops with uv's explanation and changes nothing. With the
+      lock (the default) everything is brought to the tested set, as before.
+    * After installing or updating, the manager checks the environment and warns about
+      any installed package whose requirements are not met.
+
 2026.9.28 -- Bugfixes: the right installation, a sturdier datastore, quicker updates
     * The manager run from an installation's own environment -- such as
       ``~/SEAMM_DEV/venv/bin/seamm-manager``, or the app ``SEAMM-Manager (SEAMM_DEV)``
