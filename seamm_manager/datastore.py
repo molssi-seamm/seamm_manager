@@ -4,6 +4,8 @@
 
 from pathlib import Path
 import platform
+import re
+import sqlite3
 import subprocess
 
 from . import my
@@ -13,11 +15,11 @@ system = platform.system()
 if system in ("Darwin",):
     from .mac import ServiceManager
 
-    mgr = ServiceManager(prefix="org.molssi.seamm.")
+    mgr = ServiceManager(prefix="org.molssi.seamm")
 elif system in ("Linux",):
     from .linux import ServiceManager
 
-    mgr = ServiceManager(prefix="org.molssi.seamm.")
+    mgr = ServiceManager(prefix="org.molssi.seamm")
 else:
     raise NotImplementedError(f"SEAMM does not support services on {system} yet.")
 
@@ -104,11 +106,23 @@ def ensure(default_project="default"):
     """
     db_path = my.root / "Jobs" / "seamm.db"
     if db_path.exists():
-        return False
+        state = _seed_state(db_path)
+        if state == "seeded":
+            return False
+        if state == "no tables":
+            # A file with none of SEAMM's tables holds no data: e.g. a JobServer
+            # started before seamm-datastore was installed creates an empty
+            # seamm.db. Replace it with a proper one.
+            print(f"The datastore {db_path} is empty; creating it afresh.")
+            for suffix in ("", "-wal", "-shm"):
+                Path(str(db_path) + suffix).unlink(missing_ok=True)
+        else:  # the tables exist but there are no users: seed them below
+            print(f"The datastore {db_path} has no users; adding the defaults.")
     if not my.uv.exists or my.uv.which("python") is None:
         return False
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Creating the datastore {db_path}")
+    if not db_path.exists():
+        print(f"Creating the datastore {db_path}")
     code = (
         "import seamm_datastore\n"
         f"seamm_datastore.connect(database_uri='sqlite:///{db_path}', "
@@ -123,15 +137,102 @@ def ensure(default_project="default"):
         print("\n".join("      " + line for line in result.stderr.splitlines()[-6:]))
         return False
     print("   done; the administrator account is 'admin' (password 'admin').")
+    # seamm_datastore creates the tables without recording their revision; record
+    # it so later updates migrate from the right place.
+    revision = unversioned_revision(db_path)
+    if revision is not None:
+        try:
+            stamp(revision)
+        except Exception as e:
+            print(f"   (could not record the database's version: {e})")
     return True
+
+
+def _seed_state(db_path):
+    """How far an existing datastore file is set up.
+
+    Returns "no tables" (none of SEAMM's tables), "no users" (the tables but no
+    user accounts), or "seeded".
+    """
+    try:
+        with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+            tables = {r[0] for r in db.execute("select name from sqlite_master")}
+            if "users" not in tables:
+                return "no tables"
+            if db.execute("select count(*) from users").fetchone()[0] == 0:
+                return "no users"
+    except sqlite3.Error:
+        return "seeded"  # not ours to judge; leave it alone
+    return "seeded"
+
+
+# Revisions of seamm_datastore's migrations whose schema can be recognized in a
+# database that was never put under alembic (it has no alembic_version table).
+# Older databases have a ``path`` column in ``flowcharts``; the first migration,
+# 7b24598d1fee, removes it and adds ``flowchart_metadata``; d7d6859198e9 adds a
+# unique constraint on ``sha256_strict``.
+_BASE_REVISION = "7b24598d1fee"
+_HASH_REVISION = "d7d6859198e9"
+
+
+def unversioned_revision(db_path):
+    """The revision an unversioned database's tables already match, or None.
+
+    None when the database is versioned, has no jobs table, or predates the
+    first migration (which alembic can then apply from scratch).
+    """
+    try:
+        with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+            tables = {r[0] for r in db.execute("select name from sqlite_master")}
+            if "alembic_version" in tables or "flowcharts" not in tables:
+                return None
+            columns = {r[1] for r in db.execute("pragma table_info(flowcharts)")}
+            if "path" in columns or "flowchart_metadata" not in columns:
+                return None
+            sql = " ".join(
+                r[0] or ""
+                for r in db.execute(
+                    "select sql from sqlite_master where tbl_name = 'flowcharts'"
+                )
+            )
+            unique_index = any(
+                idx[2]
+                and [c[2] for c in db.execute(f"pragma index_info('{idx[1]}')")]
+                == ["sha256_strict"]
+                for idx in db.execute("pragma index_list(flowcharts)")
+            )
+    except sqlite3.Error:
+        return None
+    unique = (
+        unique_index
+        or "uq_flowcharts_sha256_strict" in sql
+        or re.search(r"unique\s*\(\s*sha256_strict\s*\)", sql, re.IGNORECASE)
+    )
+    return _HASH_REVISION if unique else _BASE_REVISION
+
+
+def stamp(revision):
+    """Record in the database that its tables are at `revision`, without changes."""
+    db_path = my.root / "Jobs" / "seamm.db"
+    path = _find_path()
+    alembic = _alembic()
+    if path is None or alembic is None:
+        raise RuntimeError("seamm-datastore (and its alembic) is not installed.")
+    uri = f"sqlite:///{db_path}"
+    cmd = f'"{alembic}" -x uri="{uri}" stamp {revision}'
+    result = subprocess.run(cmd, cwd=path, shell=True, text=True, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Running '{cmd}' was not successful:\n\n{result.stderr}")
 
 
 def update():
     """Update the database to the latest version."""
     db_path = my.root / "Jobs" / "seamm.db"
-    if not db_path.expanduser().exists():
+    if not db_path.expanduser().exists() or _seed_state(db_path) != "seeded":
+        # Missing, or an empty file / tables without users: migrations would not
+        # create SEAMM's tables, only mark the file as migrated. Create it properly.
         if not ensure():
-            print(f"The database file '{db_path}' does not exist.")
+            print(f"The database file '{db_path}' could not be created.")
     else:
         version = db_version()
         latest = latest_version()
@@ -142,14 +243,25 @@ def update():
             restart = mgr.is_running(service_name)
             if restart:
                 print(f"Stopping the service {service_name}")
-                mgr.stop_service(service_name)
+                mgr.stop(service_name)
+
+            # A database that was never put under alembic would otherwise be
+            # migrated from the first revision and fail; record the revision its
+            # tables already have first.
+            revision = unversioned_revision(db_path)
+            if revision is not None:
+                print(
+                    f"The database has no version recorded; its tables match "
+                    f"revision {revision}, so recording that first."
+                )
+                stamp(revision)
 
             print("Updating the database.")
             update_db()
 
             if restart:
                 print(f"Restarting the service {service_name}")
-                mgr.start_service(service_name)
+                mgr.start(service_name)
 
             version = db_version()
             if version == latest:

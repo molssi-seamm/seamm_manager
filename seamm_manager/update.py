@@ -67,6 +67,15 @@ def setup(parser):
         ),
     )
     subparser.add_argument(
+        "--refresh-codes",
+        action="store_true",
+        help=(
+            "Apply the plug-ins' environment files to the codes' conda environments "
+            "even if unchanged, to pick up new builds of the codes now. Otherwise an "
+            "unchanged file is applied again only after 7 days."
+        ),
+    )
+    subparser.add_argument(
         "--latest",
         action="store_true",
         help=(

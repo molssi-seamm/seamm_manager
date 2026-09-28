@@ -347,7 +347,9 @@ class ServiceManager:
     def data(self):
         if self._data is None:
             self._data = {}
-            pattern = self.prefix + ".*"
+            # Only the service definitions themselves: an editor's backup such as
+            # "org.molssi.seamm.webui.plist~" used to show up as a service.
+            pattern = self.prefix + ".*.plist"
             for path, domain in self.paths:
                 for file_path in path.glob(pattern):
                     name = file_path.stem

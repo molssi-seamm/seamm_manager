@@ -200,7 +200,9 @@ class ServiceManager:
     def data(self):
         if self._data is None:
             self._data = {}
-            pattern = self.prefix + ".*"
+            # Only the service definitions themselves: an editor's backup such as
+            # "org.molssi.seamm.webui.service~" used to show up as a service.
+            pattern = self.prefix + ".*.service"
             for path, domain in self.paths:
                 for file_path in path.glob(pattern):
                     service = file_path.stem
