@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
+    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e1d9719b"></script>
+    <script src="../../_static/documentation_options.js?v=94555e99"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>
@@ -54,6 +54,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.requirements</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidRequirement</span><span class="p">,</span> <span class="n">Requirement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonicalize_name</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -248,7 +251,13 @@
 <span class="sd">        constraints : pathlib.Path or str = None</span>
 <span class="sd">            A constraints file (the published lock) passed with ``-c``.</span>
 <span class="sd">        upgrade : bool = False</span>
-<span class="sd">            Upgrade the named packages to the newest allowed versions.</span>
+<span class="sd">            Upgrade to the newest allowed versions: the named packages and their</span>
+<span class="sd">            dependencies. With `constraints` (the lock) the allowed versions are the</span>
+<span class="sd">            tested set. Without them the declared requirements of every other</span>
+<span class="sd">            installed package are part of the resolution too (see</span>
+<span class="sd">            `installed_requirements`), so a dependency moves only as far as all</span>
+<span class="sd">            installed packages allow -- and uv reports an error, installing</span>
+<span class="sd">            nothing, if no versions satisfy everything.</span>
 <span class="sd">        refresh : bool = True</span>
 <span class="sd">            Ignore uv's cached view of the index, so a release published minutes</span>
 <span class="sd">            ago is seen. Without it uv can reuse stale index metadata and</span>
@@ -265,8 +274,140 @@
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--upgrade"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">"--constraints"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">constraints</span><span class="p">)])</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">upgrade</span> <span class="ow">and</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="c1"># Resolve with every other installed package's requirements, so that</span>
+            <span class="c1"># upgrading these packages' dependencies respects the caps those</span>
+            <span class="c1"># packages declare (uv otherwise considers only the named packages).</span>
+            <span class="n">requirements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_requirements</span><span class="p">(</span><span class="n">_requirement_names</span><span class="p">(</span><span class="n">packages</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">requirements</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+                <span class="n">context</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                    <span class="s2">"w"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"-installed-requirements.txt"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">requirements</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">"--requirements"</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
         <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">packages</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pip</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pip</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">Path</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report_conflicts</span><span class="p">()</span></div>
+
+
+    <span class="c1"># The requirements of the installed packages, markers evaluated, extras-only</span>
+    <span class="c1"># and URL requirements dropped. Run in the environment's own interpreter.</span>
+    <span class="c1"># Run in the environment's own python, with only the standard library: the raw</span>
+    <span class="c1"># requirements of each installed package and the values for evaluating their</span>
+    <span class="c1"># markers (as packaging.markers.default_environment gives them).</span>
+    <span class="n">_REQUIREMENTS_SCRIPT</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"""</span>
+<span class="s2">import importlib.metadata as m, json, os, platform, sys</span>
+<span class="s2">impl = sys.implementation</span>
+<span class="s2">version = impl.version</span>
+<span class="s2">full = "</span><span class="si">{0.major}</span><span class="s2">.</span><span class="si">{0.minor}</span><span class="s2">.</span><span class="si">{0.micro}</span><span class="s2">".format(version)</span>
+<span class="s2">if version.releaselevel != "final":</span>
+<span class="s2">    full += version.releaselevel[0] + str(version.serial)</span>
+<span class="s2">environment = {</span>
+<span class="s2">    "implementation_name": impl.name,</span>
+<span class="s2">    "implementation_version": full,</span>
+<span class="s2">    "os_name": os.name,</span>
+<span class="s2">    "platform_machine": platform.machine(),</span>
+<span class="s2">    "platform_release": platform.release(),</span>
+<span class="s2">    "platform_system": platform.system(),</span>
+<span class="s2">    "platform_version": platform.version(),</span>
+<span class="s2">    "python_full_version": platform.python_version(),</span>
+<span class="s2">    "platform_python_implementation": platform.python_implementation(),</span>
+<span class="s2">    "python_version": ".".join(platform.python_version_tuple()[:2]),</span>
+<span class="s2">    "sys_platform": sys.platform,</span>
+<span class="s2">}</span>
+<span class="s2">packages = [[d.metadata["Name"] or "", d.requires or []] for d in m.distributions()]</span>
+<span class="s2">print(json.dumps({"environment": environment, "packages": packages}))</span>
+<span class="s2">"""</span>
+
+<div class="viewcode-block" id="Uv.installed_requirements">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.Uv.installed_requirements">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">installed_requirements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">        </span><span class="sd">"""The declared requirements of the installed packages.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exclude : [str]</span>
+<span class="sd">            Packages whose own requirements to leave out (those being installed;</span>
+<span class="sd">            requirements *on* them from other packages are kept, since they may cap</span>
+<span class="sd">            the upgrade).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        [str]</span>
+<span class="sd">            Requirement specifiers.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        UvError</span>
+<span class="sd">            If they cannot be read; the upgrade must not go ahead blind.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">python</span><span class="p">),</span>
+                <span class="s2">"-c"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_REQUIREMENTS_SCRIPT</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">exclude</span><span class="p">)),</span>
+            <span class="p">],</span>
+            <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UvError</span><span class="p">(</span>
+                <span class="s2">"Could not read the installed packages' requirements, which an "</span>
+                <span class="s2">"upgrade without the lock needs so as not to break them: "</span>
+                <span class="o">+</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">data</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span> <span class="s2">"extra"</span><span class="p">:</span> <span class="s2">""</span><span class="p">}</span>
+        <span class="n">exclude</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">}</span>
+        <span class="n">requirements</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">texts</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"packages"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">canonicalize_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">requirement</span> <span class="o">=</span> <span class="n">Requirement</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">InvalidRequirement</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">requirement</span><span class="o">.</span><span class="n">url</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="n">requirement</span><span class="o">.</span><span class="n">marker</span>
+                <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">marker</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">requirement</span><span class="o">.</span><span class="n">marker</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">requirements</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">requirement</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">requirements</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Uv.report_conflicts">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.Uv.report_conflicts">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report_conflicts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Print any installed package whose requirements are not met.</span>
+
+<span class="sd">        Returns the conflicts as text ("" if there are none).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">""</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"pip"</span><span class="p">,</span> <span class="s2">"check"</span><span class="p">,</span> <span class="s2">"--python"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">python</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">""</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">"Checked"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ln</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Warning: some installed packages' requirements are not met:"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Uv.uninstall">
@@ -326,6 +467,17 @@
         <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span></div>
 </div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_requirement_names</span><span class="p">(</span><span class="n">specs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The distribution names in requirement specifiers, e.g. seamm==1 -&gt; seamm."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Requirement</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">InvalidRequirement</span><span class="p">:</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">names</span>
 </pre></div>
 
             <div class="clearer"></div>
@@ -357,7 +509,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>

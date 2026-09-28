@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=e1d9719b"></script>
+    <script src="../_static/documentation_options.js?v=94555e99"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -2108,11 +2108,39 @@ builds) expect to find as <code class="docutils literal notranslate"><span class
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>packages</strong> (<em>str</em><em> or </em><em>[</em><em>str</em><em>]</em>) – Requirement specifiers, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;seamm&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;seamm==2026.9.25&quot;</span></code>.</p></li>
 <li><p><strong>constraints</strong> (<em>pathlib.Path</em><em> or </em><em>str = None</em>) – A constraints file (the published lock) passed with <code class="docutils literal notranslate"><span class="pre">-c</span></code>.</p></li>
-<li><p><strong>upgrade</strong> (<em>bool = False</em>) – Upgrade the named packages to the newest allowed versions.</p></li>
+<li><p><strong>upgrade</strong> (<em>bool = False</em>) – Upgrade to the newest allowed versions: the named packages and their
+dependencies. With <cite>constraints</cite> (the lock) the allowed versions are the
+tested set. Without them the declared requirements of every other
+installed package are part of the resolution too (see
+<cite>installed_requirements</cite>), so a dependency moves only as far as all
+installed packages allow – and uv reports an error, installing
+nothing, if no versions satisfy everything.</p></li>
 <li><p><strong>refresh</strong> (<em>bool = True</em>) – Ignore uv’s cached view of the index, so a release published minutes
 ago is seen. Without it uv can reuse stale index metadata and
 report nothing to do.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.installed_requirements">
+<span class="sig-name descname"><span class="pre">installed_requirements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.installed_requirements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.installed_requirements" title="Link to this definition">¶</a></dt>
+<dd><p>The declared requirements of the installed packages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>exclude</strong> (<em>[</em><em>str</em><em>]</em>) – Packages whose own requirements to leave out (those being installed;
+requirements <em>on</em> them from other packages are kept, since they may cap
+the upgrade).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Requirement specifiers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[str]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#seamm_manager.uv.UvError" title="seamm_manager.uv.UvError"><strong>UvError</strong></a> – If they cannot be read; the upgrade must not go ahead blind.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2145,6 +2173,13 @@ report nothing to do.</p></li>
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.remove">
 <span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.remove" title="Link to this definition">¶</a></dt>
 <dd><p>Delete the environment directory.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.report_conflicts">
+<span class="sig-name descname"><span class="pre">report_conflicts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.report_conflicts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.report_conflicts" title="Link to this definition">¶</a></dt>
+<dd><p>Print any installed package whose requirements are not met.</p>
+<p>Returns the conflicts as text (”” if there are none).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2508,11 +2543,13 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.exists"><code class="docutils literal notranslate"><span class="pre">Uv.exists</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.freeze"><code class="docutils literal notranslate"><span class="pre">Uv.freeze()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.install"><code class="docutils literal notranslate"><span class="pre">Uv.install()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.installed_requirements"><code class="docutils literal notranslate"><span class="pre">Uv.installed_requirements()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.list"><code class="docutils literal notranslate"><span class="pre">Uv.list()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.path"><code class="docutils literal notranslate"><span class="pre">Uv.path</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.python"><code class="docutils literal notranslate"><span class="pre">Uv.python</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.python_version_installed"><code class="docutils literal notranslate"><span class="pre">Uv.python_version_installed()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.remove"><code class="docutils literal notranslate"><span class="pre">Uv.remove()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.report_conflicts"><code class="docutils literal notranslate"><span class="pre">Uv.report_conflicts()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.run"><code class="docutils literal notranslate"><span class="pre">Uv.run()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.tool_upgrade"><code class="docutils literal notranslate"><span class="pre">Uv.tool_upgrade()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.uninstall"><code class="docutils literal notranslate"><span class="pre">Uv.uninstall()</span></code></a></li>
@@ -2577,7 +2614,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

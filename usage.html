@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e1d9719b"></script>
+    <script src="_static/documentation_options.js?v=94555e99"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -112,8 +112,13 @@ day are identical. <code class="docutils literal notranslate"><span class="pre">
 resolve. Because the list is refreshed nightly, a release made today is invisible to
 <code class="docutils literal notranslate"><span class="pre">update</span></code> until tomorrow; <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code> asks PyPI for each package’s newest
 release instead, pins it exactly, and skips the lock (which would pin yesterday’s
-version). If Zenodo cannot be reached, the manager says so and uses the package list and lock
-it saved last time.</p>
+version). Without the lock the manager resolves the whole installation together: the
+packages being updated, their dependencies, and the requirements of every other
+installed package. Dependencies are upgraded as far as all of them allow, and if no set
+of versions satisfies everything the update stops, reports why, and changes nothing.
+After any install or update the manager checks the environment and warns about any
+package whose requirements are not met. If Zenodo cannot be reached, the manager says
+so and uses the package list and lock it saved last time.</p>
 <p>When a plug-in’s installer updates its code’s conda environment, it applies the
 plug-in’s environment file only if the file changed since it was last applied, or if
 that was more than a week ago, since re-solving a conda environment is slow.
@@ -279,7 +284,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

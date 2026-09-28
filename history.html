@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e1d9719b"></script>
+    <script src="_static/documentation_options.js?v=94555e99"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,20 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.28.1 – Bugfix: updates respect every installed package’s requirements</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code> and <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code> resolved only the packages being
+updated and their dependencies, ignoring what the other installed packages
+require: updating seamm-thermochemistry moved pint to 0.26.1, breaking mendeleev,
+which needs <code class="docutils literal notranslate"><span class="pre">pint&lt;0.25</span></code>. Updates without the lock now resolve the whole
+installation at once – the packages being updated, their dependencies and the
+requirements of everything else installed – so dependencies are still brought
+up to date as far as every package allows, and if no set of versions satisfies
+them all the update stops with uv’s explanation and changes nothing. With the
+lock (the default) everything is brought to the tested set, as before.</p></li>
+<li><p>After installing or updating, the manager checks the environment and warns about
+any installed package whose requirements are not met.</p></li>
+</ul>
+</dd>
 <dt>2026.9.28 – Bugfixes: the right installation, a sturdier datastore, quicker updates</dt><dd><ul class="simple">
 <li><p>The manager run from an installation’s own environment – such as
 <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv/bin/seamm-manager</span></code>, or the app <code class="docutils literal notranslate"><span class="pre">SEAMM-Manager</span> <span class="pre">(SEAMM_DEV)</span></code>
@@ -304,7 +318,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
