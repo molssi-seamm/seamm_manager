@@ -74,6 +74,15 @@ def test_install_commands(uv, tmp_path):
 
     uv.install("seamm", refresh=False)
     assert "--refresh" not in uv.calls[-1]
+
+    # Without the lock, only the named packages are upgraded
+    uv.install(["xnn-step==2026.9.28", "seamm"], upgrade=True)
+    cmd = uv.calls[-1]
+    assert "--upgrade" not in cmd
+    assert [cmd[i + 1] for i, a in enumerate(cmd) if a == "--upgrade-package"] == [
+        "xnn-step",
+        "seamm",
+    ]
     uv.install([])
     assert uv.calls[-1][1:3] == ["pip", "install"]  # unchanged: nothing run
 

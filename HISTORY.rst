@@ -1,6 +1,15 @@
 =======
 History
 =======
+2026.9.28.1 -- Bugfix: update --latest no longer upgrades every dependency
+    * ``update --latest`` and ``--no-constraints`` upgraded not only the packages being
+      updated but all of their dependencies to their newest releases, ignoring caps
+      that other installed packages declare: updating seamm-thermochemistry moved pint
+      to 0.26.1, past mendeleev's ``pint<0.25``. Without the lock only the packages
+      being updated are now upgraded, and their dependencies change only when a new
+      version requires it. With the lock (the default) everything is still brought to
+      the tested set.
+
 2026.9.28 -- Bugfixes: the right installation, a sturdier datastore, quicker updates
     * The manager run from an installation's own environment -- such as
       ``~/SEAMM_DEV/venv/bin/seamm-manager``, or the app ``SEAMM-Manager (SEAMM_DEV)``

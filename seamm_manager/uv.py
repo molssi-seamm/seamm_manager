@@ -179,7 +179,13 @@ class Uv(object):
         constraints : pathlib.Path or str = None
             A constraints file (the published lock) passed with ``-c``.
         upgrade : bool = False
-            Upgrade the named packages to the newest allowed versions.
+            Upgrade to the newest allowed versions. With `constraints` (the lock),
+            everything is upgraded within them, bringing the dependencies to the
+            tested set too. Without constraints only the named packages are
+            upgraded (``--upgrade-package``): their dependencies change only if a
+            new version requires it. A plain ``--upgrade`` there would move every
+            dependency to its newest release, past caps other packages declare
+            (e.g. pint beyond mendeleev's ``<0.25``).
         refresh : bool = True
             Ignore uv's cached view of the index, so a release published minutes
             ago is seen. Without it uv can reuse stale index metadata and
@@ -193,7 +199,11 @@ class Uv(object):
         if refresh:
             args.append("--refresh")
         if upgrade:
-            args.append("--upgrade")
+            if constraints is not None:
+                args.append("--upgrade")
+            else:
+                for name in _requirement_names(packages):
+                    args.extend(["--upgrade-package", name])
         if constraints is not None:
             args.extend(["--constraints", str(constraints)])
         args.extend(packages)
@@ -243,3 +253,16 @@ class Uv(object):
             check=False,
         )
         return result.returncode == 0
+
+
+def _requirement_names(specs):
+    """The distribution names in requirement specifiers, e.g. seamm==1 -> seamm."""
+    from packaging.requirements import InvalidRequirement, Requirement
+
+    names = []
+    for spec in specs:
+        try:
+            names.append(Requirement(str(spec)).name)
+        except InvalidRequirement:
+            names.append(str(spec).split("=")[0].split("<")[0].split(">")[0].strip())
+    return names
