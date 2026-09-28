@@ -20,7 +20,10 @@ unversioned database whose schema matches a known revision; ``datastore.ensure``
 an existing but unseeded ``seamm.db``; seamm_thermochemistry's installer ``update`` in
 an ``own`` installation still re-downloads over local changes; retire conda
 ``seamm-dev``, the old ``SEAMM-dev`` apps and the conda ``dev_dashboard`` on the Mac
-(Paul's call).
+(Paul's call). ``update --latest``: PyPI's JSON API and simple index are refreshed
+separately and either can lag the other by minutes after a release (seen both ways on
+2026-09-27/28); the manager now asks the simple index, which is what uv installs from,
+but it too can lag, so ``--latest`` right after a release may need a retry.
 
 Earlier status: **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
 2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 released** (2026-09-27): seamm_util 2026.9.27.1 (``current_root``,
