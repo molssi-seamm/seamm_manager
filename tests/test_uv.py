@@ -5,6 +5,7 @@ present, a real environment in a temporary directory."""
 import json
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
@@ -74,15 +75,6 @@ def test_install_commands(uv, tmp_path):
 
     uv.install("seamm", refresh=False)
     assert "--refresh" not in uv.calls[-1]
-
-    # Without the lock, only the named packages are upgraded
-    uv.install(["xnn-step==2026.9.28", "seamm"], upgrade=True)
-    cmd = uv.calls[-1]
-    assert "--upgrade" not in cmd
-    assert [cmd[i + 1] for i, a in enumerate(cmd) if a == "--upgrade-package"] == [
-        "xnn-step",
-        "seamm",
-    ]
     uv.install([])
     assert uv.calls[-1][1:3] == ["pip", "install"]  # unchanged: nothing run
 
@@ -124,3 +116,77 @@ def test_tool_upgrade_refreshes(uv):
     assert "--force" in cmd and "--refresh" in cmd
     assert cmd[cmd.index("--python") + 1] == "3.12"
     assert cmd[-1] == "seamm-manager"
+
+
+def test_upgrade_without_lock_respects_installed_requirements(uv, monkeypatch):
+    monkeypatch.setattr(type(uv), "exists", property(lambda self: True))
+    seen = {}
+    monkeypatch.setattr(
+        type(uv),
+        "installed_requirements",
+        lambda self, exclude: seen.setdefault("exclude", list(exclude))
+        and ["pint<0.25,>=0.24.4", "numpy>=1.20"],
+    )
+    real_run = subprocess.run
+
+    def capture(command, **kwargs):
+        if "--requirements" in command:
+            path = command[command.index("--requirements") + 1]
+            seen["file"] = Path(path).read_text()
+            seen["path"] = path
+        return _Result()
+
+    monkeypatch.setattr(subprocess, "run", capture)
+    uv.install(["seamm-thermochemistry==2026.9.28"], upgrade=True)
+    monkeypatch.setattr(subprocess, "run", real_run)
+    assert seen["exclude"] == ["seamm-thermochemistry"]
+    assert seen["file"].split() == ["pint<0.25,>=0.24.4", "numpy>=1.20"]
+    assert not Path(seen["path"]).exists()  # cleaned up
+
+
+def test_upgrade_with_lock_uses_the_lock_only(uv, monkeypatch, tmp_path):
+    monkeypatch.setattr(type(uv), "exists", property(lambda self: True))
+    monkeypatch.setattr(
+        type(uv),
+        "installed_requirements",
+        lambda self, exclude: pytest.fail("not needed with the lock"),
+    )
+    lock = tmp_path / "seamm.lock.txt"
+    lock.write_text("seamm==1\n")
+    uv.install(["seamm"], constraints=lock, upgrade=True)
+    install = [c for c in uv.calls if c[1:3] == ["pip", "install"]][-1]
+    assert "--upgrade" in install and "--requirements" not in install
+
+
+def test_conflicts_are_reported(uv, monkeypatch, capsys):
+    monkeypatch.setattr(type(uv), "exists", property(lambda self: True))
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *a, **k: _Result(
+            returncode=1,
+            stdout="The package `mendeleev` requires `pint<0.25`, but `0.26.1` is "
+            "installed\n",
+        ),
+    )
+    assert "mendeleev" in uv.report_conflicts()
+    assert "requirements are not met" in capsys.readouterr().out
+
+
+def test_installed_requirements_need_only_the_standard_library(tmp_path, monkeypatch):
+    """The environment's python dumps raw metadata; the manager evaluates it."""
+    from seamm_manager.uv import Uv
+
+    uv = Uv(tmp_path)
+    monkeypatch.setattr(type(uv), "exists", property(lambda self: True))
+    monkeypatch.setattr(type(uv), "python", property(lambda self: sys.executable))
+    real_run = subprocess.run
+
+    def isolated(command, **kwargs):
+        # -I: no site-packages, so neither packaging nor pip can be imported
+        return real_run([command[0], "-I", *command[1:]], **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", isolated)
+    requirements = uv.installed_requirements(exclude=["seamm-manager"])
+    assert requirements == sorted(requirements)
+    assert all(";" not in r and "@" not in r for r in requirements)

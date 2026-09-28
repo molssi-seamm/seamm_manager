@@ -47,10 +47,13 @@ day are identical. ``--no-constraints`` opts out and takes the newest releases t
 resolve. Because the list is refreshed nightly, a release made today is invisible to
 ``update`` until tomorrow; ``update --latest`` asks PyPI for each package's newest
 release instead, pins it exactly, and skips the lock (which would pin yesterday's
-version). Without the lock only the packages being updated are upgraded; their
-dependencies stay as they are unless a new version needs a newer one, so the rest of
-the environment stays at the tested set. If Zenodo cannot be reached, the manager says so and uses the package list and lock
-it saved last time.
+version). Without the lock the manager resolves the whole installation together: the
+packages being updated, their dependencies, and the requirements of every other
+installed package. Dependencies are upgraded as far as all of them allow, and if no set
+of versions satisfies everything the update stops, reports why, and changes nothing.
+After any install or update the manager checks the environment and warns about any
+package whose requirements are not met. If Zenodo cannot be reached, the manager says
+so and uses the package list and lock it saved last time.
 
 When a plug-in's installer updates its code's conda environment, it applies the
 plug-in's environment file only if the file changed since it was last applied, or if
