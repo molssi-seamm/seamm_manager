@@ -208,6 +208,51 @@ class InstallerBase(object):
         print(f"    Uses the code as configured in {own}.")
         return True
 
+    # An environment file is applied again only if it changed, or after this long,
+    # so that ``update --all`` is quick but the codes still get new builds.
+    REFRESH_DAYS = 7
+
+    def _applied_marker(self, environment):
+        """The file recording which environment file was last applied."""
+        return (
+            self.conda.path(environment) / "conda-meta" / f"seamm-{self.section}.sha256"
+        )
+
+    def _environment_file_hash(self):
+        import hashlib
+
+        return hashlib.sha256(Path(self.environment_file).read_bytes()).hexdigest()
+
+    def _unchanged_since_applied(self, environment):
+        """Whether the environment file was applied recently and not changed since.
+
+        ``SEAMM_REFRESH_CODES`` (set by ``seamm-manager update --refresh-codes``)
+        forces the file to be applied again.
+        """
+        import time
+
+        if os.environ.get("SEAMM_REFRESH_CODES"):
+            return False
+        try:
+            marker = self._applied_marker(environment)
+            if not marker.exists():
+                return False
+            age_days = (time.time() - marker.stat().st_mtime) / 86400
+            return (
+                marker.read_text().strip() == self._environment_file_hash()
+                and age_days < self.REFRESH_DAYS
+            )
+        except Exception:
+            return False
+
+    def _record_applied(self, environment):
+        try:
+            marker = self._applied_marker(environment)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(self._environment_file_hash() + "\n")
+        except Exception as e:  # never fail an installation over the record
+            self.logger.debug(f"Could not record the applied environment file: {e}")
+
     def ask_yes_no(self, text, default=None):
         """Ask a simple yes/no question, returning True/False.
 
@@ -656,6 +701,7 @@ class InstallerBase(object):
             "may take a minute or two."
         )
         self.conda.create_environment(environment_file, name=self.environment)
+        self._record_applied(self.environment)
 
         # Update the configuration file.
         self.check_exe_configuration_file()
@@ -840,11 +886,18 @@ class InstallerBase(object):
             environment = self.environment
             if "conda-environment" in data and data["conda-environment"] != "":
                 environment = data["conda-environment"]
+            if self._unchanged_since_applied(environment):
+                print(
+                    f"    The Conda environment '{environment}' is up to date (the "
+                    "environment file is unchanged since it was applied)."
+                )
+                return
             print(
                 f"    Updating Conda environment '{environment}'. This may "
                 "take a minute or two."
             )
             self.conda.update_environment(self.environment_file, name=environment)
+            self._record_applied(environment)
             # Update the configuration file, just in case.
             self.exe_config.set_value("local", "installation", "conda")
             conda_exe = seamm_manager.find_conda()

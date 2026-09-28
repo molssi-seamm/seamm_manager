@@ -1,6 +1,30 @@
 =======
 History
 =======
+2026.9.28 -- Bugfixes: the right installation, a sturdier datastore, quicker updates
+    * The manager run from an installation's own environment -- such as
+      ``~/SEAMM_DEV/venv/bin/seamm-manager``, or the app ``SEAMM-Manager (SEAMM_DEV)``
+      -- worked on ``~/SEAMM``, showing production's services and shortcuts. It now
+      works on the installation it runs from (``--root``, ``--development`` and
+      ``$SEAMM_ROOT`` still take precedence), and treats ``~/SEAMM_DEV`` as the
+      development installation.
+    * ``update --all`` no longer re-solves every code's conda environment each time:
+      a plug-in's environment file is applied again only if it changed, or after a
+      week. ``update --refresh-codes`` applies them all now.
+    * A jobs database that was never put under version control (as older development
+      databases were) is now recognised and brought up to date instead of failing
+      part-way; a new database is marked with its version when created; and an empty
+      ``seamm.db`` (left by a JobServer started before the datastore was installed) or
+      one without user accounts is set up properly instead of being taken as ready.
+    * Updating the database while the JobServer ran would have crashed, and never
+      stopped the JobServer first: it looked for the services under the wrong name.
+    * When Zenodo cannot be reached, the manager uses the package list and lock it
+      saved last time, with a one-line note, instead of printing a traceback.
+    * On macOS, an editor's backup of a service file (``...plist~``) no longer shows up
+      as a service.
+    * Documentation: running several installations side by side, and trying a new
+      release beside production.
+
 2026.9.27.6 -- A trial installation cannot change production's codes
     * Each installation now has a code-environment policy for the external codes'
       conda environments, kept in ``<root>/installation.ini``. ``own`` (always the case

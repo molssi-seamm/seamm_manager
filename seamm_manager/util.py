@@ -52,6 +52,10 @@ class JSONDecoder(json.JSONDecoder):
         return d
 
 
+class PackageListUnavailable(RuntimeError):
+    """The package list could not be fetched and there is no earlier copy."""
+
+
 def find_packages(progress=True, update=None, update_cache=False, cache_valid=1):
     """Fetch the package list and its lock file from Zenodo.
 
@@ -66,16 +70,29 @@ def find_packages(progress=True, update=None, update_cache=False, cache_valid=1)
     dict(str, dict)
         name -> {"description", "type", "version"}
     """
-    zenodo = Zenodo()
+    directory = my.root / "environments"
+    cached = directory / "SEAMM_packages.json"
+    record = None
     try:
+        zenodo = Zenodo()
         record = zenodo.get_latest_public_record(PACKAGE_LIST_RECORD)
-    except Exception as e:
-        raise RuntimeError(f"Error finding the package list from Zenodo: {str(e)}")
-
-    try:
         text = record.get_file("SEAMM_packages.json")
     except Exception as e:
-        raise RuntimeError(f"Error getting the package list from Zenodo: {str(e)}")
+        # Zenodo is slow or unreachable now and then; use the last list fetched.
+        reason = str(e).splitlines()[0][:120] if str(e) else type(e).__name__
+        if not cached.exists():
+            raise PackageListUnavailable(
+                "Could not get the list of SEAMM packages from Zenodo, and there is "
+                f"no copy from an earlier run ({reason}). Check the network and "
+                "try again."
+            ) from None
+        when = datetime.fromtimestamp(cached.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        print(
+            f"Could not reach Zenodo for the package list ({reason}); using the "
+            f"copy from {when}."
+        )
+        text = cached.read_text()
+        record = None
 
     package_db = json.loads(text, cls=JSONDecoder)
     if package_db.get("format", 1) != 2:
@@ -83,21 +100,30 @@ def find_packages(progress=True, update=None, update_cache=False, cache_valid=1)
             "The package list from Zenodo is not in the expected format (2); "
             f"got {package_db.get('format', 1)}."
         )
+    if record is not None:
+        directory.mkdir(parents=True, exist_ok=True)
+        cached.write_text(text)
 
     my.package_metadata = package_db["metadata"] if "metadata" in package_db else {}
 
     # The lock file, kept beside the environment for uv to use as constraints
     lock_name = package_db.get("lock", "seamm.lock.txt")
-    try:
-        lock = record.get_file(lock_name)
-    except Exception as e:
-        my.logger.warning(f"Could not get the lock file {lock_name} from Zenodo: {e}")
-        my.lock = None
+    lock_path = directory / lock_name
+    if record is None:
+        # Offline: the lock saved with the cached list, if any
+        my.lock = lock_path if lock_path.exists() else None
     else:
-        directory = my.root / "environments"
-        directory.mkdir(parents=True, exist_ok=True)
-        my.lock = directory / lock_name
-        my.lock.write_text(lock)
+        try:
+            lock = record.get_file(lock_name)
+        except Exception as e:
+            my.logger.warning(
+                f"Could not get the lock file {lock_name} from Zenodo: {e}"
+            )
+            my.lock = lock_path if lock_path.exists() else None
+        else:
+            directory.mkdir(parents=True, exist_ok=True)
+            my.lock = lock_path
+            my.lock.write_text(lock)
 
     return package_db["packages"]
 
@@ -339,6 +365,8 @@ def run_plugin_installer(package, *args, verbose=True):
         # Tell the installer which installation it is working on, so the code's
         # .ini file goes into this root rather than ~/SEAMM.
         env = {**os.environ, "SEAMM_ROOT": str(my.root)}
+        if getattr(my.options, "refresh_codes", False):
+            env["SEAMM_REFRESH_CODES"] = "1"
         result = subprocess.run(
             [str(installer), *args], capture_output=True, text=True, env=env
         )

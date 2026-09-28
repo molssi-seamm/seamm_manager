@@ -4,8 +4,9 @@ Usage
 
 ``seamm-manager`` is a command with sub-commands; ``seamm-manager --help`` lists them
 and ``seamm-manager <command> --help`` the options of each. Global options come first:
-``--root DIR`` chooses the SEAMM root (default ``$SEAMM_ROOT`` if set, else
-``~/SEAMM``), ``--development`` uses ``~/SEAMM_DEV`` and adds the development tools,
+``--root DIR`` chooses the SEAMM root (default ``$SEAMM_ROOT`` if set, else the
+installation whose environment the manager runs from -- ``~/SEAMM_DEV/venv/bin/seamm-manager``
+and the app ``SEAMM-Manager (SEAMM_DEV)`` work on ``~/SEAMM_DEV`` -- else ``~/SEAMM``), ``--development`` uses ``~/SEAMM_DEV`` and adds the development tools,
 ``--name`` sets the installation's name in its services and apps, and ``--log-level``
 controls verbosity. With no command the graphical installer opens.
 
@@ -46,7 +47,15 @@ day are identical. ``--no-constraints`` opts out and takes the newest releases t
 resolve. Because the list is refreshed nightly, a release made today is invisible to
 ``update`` until tomorrow; ``update --latest`` asks PyPI for each package's newest
 release instead, pins it exactly, and skips the lock (which would pin yesterday's
-version). The one exception is the manager itself: since the list is refreshed
+version). If Zenodo cannot be reached, the manager says so and uses the package list and lock
+it saved last time.
+
+When a plug-in's installer updates its code's conda environment, it applies the
+plug-in's environment file only if the file changed since it was last applied, or if
+that was more than a week ago, since re-solving a conda environment is slow.
+``update --refresh-codes`` applies them all now, to pick up new builds of the codes.
+
+The one exception is the manager itself: since the list is refreshed
 nightly, after an install or update the manager makes sure the environment holds
 the same release it is running, so the plug-ins' installers never run on an older
 one. After every change the manager writes ``<root>/environments/<timestamp>_*.txt``
@@ -98,6 +107,35 @@ Choose it with ``seamm-manager --root <root> install --code-environments <policy
 The plug-ins' installers honour it through the seamm-manager in the installation's
 own environment; if that copy is too old to know about policies, the manager skips
 their install, update and uninstall steps rather than risk the shared environments.
+
+Trying a new release beside production
+--------------------------------------
+
+To try new versions of SEAMM and the plug-ins without touching the installation you
+use, make a second one, use it, and remove it::
+
+    $ seamm-manager --root ~/SEAMM_NEW install --all
+    $ seamm-manager --root ~/SEAMM_NEW update --all --latest    # today's releases
+    $ seamm-manager --root ~/SEAMM_NEW install seamm-webui
+    $ seamm-manager --root ~/SEAMM_NEW services create jobserver
+    $ seamm-manager --root ~/SEAMM_NEW services create webui --webui-host 127.0.0.1
+    $ seamm-manager --root ~/SEAMM_NEW apps create
+
+The new installation shares ``~/SEAMM``'s codes (it copies their ``.ini`` files and
+never creates or updates a conda environment), gets its own JobServer
+(``jobserver-SEAMM_NEW``), web interface on the next free port (55056 beside
+production's 55055) and apps (``SEAMM (SEAMM_NEW)``), and keeps its jobs in
+``~/SEAMM_NEW/Jobs``. Submit jobs to it through its own web interface or app.
+
+To remove it::
+
+    $ seamm-manager --root ~/SEAMM_NEW services delete jobserver webui
+    $ seamm-manager --root ~/SEAMM_NEW apps delete
+    $ seamm-manager --root ~/SEAMM_NEW environment remove
+    $ rm -rf ~/SEAMM_NEW
+
+``environment remove`` removes only the Python environment; the last command removes
+the rest (jobs, logs, configuration, the web interface's environment).
 
 Where things are
 ----------------
