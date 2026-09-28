@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="_static/documentation_options.js?v=e1d9719b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,31 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.28 – Bugfixes: the right installation, a sturdier datastore, quicker updates</dt><dd><ul class="simple">
+<li><p>The manager run from an installation’s own environment – such as
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv/bin/seamm-manager</span></code>, or the app <code class="docutils literal notranslate"><span class="pre">SEAMM-Manager</span> <span class="pre">(SEAMM_DEV)</span></code>
+– worked on <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>, showing production’s services and shortcuts. It now
+works on the installation it runs from (<code class="docutils literal notranslate"><span class="pre">--root</span></code>, <code class="docutils literal notranslate"><span class="pre">--development</span></code> and
+<code class="docutils literal notranslate"><span class="pre">$SEAMM_ROOT</span></code> still take precedence), and treats <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> as the
+development installation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> no longer re-solves every code’s conda environment each time:
+a plug-in’s environment file is applied again only if it changed, or after a
+week. <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--refresh-codes</span></code> applies them all now.</p></li>
+<li><p>A jobs database that was never put under version control (as older development
+databases were) is now recognised and brought up to date instead of failing
+part-way; a new database is marked with its version when created; and an empty
+<code class="docutils literal notranslate"><span class="pre">seamm.db</span></code> (left by a JobServer started before the datastore was installed) or
+one without user accounts is set up properly instead of being taken as ready.</p></li>
+<li><p>Updating the database while the JobServer ran would have crashed, and never
+stopped the JobServer first: it looked for the services under the wrong name.</p></li>
+<li><p>When Zenodo cannot be reached, the manager uses the package list and lock it
+saved last time, with a one-line note, instead of printing a traceback.</p></li>
+<li><p>On macOS, an editor’s backup of a service file (<code class="docutils literal notranslate"><span class="pre">...plist~</span></code>) no longer shows up
+as a service.</p></li>
+<li><p>Documentation: running several installations side by side, and trying a new
+release beside production.</p></li>
+</ul>
+</dd>
 <dt>2026.9.27.6 – A trial installation cannot change production’s codes</dt><dd><ul class="simple">
 <li><p>Each installation now has a code-environment policy for the external codes’
 conda environments, kept in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code>. <code class="docutils literal notranslate"><span class="pre">own</span></code> (always the case
@@ -279,7 +304,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

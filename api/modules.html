@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>seamm_manager &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="../_static/documentation_options.js?v=e1d9719b"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>  
@@ -118,6 +118,8 @@
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.latest_version"><code class="docutils literal notranslate"><span class="pre">latest_version()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.stamp"><code class="docutils literal notranslate"><span class="pre">stamp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.unversioned_revision"><code class="docutils literal notranslate"><span class="pre">unversioned_revision()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.datastore.update_db"><code class="docutils literal notranslate"><span class="pre">update_db()</span></code></a></li>
 </ul>
@@ -161,6 +163,7 @@
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.installer_base">seamm_manager.installer_base module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase"><code class="docutils literal notranslate"><span class="pre">InstallerBase</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.section"><code class="docutils literal notranslate"><span class="pre">InstallerBase.section</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.REFRESH_DAYS"><code class="docutils literal notranslate"><span class="pre">InstallerBase.REFRESH_DAYS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">InstallerBase.ask_yes_no()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.check"><code class="docutils literal notranslate"><span class="pre">InstallerBase.check()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.check_configuration_file"><code class="docutils literal notranslate"><span class="pre">InstallerBase.check_configuration_file()</span></code></a></li>
@@ -309,6 +312,7 @@
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.JSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">JSONEncoder.default()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.PackageListUnavailable"><code class="docutils literal notranslate"><span class="pre">PackageListUnavailable</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.constraints"><code class="docutils literal notranslate"><span class="pre">constraints()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.find_packages"><code class="docutils literal notranslate"><span class="pre">find_packages()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.util.get_metadata"><code class="docutils literal notranslate"><span class="pre">get_metadata()</span></code></a></li>
@@ -407,7 +411,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>

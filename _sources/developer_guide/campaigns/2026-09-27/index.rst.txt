@@ -1,18 +1,59 @@
 2026-09-27 -- Several SEAMM installations side by side
 ======================================================
 
-Status (2026-09-27): **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
+Status (2026-09-27): **complete.** All six phases done and released; details of each
+phase follow.
+
+**Phase 6 done** (paul.local): a trial ``~/SEAMM_NEW`` was installed (``install --all``,
+then ``update --all --latest``), given its own ``jobserver-SEAMM_NEW``,
+``webui-SEAMM_NEW`` (port 55056 beside production's 55055) and apps, ran a MOPAC job and
+the LAMMPS + xnn flowchart on production's shared codes (both finished, with
+``--root /Users/psaxe/SEAMM_NEW``), and was removed with ``services delete``, ``apps
+delete``, ``environment remove`` and ``rm -rf``. Production -- its eight conda
+environments, ini files, thermochemistry database, datastore, services and apps -- was
+identical to the first snapshot afterwards. Documented in seamm_manager's usage guide
+and on the docs site (how-to *Trying a New Release Beside Production*, PR #58).
+
+**Loose ends found during the campaign** (none blocking): the macOS service listing
+counts LaunchAgents files not ending in ``.plist``; ``datastore.update`` should stamp an
+unversioned database whose schema matches a known revision; ``datastore.ensure`` skips
+an existing but unseeded ``seamm.db``; seamm_thermochemistry's installer ``update`` in
+an ``own`` installation still re-downloads over local changes; retire conda
+``seamm-dev``, the old ``SEAMM-dev`` apps and the conda ``dev_dashboard`` on the Mac
+(Paul's call). ``update --latest``: PyPI's JSON API and simple index are refreshed
+separately and either can lag the other by minutes after a release (seen both ways on
+2026-09-27/28); the manager now asks the simple index, which is what uv installs from,
+but it too can lag, so ``--latest`` right after a release may need a retry.
+
+Earlier status: **phase 1 released** (seamm_util 2026.9.27, seamm_jobserver
 2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). **Phase 2 released** (2026-09-27): seamm_util 2026.9.27.1 (``current_root``,
 ``installation_path``), seamm_exec 2026.9.27 (D8), seamm 2026.9.27 (data path,
 dashboards.ini, Open dialog), vasp_step 2026.9.27, forcefield_step 2026.9.27,
 xnn_step 2026.9.27.1 and seamm_thermochemistry 2026.9.27. Phases 3 and 4 need the
-decisions below. **Phase 3 released** (seamm_manager 2026.9.27.5, on this Mac and paul.local) **Phase 4 in review** (seamm_manager 2026.9.27.6, seamm_thermochemistry 2026.9.27.1): D6 with ``<root>/installation.ini`` (not ``<root>/seamm.ini``, which seamm_util still migrates into ``~/.seamm.d``), report-only installers in ``shared`` roots, and a tool-side guard when the root's venv manager predates the policy. A first live test on paul.local ran the released manager by mistake and recreated its eight shared conda environments (repaired; see the phase 4 notes in memory); the repeated test, three runs in a trial root, left every shared environment, ``~/SEAMM`` ini file and the database unchanged.: D5 names, D7
+decisions below. **Phase 3 released** (seamm_manager 2026.9.27.5, on this Mac and paul.local) **Phase 4 released** (seamm_manager 2026.9.27.6, seamm_thermochemistry 2026.9.27.1; on this Mac and paul.local): D6 with ``<root>/installation.ini`` (not ``<root>/seamm.ini``, which seamm_util still migrates into ``~/.seamm.d``), report-only installers in ``shared`` roots, and a tool-side guard when the root's venv manager predates the policy. A first live test on paul.local ran the released manager by mistake and recreated its eight shared conda environments (repaired; see the phase 4 notes in memory); the repeated test, three runs in a trial root, left every shared environment, ``~/SEAMM`` ini file and the database unchanged.: D5 names, D7
 ports, same-root replacement, ``status --all``, the GUI's window title and Services
 tab (now sharing ``create_service``), and the ``--latest`` simple-index fix; verified
 on paul.local with a bare trial root ``~/SEAMM_P3TEST`` beside production (removed
 afterwards). Loose end: ``datastore.ensure()`` skips a database file that exists but
 was never seeded (a JobServer started before seamm-datastore was installed creates an
-empty ``seamm.db``); it should seed an empty database.
+empty ``seamm.db``); it should seed an empty database. **Phase 5 done** (2026-09-27, this Mac): ``~/SEAMM_DEV`` runs from
+``~/SEAMM_DEV/venv`` with today's releases, the development tools, and gaussian_step
+and seamm_bsse (editable) from their checkouts; policy ``shared``, so its code ``.ini``
+files are copies of ``~/SEAMM``'s. Its database had never been stamped by alembic (its
+schema was exactly revision 7b24598d1fee): backed up to
+``seamm.db.bak-2026-09-27-before-uv-conversion``, stamped, then migrated to head by the
+install (2,075 jobs and 980 flowcharts, unchanged). ``jobserver-SEAMM_DEV`` and
+``webui-SEAMM_DEV`` (port 55155, 127.0.0.1) replaced ``dev_jobserver`` and ``dev_webui``
+through the same-root check; the conda-era ``dev_dashboard`` (port 55066) was restarted
+and still runs from ``seamm-dev``. Test job 3976 (From SMILES + MOPAC, local queue) ran
+as ``run_from_jobserver ... --root /Users/psaxe/SEAMM_DEV`` and finished. No shared
+conda environment, ``~/SEAMM`` ini file or database changed. Left for Paul: removing
+conda ``seamm-dev`` and the old ``SEAMM-dev.app`` / ``SEAMM-Installer-dev.app``; the
+other session's xnn_step working tree was not installed (it would replace today's
+release with an older base). Loose ends found: the macOS service listing counts
+LaunchAgents files that do not end in ``.plist`` (an editor backup showed up as a
+service); ``datastore.update`` should stamp an unversioned database whose schema
+matches a known revision instead of migrating it from scratch.
 
 **Phase 2 decision:** reference data follows the rule *the installation's own copy
 under its root if it has one, else the default installation's in ~/SEAMM*

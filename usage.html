@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="_static/documentation_options.js?v=e1d9719b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -47,8 +47,9 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span></code> is a command with sub-commands; <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">--help</span></code> lists them
 and <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">&lt;command&gt;</span> <span class="pre">--help</span></code> the options of each. Global options come first:
-<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">DIR</span></code> chooses the SEAMM root (default <code class="docutils literal notranslate"><span class="pre">$SEAMM_ROOT</span></code> if set, else
-<code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>), <code class="docutils literal notranslate"><span class="pre">--development</span></code> uses <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> and adds the development tools,
+<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">DIR</span></code> chooses the SEAMM root (default <code class="docutils literal notranslate"><span class="pre">$SEAMM_ROOT</span></code> if set, else the
+installation whose environment the manager runs from – <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv/bin/seamm-manager</span></code>
+and the app <code class="docutils literal notranslate"><span class="pre">SEAMM-Manager</span> <span class="pre">(SEAMM_DEV)</span></code> work on <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> – else <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>), <code class="docutils literal notranslate"><span class="pre">--development</span></code> uses <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> and adds the development tools,
 <code class="docutils literal notranslate"><span class="pre">--name</span></code> sets the installation’s name in its services and apps, and <code class="docutils literal notranslate"><span class="pre">--log-level</span></code>
 controls verbosity. With no command the graphical installer opens.</p>
 <table class="docutils align-default">
@@ -111,7 +112,13 @@ day are identical. <code class="docutils literal notranslate"><span class="pre">
 resolve. Because the list is refreshed nightly, a release made today is invisible to
 <code class="docutils literal notranslate"><span class="pre">update</span></code> until tomorrow; <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code> asks PyPI for each package’s newest
 release instead, pins it exactly, and skips the lock (which would pin yesterday’s
-version). The one exception is the manager itself: since the list is refreshed
+version). If Zenodo cannot be reached, the manager says so and uses the package list and lock
+it saved last time.</p>
+<p>When a plug-in’s installer updates its code’s conda environment, it applies the
+plug-in’s environment file only if the file changed since it was last applied, or if
+that was more than a week ago, since re-solving a conda environment is slow.
+<code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--refresh-codes</span></code> applies them all now, to pick up new builds of the codes.</p>
+<p>The one exception is the manager itself: since the list is refreshed
 nightly, after an install or update the manager makes sure the environment holds
 the same release it is running, so the plug-ins’ installers never run on an older
 one. After every change the manager writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/environments/&lt;timestamp&gt;_*.txt</span></code>
@@ -159,6 +166,33 @@ The plug-ins’ installers honour it through the seamm-manager in the installati
 own environment; if that copy is too old to know about policies, the manager skips
 their install, update and uninstall steps rather than risk the shared environments.</p>
 </section>
+<section id="trying-a-new-release-beside-production">
+<h2>Trying a new release beside production<a class="headerlink" href="#trying-a-new-release-beside-production" title="Link to this heading">¶</a></h2>
+<p>To try new versions of SEAMM and the plug-ins without touching the installation you
+use, make a second one, use it, and remove it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ seamm-manager --root ~/SEAMM_NEW install --all
+$ seamm-manager --root ~/SEAMM_NEW update --all --latest    # today's releases
+$ seamm-manager --root ~/SEAMM_NEW install seamm-webui
+$ seamm-manager --root ~/SEAMM_NEW services create jobserver
+$ seamm-manager --root ~/SEAMM_NEW services create webui --webui-host 127.0.0.1
+$ seamm-manager --root ~/SEAMM_NEW apps create
+</pre></div>
+</div>
+<p>The new installation shares <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>’s codes (it copies their <code class="docutils literal notranslate"><span class="pre">.ini</span></code> files and
+never creates or updates a conda environment), gets its own JobServer
+(<code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_NEW</span></code>), web interface on the next free port (55056 beside
+production’s 55055) and apps (<code class="docutils literal notranslate"><span class="pre">SEAMM</span> <span class="pre">(SEAMM_NEW)</span></code>), and keeps its jobs in
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW/Jobs</span></code>. Submit jobs to it through its own web interface or app.</p>
+<p>To remove it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ seamm-manager --root ~/SEAMM_NEW services delete jobserver webui
+$ seamm-manager --root ~/SEAMM_NEW apps delete
+$ seamm-manager --root ~/SEAMM_NEW environment remove
+$ rm -rf ~/SEAMM_NEW
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code> removes only the Python environment; the last command removes
+the rest (jobs, logs, configuration, the web interface’s environment).</p>
+</section>
 <section id="where-things-are">
 <h2>Where things are<a class="headerlink" href="#where-things-are" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">~/</span><span class="n">SEAMM</span><span class="o">/</span>                 <span class="n">the</span> <span class="n">root</span> <span class="p">(</span><span class="o">--</span><span class="n">root</span><span class="p">)</span>
@@ -192,6 +226,7 @@ import it there.</p>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#versions-and-the-lock-file">Versions and the lock file</a></li>
 <li><a class="reference internal" href="#several-installations">Several installations</a></li>
+<li><a class="reference internal" href="#trying-a-new-release-beside-production">Trying a new release beside production</a></li>
 <li><a class="reference internal" href="#where-things-are">Where things are</a></li>
 </ul>
 </li>
@@ -244,7 +279,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

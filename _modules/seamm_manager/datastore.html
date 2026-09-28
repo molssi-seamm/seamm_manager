@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>seamm_manager.datastore &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="../../_static/documentation_options.js?v=e1d9719b"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>
@@ -42,6 +42,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
@@ -51,11 +53,11 @@
 <span class="k">if</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Darwin"</span><span class="p">,):</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.mac</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceManager</span>
 
-    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm."</span><span class="p">)</span>
+    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm"</span><span class="p">)</span>
 <span class="k">elif</span> <span class="n">system</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Linux"</span><span class="p">,):</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.linux</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceManager</span>
 
-    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm."</span><span class="p">)</span>
+    <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SEAMM does not support services on </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2"> yet."</span><span class="p">)</span>
 
@@ -153,11 +155,23 @@
 <span class="sd">    """</span>
     <span class="n">db_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"seamm.db"</span>
     <span class="k">if</span> <span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">_seed_state</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="s2">"seeded"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="s2">"no tables"</span><span class="p">:</span>
+            <span class="c1"># A file with none of SEAMM's tables holds no data: e.g. a JobServer</span>
+            <span class="c1"># started before seamm-datastore was installed creates an empty</span>
+            <span class="c1"># seamm.db. Replace it with a proper one.</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The datastore </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2"> is empty; creating it afresh."</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"-wal"</span><span class="p">,</span> <span class="s2">"-shm"</span><span class="p">):</span>
+                <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># the tables exist but there are no users: seed them below</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The datastore </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2"> has no users; adding the defaults."</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">or</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="n">db_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Creating the datastore </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Creating the datastore </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">code</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"import seamm_datastore</span><span class="se">\n</span><span class="s2">"</span>
         <span class="sa">f</span><span class="s2">"seamm_datastore.connect(database_uri='sqlite:///</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">', "</span>
@@ -172,7 +186,98 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"      "</span> <span class="o">+</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">6</span><span class="p">:]))</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"   done; the administrator account is 'admin' (password 'admin')."</span><span class="p">)</span>
+    <span class="c1"># seamm_datastore creates the tables without recording their revision; record</span>
+    <span class="c1"># it so later updates migrate from the right place.</span>
+    <span class="n">revision</span> <span class="o">=</span> <span class="n">unversioned_revision</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">revision</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stamp</span><span class="p">(</span><span class="n">revision</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   (could not record the database's version: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_seed_state</span><span class="p">(</span><span class="n">db_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How far an existing datastore file is set up.</span>
+
+<span class="sd">    Returns "no tables" (none of SEAMM's tables), "no users" (the tables but no</span>
+<span class="sd">    user accounts), or "seeded".</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file:</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">?mode=ro"</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+            <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"select name from sqlite_master"</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="s2">"users"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">"no tables"</span>
+            <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"select count(*) from users"</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">"no users"</span>
+    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"seeded"</span>  <span class="c1"># not ours to judge; leave it alone</span>
+    <span class="k">return</span> <span class="s2">"seeded"</span>
+
+
+<span class="c1"># Revisions of seamm_datastore's migrations whose schema can be recognized in a</span>
+<span class="c1"># database that was never put under alembic (it has no alembic_version table).</span>
+<span class="c1"># Older databases have a ``path`` column in ``flowcharts``; the first migration,</span>
+<span class="c1"># 7b24598d1fee, removes it and adds ``flowchart_metadata``; d7d6859198e9 adds a</span>
+<span class="c1"># unique constraint on ``sha256_strict``.</span>
+<span class="n">_BASE_REVISION</span> <span class="o">=</span> <span class="s2">"7b24598d1fee"</span>
+<span class="n">_HASH_REVISION</span> <span class="o">=</span> <span class="s2">"d7d6859198e9"</span>
+
+
+<div class="viewcode-block" id="unversioned_revision">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.datastore.unversioned_revision">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unversioned_revision</span><span class="p">(</span><span class="n">db_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The revision an unversioned database's tables already match, or None.</span>
+
+<span class="sd">    None when the database is versioned, has no jobs table, or predates the</span>
+<span class="sd">    first migration (which alembic can then apply from scratch).</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file:</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">?mode=ro"</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+            <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"select name from sqlite_master"</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="s2">"alembic_version"</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">or</span> <span class="s2">"flowcharts"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"pragma table_info(flowcharts)"</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="s2">"path"</span> <span class="ow">in</span> <span class="n">columns</span> <span class="ow">or</span> <span class="s2">"flowchart_metadata"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">sql</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">""</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"select sql from sqlite_master where tbl_name = 'flowcharts'"</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">unique_index</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">idx</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pragma index_info('</span><span class="si">{</span><span class="n">idx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">')"</span><span class="p">)]</span>
+                <span class="o">==</span> <span class="p">[</span><span class="s2">"sha256_strict"</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"pragma index_list(flowcharts)"</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">unique</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">unique_index</span>
+        <span class="ow">or</span> <span class="s2">"uq_flowcharts_sha256_strict"</span> <span class="ow">in</span> <span class="n">sql</span>
+        <span class="ow">or</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"unique\s*\(\s*sha256_strict\s*\)"</span><span class="p">,</span> <span class="n">sql</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_HASH_REVISION</span> <span class="k">if</span> <span class="n">unique</span> <span class="k">else</span> <span class="n">_BASE_REVISION</span></div>
+
+
+
+<div class="viewcode-block" id="stamp">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.datastore.stamp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stamp</span><span class="p">(</span><span class="n">revision</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record in the database that its tables are at `revision`, without changes."""</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"seamm.db"</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">_find_path</span><span class="p">()</span>
+    <span class="n">alembic</span> <span class="o">=</span> <span class="n">_alembic</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">alembic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"seamm-datastore (and its alembic) is not installed."</span><span class="p">)</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"sqlite:///</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">alembic</span><span class="si">}</span><span class="s1">" -x uri="</span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s1">" stamp </span><span class="si">{</span><span class="n">revision</span><span class="si">}</span><span class="s1">'</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running '</span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="s2">' was not successful:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
@@ -181,9 +286,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">"""Update the database to the latest version."""</span>
     <span class="n">db_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"seamm.db"</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">db_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">db_path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="n">_seed_state</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"seeded"</span><span class="p">:</span>
+        <span class="c1"># Missing, or an empty file / tables without users: migrations would not</span>
+        <span class="c1"># create SEAMM's tables, only mark the file as migrated. Create it properly.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database file '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' does not exist."</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The database file '</span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">' could not be created."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">version</span> <span class="o">=</span> <span class="n">db_version</span><span class="p">()</span>
         <span class="n">latest</span> <span class="o">=</span> <span class="n">latest_version</span><span class="p">()</span>
@@ -194,14 +301,25 @@
             <span class="n">restart</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">restart</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Stopping the service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                <span class="n">mgr</span><span class="o">.</span><span class="n">stop_service</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+                <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+
+            <span class="c1"># A database that was never put under alembic would otherwise be</span>
+            <span class="c1"># migrated from the first revision and fail; record the revision its</span>
+            <span class="c1"># tables already have first.</span>
+            <span class="n">revision</span> <span class="o">=</span> <span class="n">unversioned_revision</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">revision</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"The database has no version recorded; its tables match "</span>
+                    <span class="sa">f</span><span class="s2">"revision </span><span class="si">{</span><span class="n">revision</span><span class="si">}</span><span class="s2">, so recording that first."</span>
+                <span class="p">)</span>
+                <span class="n">stamp</span><span class="p">(</span><span class="n">revision</span><span class="p">)</span>
 
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating the database."</span><span class="p">)</span>
             <span class="n">update_db</span><span class="p">()</span>
 
             <span class="k">if</span> <span class="n">restart</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarting the service </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                <span class="n">mgr</span><span class="o">.</span><span class="n">start_service</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+                <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
 
             <span class="n">version</span> <span class="o">=</span> <span class="n">db_version</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="n">latest</span><span class="p">:</span>
@@ -321,7 +439,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.datastore</a></li> 
       </ul>

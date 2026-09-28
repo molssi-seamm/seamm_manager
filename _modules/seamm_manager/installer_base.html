@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="../../_static/documentation_options.js?v=e1d9719b"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -247,6 +247,51 @@
             <span class="k">return</span> <span class="kc">False</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Uses the code as configured in </span><span class="si">{</span><span class="n">own</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="c1"># An environment file is applied again only if it changed, or after this long,</span>
+    <span class="c1"># so that ``update --all`` is quick but the codes still get new builds.</span>
+    <span class="n">REFRESH_DAYS</span> <span class="o">=</span> <span class="mi">7</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_applied_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The file recording which environment file was last applied."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"conda-meta"</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"seamm-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="si">}</span><span class="s2">.sha256"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment_file_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">)</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unchanged_since_applied</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Whether the environment file was applied recently and not changed since.</span>
+
+<span class="sd">        ``SEAMM_REFRESH_CODES`` (set by ``seamm-manager update --refresh-codes``)</span>
+<span class="sd">        forces the file to be applied again.</span>
+<span class="sd">        """</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SEAMM_REFRESH_CODES"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">marker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_marker</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">marker</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="n">age_days</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">marker</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span> <span class="o">/</span> <span class="mi">86400</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">marker</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_file_hash</span><span class="p">()</span>
+                <span class="ow">and</span> <span class="n">age_days</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">REFRESH_DAYS</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_record_applied</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">marker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_marker</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+            <span class="n">marker</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_environment_file_hash</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># never fail an installation over the record</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not record the applied environment file: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="InstallerBase.ask_yes_no">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.ask_yes_no">[docs]</a>
@@ -716,6 +761,7 @@
             <span class="s2">"may take a minute or two."</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">create_environment</span><span class="p">(</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
 
         <span class="c1"># Update the configuration file.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_exe_configuration_file</span><span class="p">()</span>
@@ -915,11 +961,18 @@
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span>
             <span class="k">if</span> <span class="s2">"conda-environment"</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="s2">"conda-environment"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"conda-environment"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unchanged_since_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"    The Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">' is up to date (the "</span>
+                    <span class="s2">"environment file is unchanged since it was applied)."</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"    Updating Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This may "</span>
                 <span class="s2">"take a minute or two."</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
             <span class="c1"># Update the configuration file, just in case.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"installation"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">)</span>
             <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
@@ -972,7 +1025,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>2026-09-27 – Several SEAMM installations side by side &#8212; SEAMM Manager Step 2026.9.27.6 documentation</title>
+    <title>2026-09-27 – Several SEAMM installations side by side &#8212; SEAMM Manager Step 2026.9.28 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../../_static/documentation_options.js?v=e9cf61d0"></script>
+    <script src="../../../_static/documentation_options.js?v=e1d9719b"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../index.html" accesskey="U">Campaigns</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
@@ -47,18 +47,56 @@
             
   <section id="several-seamm-installations-side-by-side">
 <h1>2026-09-27 – Several SEAMM installations side by side<a class="headerlink" href="#several-seamm-installations-side-by-side" title="Link to this heading">¶</a></h1>
-<p>Status (2026-09-27): <strong>phase 1 released</strong> (seamm_util 2026.9.27, seamm_jobserver
+<p>Status (2026-09-27): <strong>complete.</strong> All six phases done and released; details of each
+phase follow.</p>
+<p><strong>Phase 6 done</strong> (paul.local): a trial <code class="docutils literal notranslate"><span class="pre">~/SEAMM_NEW</span></code> was installed (<code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">--all</span></code>,
+then <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span> <span class="pre">--latest</span></code>), given its own <code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_NEW</span></code>,
+<code class="docutils literal notranslate"><span class="pre">webui-SEAMM_NEW</span></code> (port 55056 beside production’s 55055) and apps, ran a MOPAC job and
+the LAMMPS + xnn flowchart on production’s shared codes (both finished, with
+<code class="docutils literal notranslate"><span class="pre">--root</span> <span class="pre">/Users/psaxe/SEAMM_NEW</span></code>), and was removed with <code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">delete</span></code>, <code class="docutils literal notranslate"><span class="pre">apps</span>
+<span class="pre">delete</span></code>, <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code> and <code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span></code>. Production – its eight conda
+environments, ini files, thermochemistry database, datastore, services and apps – was
+identical to the first snapshot afterwards. Documented in seamm_manager’s usage guide
+and on the docs site (how-to <em>Trying a New Release Beside Production</em>, PR #58).</p>
+<p><strong>Loose ends found during the campaign</strong> (none blocking): the macOS service listing
+counts LaunchAgents files not ending in <code class="docutils literal notranslate"><span class="pre">.plist</span></code>; <code class="docutils literal notranslate"><span class="pre">datastore.update</span></code> should stamp an
+unversioned database whose schema matches a known revision; <code class="docutils literal notranslate"><span class="pre">datastore.ensure</span></code> skips
+an existing but unseeded <code class="docutils literal notranslate"><span class="pre">seamm.db</span></code>; seamm_thermochemistry’s installer <code class="docutils literal notranslate"><span class="pre">update</span></code> in
+an <code class="docutils literal notranslate"><span class="pre">own</span></code> installation still re-downloads over local changes; retire conda
+<code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code>, the old <code class="docutils literal notranslate"><span class="pre">SEAMM-dev</span></code> apps and the conda <code class="docutils literal notranslate"><span class="pre">dev_dashboard</span></code> on the Mac
+(Paul’s call). <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code>: PyPI’s JSON API and simple index are refreshed
+separately and either can lag the other by minutes after a release (seen both ways on
+2026-09-27/28); the manager now asks the simple index, which is what uv installs from,
+but it too can lag, so <code class="docutils literal notranslate"><span class="pre">--latest</span></code> right after a release may need a retry.</p>
+<p>Earlier status: <strong>phase 1 released</strong> (seamm_util 2026.9.27, seamm_jobserver
 2026.9.27, seamm_manager 2026.9.27.4; all on this Mac and paul.local). <strong>Phase 2 released</strong> (2026-09-27): seamm_util 2026.9.27.1 (<code class="docutils literal notranslate"><span class="pre">current_root</span></code>,
 <code class="docutils literal notranslate"><span class="pre">installation_path</span></code>), seamm_exec 2026.9.27 (D8), seamm 2026.9.27 (data path,
 dashboards.ini, Open dialog), vasp_step 2026.9.27, forcefield_step 2026.9.27,
 xnn_step 2026.9.27.1 and seamm_thermochemistry 2026.9.27. Phases 3 and 4 need the
-decisions below. <strong>Phase 3 released</strong> (seamm_manager 2026.9.27.5, on this Mac and paul.local) <strong>Phase 4 in review</strong> (seamm_manager 2026.9.27.6, seamm_thermochemistry 2026.9.27.1): D6 with <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> (not <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/seamm.ini</span></code>, which seamm_util still migrates into <code class="docutils literal notranslate"><span class="pre">~/.seamm.d</span></code>), report-only installers in <code class="docutils literal notranslate"><span class="pre">shared</span></code> roots, and a tool-side guard when the root’s venv manager predates the policy. A first live test on paul.local ran the released manager by mistake and recreated its eight shared conda environments (repaired; see the phase 4 notes in memory); the repeated test, three runs in a trial root, left every shared environment, <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> ini file and the database unchanged.: D5 names, D7
+decisions below. <strong>Phase 3 released</strong> (seamm_manager 2026.9.27.5, on this Mac and paul.local) <strong>Phase 4 released</strong> (seamm_manager 2026.9.27.6, seamm_thermochemistry 2026.9.27.1; on this Mac and paul.local): D6 with <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> (not <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/seamm.ini</span></code>, which seamm_util still migrates into <code class="docutils literal notranslate"><span class="pre">~/.seamm.d</span></code>), report-only installers in <code class="docutils literal notranslate"><span class="pre">shared</span></code> roots, and a tool-side guard when the root’s venv manager predates the policy. A first live test on paul.local ran the released manager by mistake and recreated its eight shared conda environments (repaired; see the phase 4 notes in memory); the repeated test, three runs in a trial root, left every shared environment, <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> ini file and the database unchanged.: D5 names, D7
 ports, same-root replacement, <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">--all</span></code>, the GUI’s window title and Services
 tab (now sharing <code class="docutils literal notranslate"><span class="pre">create_service</span></code>), and the <code class="docutils literal notranslate"><span class="pre">--latest</span></code> simple-index fix; verified
 on paul.local with a bare trial root <code class="docutils literal notranslate"><span class="pre">~/SEAMM_P3TEST</span></code> beside production (removed
 afterwards). Loose end: <code class="docutils literal notranslate"><span class="pre">datastore.ensure()</span></code> skips a database file that exists but
 was never seeded (a JobServer started before seamm-datastore was installed creates an
-empty <code class="docutils literal notranslate"><span class="pre">seamm.db</span></code>); it should seed an empty database.</p>
+empty <code class="docutils literal notranslate"><span class="pre">seamm.db</span></code>); it should seed an empty database. <strong>Phase 5 done</strong> (2026-09-27, this Mac): <code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV</span></code> runs from
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM_DEV/venv</span></code> with today’s releases, the development tools, and gaussian_step
+and seamm_bsse (editable) from their checkouts; policy <code class="docutils literal notranslate"><span class="pre">shared</span></code>, so its code <code class="docutils literal notranslate"><span class="pre">.ini</span></code>
+files are copies of <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code>’s. Its database had never been stamped by alembic (its
+schema was exactly revision 7b24598d1fee): backed up to
+<code class="docutils literal notranslate"><span class="pre">seamm.db.bak-2026-09-27-before-uv-conversion</span></code>, stamped, then migrated to head by the
+install (2,075 jobs and 980 flowcharts, unchanged). <code class="docutils literal notranslate"><span class="pre">jobserver-SEAMM_DEV</span></code> and
+<code class="docutils literal notranslate"><span class="pre">webui-SEAMM_DEV</span></code> (port 55155, 127.0.0.1) replaced <code class="docutils literal notranslate"><span class="pre">dev_jobserver</span></code> and <code class="docutils literal notranslate"><span class="pre">dev_webui</span></code>
+through the same-root check; the conda-era <code class="docutils literal notranslate"><span class="pre">dev_dashboard</span></code> (port 55066) was restarted
+and still runs from <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code>. Test job 3976 (From SMILES + MOPAC, local queue) ran
+as <code class="docutils literal notranslate"><span class="pre">run_from_jobserver</span> <span class="pre">...</span> <span class="pre">--root</span> <span class="pre">/Users/psaxe/SEAMM_DEV</span></code> and finished. No shared
+conda environment, <code class="docutils literal notranslate"><span class="pre">~/SEAMM</span></code> ini file or database changed. Left for Paul: removing
+conda <code class="docutils literal notranslate"><span class="pre">seamm-dev</span></code> and the old <code class="docutils literal notranslate"><span class="pre">SEAMM-dev.app</span></code> / <code class="docutils literal notranslate"><span class="pre">SEAMM-Installer-dev.app</span></code>; the
+other session’s xnn_step working tree was not installed (it would replace today’s
+release with an older base). Loose ends found: the macOS service listing counts
+LaunchAgents files that do not end in <code class="docutils literal notranslate"><span class="pre">.plist</span></code> (an editor backup showed up as a
+service); <code class="docutils literal notranslate"><span class="pre">datastore.update</span></code> should stamp an unversioned database whose schema
+matches a known revision instead of migrating it from scratch.</p>
 <p><strong>Phase 2 decision:</strong> reference data follows the rule <em>the installation’s own copy
 under its root if it has one, else the default installation’s in ~/SEAMM</em>
 (<code class="docutils literal notranslate"><span class="pre">seamm_util.installation_path</span></code>), so a second installation works without copying
@@ -328,7 +366,7 @@ on 2026-09-27 returned a stale CDN copy to Python’s <code class="docutils lite
         <li class="right" >
           <a href="../2026-09-25/NOTES_phase4.html" title="Phase 4 notes – rolling out seamm-manager (started 2026-09-26)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.27.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">SEAMM Manager Step 2026.9.28 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Developer Documentation</a> &#187;</li>
           <li class="nav-item nav-item-2"><a href="../index.html" >Campaigns</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">2026-09-27 – Several SEAMM installations side by side</a></li> 
