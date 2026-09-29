@@ -100,8 +100,14 @@ def update():
         print("Install SEAMM first with 'seamm-manager install --all'.")
         return 1
 
-    # The manager itself, if installed as a uv tool: keep it current first.
-    if my.options.all and not os.environ.get("SEAMM_MANAGER_UPGRADED"):
+    # The manager itself, if installed as a uv tool: keep it current first. Only
+    # when there is a newer release: reinstalling the running tool replaces its own
+    # files, which on a network filesystem can leave it half removed.
+    if (
+        my.options.all
+        and not os.environ.get("SEAMM_MANAGER_UPGRADED")
+        and _newer_manager_release()
+    ):
         if my.uv.tool_upgrade("seamm-manager"):
             os.environ["SEAMM_MANAGER_UPGRADED"] = "1"
             print("Re-running with the updated manager.")
@@ -265,3 +271,20 @@ def update_development_environment():
     packages = my.package_metadata.get("development packages", development_packages)
     print(f"Updating development packages {' '.join(packages)}")
     my.uv.install(list(packages), upgrade=True)
+
+
+def _newer_manager_release():
+    """Whether PyPI has a newer seamm-manager than the one running.
+
+    If PyPI cannot be reached, assume there is (the upgrade itself will say).
+    """
+    from . import __version__
+    from .util import pypi_latest
+
+    latest = pypi_latest("seamm-manager")
+    if latest is None:
+        return True
+    try:
+        return Version(latest) > Version(__version__.split("+")[0])
+    except Exception:
+        return True

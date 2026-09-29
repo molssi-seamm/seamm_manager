@@ -388,6 +388,13 @@ print(json.dumps({"environment": environment, "packages": packages}))
             tool,
             check=False,
         )
+        if result.returncode != 0:
+            print(
+                f"Could not update {tool} with uv:\n"
+                + (result.stderr or result.stdout or "").strip()
+                + "\nIf it no longer runs, reinstall it with\n"
+                f"    uv tool install --force --python {self.python_version} {tool}"
+            )
         return result.returncode == 0
 
 

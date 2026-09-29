@@ -1,6 +1,17 @@
 =======
 History
 =======
+2026.9.29.2 -- Bugfix: update no longer reinstalls the running manager needlessly
+    * ``update --all`` reinstalled the manager's own uv tool every time, even when it
+      was already the newest release. On a network filesystem, as on a cluster, the
+      running manager's open files can stop the old tool being removed, leaving it
+      half deleted: the update then failed part way ("No module named
+      'seamm_manager.policy'", and every package "could not reach PyPI"), and the
+      manager no longer started. It is now reinstalled only when PyPI has a newer
+      release.
+    * If updating the manager fails, uv's error is shown, with the command to
+      reinstall it.
+
 2026.9.29.1 -- Bugfix: works with a cluster's central conda and Python
     * The codes' conda environments were always looked for, and made, in the conda
       installation's own ``envs`` directory. With a centrally provided conda, as on
