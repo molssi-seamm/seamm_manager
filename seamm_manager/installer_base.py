@@ -622,14 +622,62 @@ class InstallerBase(object):
             self.configuration.save()
 
     def check_exe_configuration_file(self):
-        """Checks that the init file for the executable for the plug-in exists."""
+        """Checks that the init file for the executable for the plug-in exists.
+
+        If it does not, it is created from the plug-in's template
+        (``data/<code>.ini``), when the plug-in ships one.
+
+        Returns
+        -------
+        bool
+            True if the file was created.
+        """
         path = self.root / self.init_file_name
+        created = False
         if not path.exists():
-            text = (self.resource_path / self.init_file_name).read_text()
-            path.write_text(text)
-            print(f"    The {self.init_file_name} file did not exist. Created {path}")
+            template = (
+                None
+                if self.resource_path is None
+                else self.resource_path / self.init_file_name
+            )
+            if template is not None and template.is_file():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(template.read_text())
+                print(
+                    f"    The {self.init_file_name} file did not exist. Created {path}"
+                )
+                created = True
 
         self.exe_config.path = path
+        return created
+
+    @property
+    def manual_code(self):
+        """Whether the code is installed by hand rather than with Conda.
+
+        Licensed codes such as ORCA, Gaussian and VASP have no environment file.
+        """
+        return (
+            getattr(self, "environment_file", None) is None or self.environment is None
+        )
+
+    def _check_manual_code(self):
+        """Give a hand-installed code its configuration file, and say how to finish.
+
+        The plug-in's template is written to ``<root>/<code>.ini`` if the file does
+        not exist; an existing file is never changed.
+        """
+        path = self.root / self.init_file_name
+        if self.check_exe_configuration_file():
+            print(
+                "    This code is not installed automatically. Install it yourself, "
+                f"then edit {path} to say how to run it."
+            )
+        elif not path.exists():
+            print(
+                "    This code is not installed automatically. Install it yourself "
+                f"and give its location in {path}."
+            )
 
     def have_executables(self, path):
         """Check whether the executables are found at the given path.
@@ -689,13 +737,10 @@ class InstallerBase(object):
             self.environment = prefixed_environment(
                 self.environment, compute_tag(self.root)
             )
-        environment_file = getattr(self, "environment_file", None)
-        if environment_file is None or self.environment is None:
-            print(
-                "    This code is not installed automatically; install it yourself "
-                f"and give its location in {self.exe_config.path}."
-            )
+        if self.manual_code:
+            self._check_manual_code()
             return
+        environment_file = self.environment_file
         print(
             f"    Installing Conda environment '{self.environment}'. This "
             "may take a minute or two."
@@ -879,6 +924,10 @@ class InstallerBase(object):
         """
         if self.shared_codes:
             self._use_shared_code()
+            return
+        if self.manual_code:
+            # Nothing to update: the code is the user's own installation.
+            self._check_manual_code()
             return
         # See if the executables are already registered in the configuration file
         data = self.exe_config.get_values("local")

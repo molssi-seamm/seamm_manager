@@ -83,6 +83,11 @@ otherwise left as they are, while those with a version specifier are kept curren
 within it. So a torch build you installed by hand for your GPU driver survives
 updates; to change it, reinstall it by hand in that environment.
 
+Licensed codes -- ORCA, Gaussian, VASP, FHI-aims -- are not installed at all: you
+install them yourself. Installing their plug-in writes a commented template,
+``~/SEAMM/<code>.ini`` (e.g. ``vasp.ini``), for you to edit to say where the code is
+and how to run it. An existing file is never changed.
+
 Migrating from seamm-installer
 ------------------------------
 
