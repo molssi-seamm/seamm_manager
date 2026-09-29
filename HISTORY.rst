@@ -1,6 +1,21 @@
 =======
 History
 =======
+2026.9.29.1 -- Bugfix: works with a cluster's central conda and Python
+    * The codes' conda environments were always looked for, and made, in the conda
+      installation's own ``envs`` directory. With a centrally provided conda, as on
+      many clusters, that directory is read-only and the environments are elsewhere
+      (``envs_dirs`` in ``~/.condarc``), so no environment could be found, updated or
+      created. Environments are now found wherever conda has them, and new ones go in
+      the first writable directory of ``envs_dirs``, as ``conda create -n`` would put
+      them.
+    * Installing no longer tries to recreate a code's conda environment that already
+      exists; it uses it, and ``update`` brings it up to date.
+    * The environment ``<root>/venv`` and the manager itself always use a Python
+      installed by uv. When a conda environment was active -- as the central conda's
+      base often is on a cluster -- uv used its Python instead, and the environment
+      would break whenever that installation changed.
+
 2026.9.29 -- Licensed codes get their configuration file on install
     * Installing the plug-in for a code you install yourself -- ORCA, Gaussian, VASP,
       FHI-aims -- now writes the plug-in's commented template, e.g. ``~/SEAMM/vasp.ini``,

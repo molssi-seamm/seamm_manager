@@ -850,9 +850,31 @@ class Conda(object):
         return result, stdout, stderr
 
     def _resolve_environment_path(self, pathname):
-        """Get the path given either a name or path for an environment."""
+        """Get the path given either a name or path for an environment.
+
+        A name is looked up among conda's environments, wherever they are. A new
+        environment goes in the first writable directory of conda's
+        ``envs_dirs`` (set e.g. in ~/.condarc), as ``conda create -n`` would put
+        it. On a shared machine whose conda is provided centrally, the base
+        installation's own ``envs`` directory is usually read-only.
+        """
         if Path(pathname).is_absolute():
-            path = Path(pathname)
-        else:
-            path = self.root_path / "envs" / pathname
-        return path
+            return Path(pathname)
+        data = self._data or {}
+        for env in data.get("envs", []):
+            path = Path(env)
+            if path.name == pathname and path != self.root_path:
+                return path
+        for directory in data.get("envs_dirs", []):
+            if _writable_directory(Path(directory)):
+                return Path(directory) / pathname
+        return self.root_path / "envs" / pathname
+
+
+def _writable_directory(path):
+    """Whether environments can be created in this directory (made if needed)."""
+    while not path.exists():
+        if path.parent == path:
+            return False
+        path = path.parent
+    return path.is_dir() and os.access(path, os.W_OK | os.X_OK)

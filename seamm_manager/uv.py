@@ -147,7 +147,16 @@ class Uv(object):
         self.run("python", "install", self.python_version)
         print(f"Creating the environment {self.path}")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        args = ["venv", "--python", self.python_version]
+        # Only a uv-managed interpreter: an active conda environment (on a cluster,
+        # often a centrally provided base) would otherwise be preferred, and the
+        # environment would break whenever that installation changed.
+        args = [
+            "venv",
+            "--python",
+            self.python_version,
+            "--python-preference",
+            "only-managed",
+        ]
         if seed:
             args.append("--seed")
         args.append(self.path)
@@ -374,6 +383,8 @@ print(json.dumps({"environment": environment, "packages": packages}))
             "--refresh",
             "--python",
             self.python_version,
+            "--python-preference",
+            "only-managed",
             tool,
             check=False,
         )
