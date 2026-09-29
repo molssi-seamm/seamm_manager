@@ -192,3 +192,18 @@ def test_installed_requirements_need_only_the_standard_library(tmp_path, monkeyp
     requirements = uv.installed_requirements(exclude=["seamm-manager"])
     assert requirements == sorted(requirements)
     assert all(";" not in r and "@" not in r for r in requirements)
+
+
+def test_failed_tool_upgrade_says_how_to_repair(uv, monkeypatch, capsys):
+    import subprocess
+
+    class _Failed:
+        returncode = 2
+        stdout = ""
+        stderr = "error: failed to remove directory: Directory not empty"
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: _Failed())
+    assert not uv.tool_upgrade("seamm-manager")
+    out = capsys.readouterr().out
+    assert "Directory not empty" in out
+    assert "uv tool install --force --python 3.12 seamm-manager" in out

@@ -51,8 +51,9 @@ Updating
 
     $ seamm-manager update --all
 
-updates the manager itself, every installed SEAMM package (to the versions in the
-current lock file), and restarts the JobServer if it needs to be. ``--no-constraints``
+updates the manager itself (if PyPI has a newer release), every installed SEAMM package
+(to the versions in the current lock file), and restarts the JobServer if it needs to
+be. ``--no-constraints``
 ignores the lock and takes the newest releases. ``--latest`` also asks PyPI directly, so
 a release made today is picked up rather than waiting for the nightly list.
 
