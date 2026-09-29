@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=94555e99"></script>
+    <script src="_static/documentation_options.js?v=45a1f582"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,15 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.29 – Licensed codes get their configuration file on install</dt><dd><ul class="simple">
+<li><p>Installing the plug-in for a code you install yourself – ORCA, Gaussian, VASP,
+FHI-aims – now writes the plug-in’s commented template, e.g. <code class="docutils literal notranslate"><span class="pre">~/SEAMM/vasp.ini</span></code>,
+and says to edit it to give the code’s location. Before, it only said to give the
+location in a file that did not exist. An existing file is never changed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span></code> no longer prints “Unable to update the executables because they were
+not installed using Conda” for these codes.</p></li>
+</ul>
+</dd>
 <dt>2026.9.28.1 – Bugfix: updates respect every installed package’s requirements</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code> and <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code> resolved only the packages being
 updated and their dependencies, ignoring what the other installed packages
@@ -318,7 +327,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

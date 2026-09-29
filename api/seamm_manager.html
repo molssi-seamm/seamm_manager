@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=94555e99"></script>
+    <script src="../_static/documentation_options.js?v=45a1f582"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -918,6 +918,16 @@ configuration file.</p>
 <dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.check_exe_configuration_file">
 <span class="sig-name descname"><span class="pre">check_exe_configuration_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/installer_base.html#InstallerBase.check_exe_configuration_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.check_exe_configuration_file" title="Link to this definition">¶</a></dt>
 <dd><p>Checks that the init file for the executable for the plug-in exists.</p>
+<p>If it does not, it is created from the plug-in’s template
+(<code class="docutils literal notranslate"><span class="pre">data/&lt;code&gt;.ini</span></code>), when the plug-in ships one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the file was created.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
@@ -994,6 +1004,13 @@ create, update or remove a conda environment.</p>
 <p>A plug-in whose code cannot be installed this way (ORCA, Gaussian,
 VASP, … are licensed manual installations) has no
 <code class="docutils literal notranslate"><span class="pre">environment_file</span></code>; say so instead of failing.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.manual_code">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">manual_code</span></span><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.manual_code" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the code is installed by hand rather than with Conda.</p>
+<p>Licensed codes such as ORCA, Gaussian and VASP have no environment file.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -2385,6 +2402,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.have_executables"><code class="docutils literal notranslate"><span class="pre">InstallerBase.have_executables()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.init_file_name"><code class="docutils literal notranslate"><span class="pre">InstallerBase.init_file_name</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.install"><code class="docutils literal notranslate"><span class="pre">InstallerBase.install()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.manual_code"><code class="docutils literal notranslate"><span class="pre">InstallerBase.manual_code</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.pip"><code class="docutils literal notranslate"><span class="pre">InstallerBase.pip</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.root"><code class="docutils literal notranslate"><span class="pre">InstallerBase.root</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.run"><code class="docutils literal notranslate"><span class="pre">InstallerBase.run()</span></code></a></li>
@@ -2614,7 +2632,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

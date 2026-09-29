@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.28.1 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=94555e99"></script>
+    <script src="../../_static/documentation_options.js?v=45a1f582"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -673,15 +673,63 @@
 <div class="viewcode-block" id="InstallerBase.check_exe_configuration_file">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.check_exe_configuration_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_exe_configuration_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Checks that the init file for the executable for the plug-in exists."""</span>
+<span class="w">        </span><span class="sd">"""Checks that the init file for the executable for the plug-in exists.</span>
+
+<span class="sd">        If it does not, it is created from the plug-in's template</span>
+<span class="sd">        (``data/&lt;code&gt;.ini``), when the plug-in ships one.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the file was created.</span>
+<span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span>
+        <span class="n">created</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
-            <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    The </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span><span class="si">}</span><span class="s2"> file did not exist. Created </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="kc">None</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">template</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">template</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"    The </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span><span class="si">}</span><span class="s2"> file did not exist. Created </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+                <span class="n">created</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">return</span> <span class="n">created</span></div>
 
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">manual_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Whether the code is installed by hand rather than with Conda.</span>
+
+<span class="sd">        Licensed codes such as ORCA, Gaussian and VASP have no environment file.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"environment_file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_manual_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Give a hand-installed code its configuration file, and say how to finish.</span>
+
+<span class="sd">        The plug-in's template is written to ``&lt;root&gt;/&lt;code&gt;.ini`` if the file does</span>
+<span class="sd">        not exist; an existing file is never changed.</span>
+<span class="sd">        """</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_file_name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_exe_configuration_file</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"    This code is not installed automatically. Install it yourself, "</span>
+                <span class="sa">f</span><span class="s2">"then edit </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> to say how to run it."</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"    This code is not installed automatically. Install it yourself "</span>
+                <span class="sa">f</span><span class="s2">"and give its location in </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="InstallerBase.have_executables">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.have_executables">[docs]</a>
@@ -749,13 +797,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="o">=</span> <span class="n">prefixed_environment</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">compute_tag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
             <span class="p">)</span>
-        <span class="n">environment_file</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"environment_file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">environment_file</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">"    This code is not installed automatically; install it yourself "</span>
-                <span class="sa">f</span><span class="s2">"and give its location in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">."</span>
-            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manual_code</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_manual_code</span><span class="p">()</span>
             <span class="k">return</span>
+        <span class="n">environment_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"    Installing Conda environment '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This "</span>
             <span class="s2">"may take a minute or two."</span>
@@ -955,6 +1000,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_codes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_use_shared_code</span><span class="p">()</span>
             <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manual_code</span><span class="p">:</span>
+            <span class="c1"># Nothing to update: the code is the user's own installation.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_manual_code</span><span class="p">()</span>
+            <span class="k">return</span>
         <span class="c1"># See if the executables are already registered in the configuration file</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">get_values</span><span class="p">(</span><span class="s2">"local"</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"installation"</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="s2">"installation"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"conda"</span><span class="p">:</span>
@@ -1025,7 +1074,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.28.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
