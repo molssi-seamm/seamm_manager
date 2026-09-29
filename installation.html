@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.9.29.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=45a1f582"></script>
+    <script src="_static/documentation_options.js?v=e58014c0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -105,6 +105,11 @@ manager, the services and the apps all use its interpreter directly.</p>
 Psi4, DFTB+, LAMMPS, xTB, Packmol, … – install the code into a conda environment of
 its own, so conda (Miniforge is recommended) is needed on a machine where you install
 one of those. The plug-in’s installer tells you if it is missing.</p>
+<p>The environments go where conda keeps them: an existing one is used wherever it is,
+and a new one goes in the first writable directory of conda’s <code class="docutils literal notranslate"><span class="pre">envs_dirs</span></code> (set in
+<code class="docutils literal notranslate"><span class="pre">~/.condarc</span></code>), as <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">create</span> <span class="pre">-n</span></code> would put it. So a conda provided centrally on
+a cluster, whose own directories are read-only, works too. SEAMM’s own environment
+never uses conda’s Python, even when a conda environment is active.</p>
 <p>When a plug-in updates its code environment from its environment file, pip
 packages named without a version (<code class="docutils literal notranslate"><span class="pre">torch</span></code>) are installed only if missing and
 otherwise left as they are, while those with a version specifier are kept current
@@ -208,7 +213,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

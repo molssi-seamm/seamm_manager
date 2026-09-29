@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
+    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.9.29.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=45a1f582"></script>
+    <script src="../../_static/documentation_options.js?v=e58014c0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>
@@ -207,7 +207,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"python"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Creating the environment </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"venv"</span><span class="p">,</span> <span class="s2">"--python"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span><span class="p">]</span>
+        <span class="c1"># Only a uv-managed interpreter: an active conda environment (on a cluster,</span>
+        <span class="c1"># often a centrally provided base) would otherwise be preferred, and the</span>
+        <span class="c1"># environment would break whenever that installation changed.</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">"venv"</span><span class="p">,</span>
+            <span class="s2">"--python"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span><span class="p">,</span>
+            <span class="s2">"--python-preference"</span><span class="p">,</span>
+            <span class="s2">"only-managed"</span><span class="p">,</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="n">seed</span><span class="p">:</span>
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--seed"</span><span class="p">)</span>
         <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
@@ -461,6 +470,8 @@
             <span class="s2">"--refresh"</span><span class="p">,</span>
             <span class="s2">"--python"</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span><span class="p">,</span>
+            <span class="s2">"--python-preference"</span><span class="p">,</span>
+            <span class="s2">"only-managed"</span><span class="p">,</span>
             <span class="n">tool</span><span class="p">,</span>
             <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
@@ -509,7 +520,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>

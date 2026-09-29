@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.29 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.9.29.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=45a1f582"></script>
+    <script src="_static/documentation_options.js?v=e58014c0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,22 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.9.29.1 – Bugfix: works with a cluster’s central conda and Python</dt><dd><ul class="simple">
+<li><p>The codes’ conda environments were always looked for, and made, in the conda
+installation’s own <code class="docutils literal notranslate"><span class="pre">envs</span></code> directory. With a centrally provided conda, as on
+many clusters, that directory is read-only and the environments are elsewhere
+(<code class="docutils literal notranslate"><span class="pre">envs_dirs</span></code> in <code class="docutils literal notranslate"><span class="pre">~/.condarc</span></code>), so no environment could be found, updated or
+created. Environments are now found wherever conda has them, and new ones go in
+the first writable directory of <code class="docutils literal notranslate"><span class="pre">envs_dirs</span></code>, as <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">create</span> <span class="pre">-n</span></code> would put
+them.</p></li>
+<li><p>Installing no longer tries to recreate a code’s conda environment that already
+exists; it uses it, and <code class="docutils literal notranslate"><span class="pre">update</span></code> brings it up to date.</p></li>
+<li><p>The environment <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> and the manager itself always use a Python
+installed by uv. When a conda environment was active – as the central conda’s
+base often is on a cluster – uv used its Python instead, and the environment
+would break whenever that installation changed.</p></li>
+</ul>
+</dd>
 <dt>2026.9.29 – Licensed codes get their configuration file on install</dt><dd><ul class="simple">
 <li><p>Installing the plug-in for a code you install yourself – ORCA, Gaussian, VASP,
 FHI-aims – now writes the plug-in’s commented template, e.g. <code class="docutils literal notranslate"><span class="pre">~/SEAMM/vasp.ini</span></code>,
@@ -327,7 +343,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
