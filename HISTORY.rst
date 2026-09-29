@@ -1,6 +1,14 @@
 =======
 History
 =======
+2026.9.29 -- Licensed codes get their configuration file on install
+    * Installing the plug-in for a code you install yourself -- ORCA, Gaussian, VASP,
+      FHI-aims -- now writes the plug-in's commented template, e.g. ``~/SEAMM/vasp.ini``,
+      and says to edit it to give the code's location. Before, it only said to give the
+      location in a file that did not exist. An existing file is never changed.
+    * ``update`` no longer prints "Unable to update the executables because they were
+      not installed using Conda" for these codes.
+
 2026.9.28.1 -- Bugfix: updates respect every installed package's requirements
     * ``update --latest`` and ``--no-constraints`` resolved only the packages being
       updated and their dependencies, ignoring what the other installed packages
