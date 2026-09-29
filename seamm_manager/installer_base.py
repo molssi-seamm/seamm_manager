@@ -741,12 +741,16 @@ class InstallerBase(object):
             self._check_manual_code()
             return
         environment_file = self.environment_file
-        print(
-            f"    Installing Conda environment '{self.environment}'. This "
-            "may take a minute or two."
-        )
-        self.conda.create_environment(environment_file, name=self.environment)
-        self._record_applied(self.environment)
+        if self.conda.exists(self.environment):
+            # e.g. a reinstall: 'update' brings the environment up to date.
+            print(f"    Using the existing Conda environment '{self.environment}'.")
+        else:
+            print(
+                f"    Installing Conda environment '{self.environment}'. This "
+                "may take a minute or two."
+            )
+            self.conda.create_environment(environment_file, name=self.environment)
+            self._record_applied(self.environment)
 
         # Update the configuration file.
         self.check_exe_configuration_file()

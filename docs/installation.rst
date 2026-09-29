@@ -77,6 +77,12 @@ Psi4, DFTB+, LAMMPS, xTB, Packmol, ... -- install the code into a conda environm
 its own, so conda (Miniforge is recommended) is needed on a machine where you install
 one of those. The plug-in's installer tells you if it is missing.
 
+The environments go where conda keeps them: an existing one is used wherever it is,
+and a new one goes in the first writable directory of conda's ``envs_dirs`` (set in
+``~/.condarc``), as ``conda create -n`` would put it. So a conda provided centrally on
+a cluster, whose own directories are read-only, works too. SEAMM's own environment
+never uses conda's Python, even when a conda environment is active.
+
 When a plug-in updates its code environment from its environment file, pip
 packages named without a version (``torch``) are installed only if missing and
 otherwise left as they are, while those with a version specifier are kept current

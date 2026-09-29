@@ -112,6 +112,7 @@ def test_prefixed_installation_makes_its_own_environment(roots, tmp_path, monkey
 def test_default_installation_owns_its_environments(roots, tmp_path, monkeypatch):
     default, new = roots
     inst = _installer(tmp_path, monkeypatch, default)
+    inst._conda = _Conda(existing=())
     monkeypatch.setattr(inst, "check_exe_configuration_file", lambda: None)
     (default / "mopac.ini").write_text("[local]\n")
     inst.exe_config.path = default / "mopac.ini"
@@ -150,3 +151,18 @@ def test_tool_refuses_installers_with_an_old_venv_manager(roots, monkeypatch, ca
     monkeypatch.setattr(my, "root", default)  # the default installation: always runs
     util.run_plugin_installer("mopac-step", "install", verbose=False)
     assert len(ran) == 2
+
+
+def test_install_keeps_an_existing_environment(roots, tmp_path, monkeypatch, capsys):
+    """A reinstall uses the environment that is there; 'update' refreshes it."""
+    default, new = roots
+    inst = _installer(tmp_path, monkeypatch, default)
+    monkeypatch.setattr(inst, "check_exe_configuration_file", lambda: None)
+    (default / "mopac.ini").write_text("[local]\n")
+    inst.exe_config.path = default / "mopac.ini"
+    monkeypatch.setattr(inst.exe_config, "save", lambda: None)
+    inst.install()
+    assert inst.conda.calls == []
+    assert (
+        "Using the existing Conda environment 'seamm-mopac'" in capsys.readouterr().out
+    )

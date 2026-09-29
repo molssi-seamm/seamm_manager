@@ -58,6 +58,8 @@ def test_create_commands(uv):
         "venv",
         "--python",
         "3.12",
+        "--python-preference",
+        "only-managed",  # never an active conda environment's Python
         "--seed",
         str(uv.path),
     ]
