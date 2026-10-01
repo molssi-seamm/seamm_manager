@@ -1,6 +1,14 @@
 =======
 History
 =======
+2026.10.1.1 -- Bugfix: update now updates the web interface too
+    * The web interface lives in its own environment (``venv-webui``), which ``update``
+      never touched: an installation kept its old web interface, and the old datastore
+      inside it, until it was updated by hand. ``update --all`` (and ``update
+      seamm-webui``) now updates it to the newest release on PyPI, and restarts its
+      service when anything in it changed. Found updating an installation to SEAMM
+      2026.10.1, whose web interface could not otherwise read flowchart format 3.0.
+
 2026.10.1 -- Convert flowcharts to format 3.0; rebuild the jobs database
     * New ``seamm-manager flowcharts migrate`` converts an installation's job
       flowcharts and its jobs database to SEAMM's new flowchart format 3.0 in one step:
