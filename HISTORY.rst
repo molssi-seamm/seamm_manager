@@ -1,6 +1,21 @@
 =======
 History
 =======
+2026.10.1 -- Convert flowcharts to format 3.0; rebuild the jobs database
+    * New ``seamm-manager flowcharts migrate`` converts an installation's job
+      flowcharts and its jobs database to SEAMM's new flowchart format 3.0 in one step:
+      a dry run and its summary, a confirmation, then -- with the JobServer and web
+      interface stopped -- the conversion, which backs up the database and keeps each
+      original flowchart beside the new one. ``flowcharts status`` says how many are
+      still in format 2.0, and ``update`` ends with a short notice when there are some.
+    * New ``seamm-manager datastore rebuild`` rebuilds the jobs database from the job
+      directories, keeping the accounts and job owners and the old database as a dated
+      backup. A missing jobs database is now built from the job directories rather than
+      created empty.
+    * Paths are found correctly when SEAMM's packages are installed for development
+      (editable).
+    * Documented in Usage and Installation.
+
 2026.9.29.2 -- Bugfix: update no longer reinstalls the running manager needlessly
     * ``update --all`` reinstalled the manager's own uv tool every time, even when it
       was already the newest release. On a network filesystem, as on a cluster, the
