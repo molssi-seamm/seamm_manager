@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.1.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=65cfade2"></script>
+    <script src="../../_static/documentation_options.js?v=e5cd86cf"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -163,8 +163,14 @@
     <span class="n">latest</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"latest"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
         <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
+        <span class="n">update_webui</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">update_packages</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
+        <span class="c1"># seamm-webui lives in its own environment, not the package list</span>
+        <span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span> <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="s2">"seamm-webui"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">):</span>
+            <span class="n">update_webui</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">modules</span><span class="p">:</span>
+            <span class="n">update_packages</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
         <span class="n">update_development_environment</span><span class="p">()</span>
@@ -214,6 +220,44 @@
 
     <span class="n">notice</span><span class="p">()</span>
     <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="update_webui">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_webui">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_webui</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Update the web interface's own environment (venv-webui), if this installation</span>
+<span class="sd">    has one, and restart its service if anything in it changed.</span>
+
+<span class="sd">    seamm-webui is not in the package list and lives in its own environment, so</span>
+<span class="sd">    updating the main environment never touched it: an installation kept its old web</span>
+<span class="sd">    interface, and the datastore inside it, until it was updated by hand.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.install</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_seamm_webui</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.uv</span><span class="w"> </span><span class="kn">import</span> <span class="n">Uv</span>
+
+    <span class="n">webui</span> <span class="o">=</span> <span class="n">Uv</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"venv-webui"</span><span class="p">,</span> <span class="n">python_version</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">webui</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">webui</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">install_seamm_webui</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">webui</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">changed</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="p">(</span><span class="n">before</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">version</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">after</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">before</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">!=</span> <span class="n">version</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">changed</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"   The web interface is up to date."</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"seamm-webui"</span><span class="p">,</span> <span class="s2">"seamm-datastore"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">changed</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">old</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">installation_service_name</span><span class="p">(</span><span class="s2">"webui"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2"> because the web interface was updated."</span><span class="p">)</span></div>
 
 
 
@@ -374,7 +418,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>

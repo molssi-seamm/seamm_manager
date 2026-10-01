@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.10.1.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=65cfade2"></script>
+    <script src="_static/documentation_options.js?v=e5cd86cf"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -86,7 +86,9 @@ flowchart editor.</p>
 </div>
 <p>updates the manager itself (if PyPI has a newer release), every installed SEAMM package
 (to the versions in the current lock file), and restarts the JobServer if it needs to
-be. <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code>
+be. If the installation has the web interface (its own environment, <code class="docutils literal notranslate"><span class="pre">venv-webui</span></code>), it
+is updated to the newest release on PyPI too, and its service restarted when anything
+in it changed; <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">seamm-webui</span></code> updates just the web interface. <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code>
 ignores the lock and takes the newest releases. <code class="docutils literal notranslate"><span class="pre">--latest</span></code> also asks PyPI directly, so
 a release made today is picked up rather than waiting for the nightly list.</p>
 <p>If the installation still has job flowcharts in the old format 2.0 and the updated SEAMM
@@ -239,7 +241,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

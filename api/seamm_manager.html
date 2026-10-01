@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.1.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=65cfade2"></script>
+    <script src="../_static/documentation_options.js?v=e5cd86cf"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -1937,6 +1937,16 @@ pinned exactly, and the lock is not applied (it would pin the older
 version); PyPI being unreachable falls back to the list for that package.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.update.update_webui">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_webui</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_webui"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_webui" title="Link to this definition">¶</a></dt>
+<dd><p>Update the web interface’s own environment (venv-webui), if this installation
+has one, and restart its service if anything in it changed.</p>
+<p>seamm-webui is not in the package list and lives in its own environment, so
+updating the main environment never touched it: an installation kept its old web
+interface, and the datastore inside it, until it was updated by hand.</p>
+</dd></dl>
+
 </section>
 <section id="module-seamm_manager.util">
 <span id="seamm-manager-util-module"></span><h2>seamm_manager.util module<a class="headerlink" href="#module-seamm_manager.util" title="Link to this heading">¶</a></h2>
@@ -2600,6 +2610,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.update.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.update.update_development_environment"><code class="docutils literal notranslate"><span class="pre">update_development_environment()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.update.update_packages"><code class="docutils literal notranslate"><span class="pre">update_packages()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.update.update_webui"><code class="docutils literal notranslate"><span class="pre">update_webui()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.util">seamm_manager.util module</a><ul>
@@ -2704,7 +2715,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
