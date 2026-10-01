@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.flowcharts &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=65cfade2"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.flowcharts</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.flowcharts</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Upgrade an installation's flowcharts to format 3.0.</span>
+
+<span class="sd">The flowchart of each job (``flowchart.flow`` in its directory) and the datastore's</span>
+<span class="sd">record of it are converted from format 2.0 to 3.0 by ``seamm-flowchart migrate``, in the</span>
+<span class="sd">installation's environment. This module wraps it in one step for users: a dry run and</span>
+<span class="sd">its summary, a confirmation, then -- with the services stopped -- the migration itself,</span>
+<span class="sd">which backs up the datastore and writes a manifest to undo the file changes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.naming</span><span class="w"> </span><span class="kn">import</span> <span class="n">service_name</span> <span class="k">as</span> <span class="n">installation_service_name</span>
+
+<span class="c1"># The keys of the plan's summary that mean there is something to do</span>
+<span class="n">_WORK</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"job flowcharts to convert"</span><span class="p">,</span>
+    <span class="s2">"flowcharts in job directories not in the datastore, to convert"</span><span class="p">,</span>
+    <span class="s2">"rows updated in place"</span><span class="p">,</span>
+    <span class="s2">"rows created (splits)"</span><span class="p">,</span>
+    <span class="s2">"rows deleted (merged, or unused)"</span><span class="p">,</span>
+    <span class="s2">"jobs pointed at another row"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_PLAN_CODE</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
+<span class="s2">import json</span>
+<span class="s2">from seamm import migrate3</span>
+<span class="s2">plan = migrate3.plan(r'</span><span class="si">{root}</span><span class="s2">')</span>
+<span class="s2">print(migrate3.text_report(plan))</span>
+<span class="s2">print('SUMMARY ' + json.dumps(plan['summary']))</span>
+<span class="s2">"""</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for the flowcharts.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    parser : argparse.ArgumentParser</span>
+<span class="sd">        The main parser for the application.</span>
+<span class="sd">    """</span>
+    <span class="n">flowcharts_parser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"flowcharts"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"The installation's job flowcharts"</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">flowcharts_parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">()</span>
+
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"migrate"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Convert the job flowcharts and the datastore to flowchart format 3.0"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--yes"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Do not ask for confirmation before converting"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--dry-run"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Only report what would be converted"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">migrate</span><span class="p">)</span>
+
+    <span class="n">tmp_parser</span> <span class="o">=</span> <span class="n">subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"status"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Whether any job flowcharts are still in format 2.0"</span>
+    <span class="p">)</span>
+    <span class="n">tmp_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">status</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_python</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The installation's Python, if SEAMM is installed there with the migration."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">or</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"python"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no SEAMM environment in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"import seamm.migrate3"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"The SEAMM installed here cannot convert flowcharts yet. Update it first "</span>
+            <span class="s2">"with 'seamm-manager update --all'."</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python</span>
+
+
+<div class="viewcode-block" id="old_job_flowcharts">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.old_job_flowcharts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">old_job_flowcharts</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_at</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The number of job directories whose flowchart is in format 2.0 (or 1.0).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    root : pathlib.Path, optional</span>
+<span class="sd">        The installation's root; by default the current one.</span>
+<span class="sd">    stop_at : int, optional</span>
+<span class="sd">        Stop counting once this many are found.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">root</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"Jobs"</span> <span class="o">/</span> <span class="s2">"projects"</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"*/*/flowchart.flow"</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+                <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="n">second</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">second</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"!MolSSI flowchart"</span><span class="p">):</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">stop_at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">stop_at</span><span class="p">:</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">count</span></div>
+
+
+
+<div class="viewcode-block" id="status">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.status">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Report whether any job flowcharts are still in format 2.0."""</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">old_job_flowcharts</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"All the job flowcharts in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2"> are in format 3.0."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> job flowcharts in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2"> are in the old format 2.0. Convert them "</span>
+            <span class="s2">"with 'seamm-manager flowcharts migrate'."</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="notice">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.notice">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">notice</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""A one-line notice for 'seamm-manager update' if old flowcharts remain."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">old_job_flowcharts</span><span class="p">(</span><span class="n">stop_at</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"import seamm.migrate3"</span><span class="p">],</span>
+            <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">"</span><span class="se">\n</span><span class="s2">This installation has job flowcharts in the old format 2.0. To convert them "</span>
+        <span class="s2">"and the datastore to 3.0 (with a backup):</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    seamm-manager flowcharts migrate"</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_plan</span><span class="p">(</span><span class="n">python</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The dry run's report and summary."""</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="n">_PLAN_CODE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Could not work out the migration:"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"    "</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">10</span><span class="p">:]))</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"SUMMARY "</span><span class="p">):</span>
+            <span class="n">summary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"SUMMARY "</span><span class="p">)</span> <span class="p">:])</span>  <span class="c1"># noqa: E203</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="p">),</span> <span class="n">summary</span>
+
+
+<div class="viewcode-block" id="migrate">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.migrate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">migrate</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Convert the installation's job flowcharts and datastore to format 3.0."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">mgr</span>
+
+    <span class="n">python</span> <span class="o">=</span> <span class="n">_python</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">python</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Working out what to convert in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2"> (nothing is changed yet)...</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">report</span><span class="p">,</span> <span class="n">summary</span> <span class="o">=</span> <span class="n">_plan</span><span class="p">(</span><span class="n">python</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">report</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_WORK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Nothing to convert: the flowcharts are already in format 3.0."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"dry_run"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Dry run: nothing was changed."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
+            <span class="s2">"Convert these flowcharts and the datastore to format 3.0? The datastore "</span>
+            <span class="s2">"is backed up first. [y/N] "</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Nothing was changed."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">services</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">installation_service_name</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"jobserver"</span><span class="p">,</span> <span class="s2">"webui"</span><span class="p">,</span> <span class="s2">"dashboard"</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">stopped</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">services</span> <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">stopped</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Stopping the service </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">seamm_flowchart</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"seamm-flowchart"</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">seamm_flowchart</span><span class="p">),</span> <span class="s2">"migrate"</span><span class="p">,</span> <span class="s2">"--root"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">),</span> <span class="s2">"--apply"</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"The migration failed:"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"    "</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">10</span><span class="p">:]))</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"Datastore backup:"</span><span class="p">,</span> <span class="s2">"Manifest of file changes:"</span><span class="p">)):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"The flowcharts and the datastore are now in format 3.0."</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">stopped</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting the service </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.flowcharts</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

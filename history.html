@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.9.29.2 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=d2789eaa"></script>
+    <script src="_static/documentation_options.js?v=65cfade2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,22 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.1 – Convert flowcharts to format 3.0; rebuild the jobs database</dt><dd><ul class="simple">
+<li><p>New <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">flowcharts</span> <span class="pre">migrate</span></code> converts an installation’s job
+flowcharts and its jobs database to SEAMM’s new flowchart format 3.0 in one step:
+a dry run and its summary, a confirmation, then – with the JobServer and web
+interface stopped – the conversion, which backs up the database and keeps each
+original flowchart beside the new one. <code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code> says how many are
+still in format 2.0, and <code class="docutils literal notranslate"><span class="pre">update</span></code> ends with a short notice when there are some.</p></li>
+<li><p>New <code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">datastore</span> <span class="pre">rebuild</span></code> rebuilds the jobs database from the job
+directories, keeping the accounts and job owners and the old database as a dated
+backup. A missing jobs database is now built from the job directories rather than
+created empty.</p></li>
+<li><p>Paths are found correctly when SEAMM’s packages are installed for development
+(editable).</p></li>
+<li><p>Documented in Usage and Installation.</p></li>
+</ul>
+</dd>
 <dt>2026.9.29.2 – Bugfix: update no longer reinstalls the running manager needlessly</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> reinstalled the manager’s own uv tool every time, even when it
 was already the newest release. On a network filesystem, as on a cluster, the
@@ -355,7 +371,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

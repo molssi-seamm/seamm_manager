@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.9.29.2 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=d2789eaa"></script>
+    <script src="_static/documentation_options.js?v=65cfade2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -97,7 +97,20 @@ services (launchd on macOS, systemd on Linux).</p></td>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">show|update</span></code></p></td>
 <td><p>Inspect or migrate the jobs database.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">refresh-cache</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">rebuild</span></code></p></td>
+<td><p>Rebuild the jobs database from the job directories,
+keeping the accounts and job owners; the old database is
+kept as a dated backup.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code></p></td>
+<td><p>Report how many job flowcharts are still in format 2.0.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">migrate</span></code></p></td>
+<td><p>Convert the job flowcharts and the jobs database to
+flowchart format 3.0 (dry run and confirmation first;
+<code class="docutils literal notranslate"><span class="pre">--dry-run</span></code>, <code class="docutils literal notranslate"><span class="pre">--yes</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">refresh-cache</span></code></p></td>
 <td><p>Re-read the package list from Zenodo.</p></td>
 </tr>
 </tbody>
@@ -284,7 +297,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.9.29.2 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=d2789eaa"></script>
+    <script src="_static/documentation_options.js?v=65cfade2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -89,6 +89,28 @@ flowchart editor.</p>
 be. <code class="docutils literal notranslate"><span class="pre">--no-constraints</span></code>
 ignores the lock and takes the newest releases. <code class="docutils literal notranslate"><span class="pre">--latest</span></code> also asks PyPI directly, so
 a release made today is picked up rather than waiting for the nightly list.</p>
+<p>If the installation still has job flowcharts in the old format 2.0 and the updated SEAMM
+can convert them, <code class="docutils literal notranslate"><span class="pre">update</span></code> ends with a short notice saying so. It never converts them
+itself.</p>
+<section id="converting-the-flowcharts-to-format-3-0">
+<h3>Converting the flowcharts to format 3.0<a class="headerlink" href="#converting-the-flowcharts-to-format-3-0" title="Link to this heading">¶</a></h3>
+<p>SEAMM 2026.10 introduced flowchart format 3.0. To convert an installation’s job
+flowcharts, and the jobs database’s record of them, after updating:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>seamm-manager<span class="w"> </span>flowcharts<span class="w"> </span>status<span class="w">     </span><span class="c1"># how many are still in format 2.0</span>
+<span class="gp">$ </span>seamm-manager<span class="w"> </span>flowcharts<span class="w"> </span>migrate
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">migrate</span></code> first shows what it would change and asks for confirmation. It then stops
+the JobServer and web interface, backs up the jobs database, renames each job’s original
+flowchart to <code class="docutils literal notranslate"><span class="pre">flowchart.v2.flow</span></code> (unchanged) beside the new <code class="docutils literal notranslate"><span class="pre">flowchart.flow</span></code>,
+converts the database, restarts the services, and says where the backup and the manifest
+of file changes are. Back up the <code class="docutils literal notranslate"><span class="pre">Jobs</span></code> directory first. <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code> stops after the
+report; <code class="docutils literal notranslate"><span class="pre">--yes</span></code> skips the question.</p>
+<p>Moving the jobs database aside and letting the web interface rebuild it is <em>not</em> a
+conversion: the rebuilt database keeps no accounts and converts nothing.
+<code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">datastore</span> <span class="pre">rebuild</span></code> keeps the accounts and job owners, but converts
+nothing either.</p>
+</section>
 </section>
 <section id="the-environment">
 <h2>The environment<a class="headerlink" href="#the-environment" title="Link to this heading">¶</a></h2>
@@ -158,7 +180,10 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
-<li><a class="reference internal" href="#updating">Updating</a></li>
+<li><a class="reference internal" href="#updating">Updating</a><ul>
+<li><a class="reference internal" href="#converting-the-flowcharts-to-format-3-0">Converting the flowcharts to format 3.0</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#the-environment">The environment</a></li>
 <li><a class="reference internal" href="#conda">Conda</a></li>
 <li><a class="reference internal" href="#migrating-from-seamm-installer">Migrating from seamm-installer</a></li>
@@ -214,7 +239,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.9.29.2 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=d2789eaa"></script>
+    <script src="../_static/documentation_options.js?v=65cfade2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -618,6 +618,17 @@ start; a JobServer created before it crash-looped on the missing database.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.datastore.rebuild">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.datastore.</span></span><span class="sig-name descname"><span class="pre">rebuild</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/datastore.html#rebuild"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.datastore.rebuild" title="Link to this definition">¶</a></dt>
+<dd><p>Rebuild the datastore from the job directories.</p>
+<p>The job directories hold each job’s flowchart and job_data.json, which is what
+the datastore records. A new datastore is built from them, keeping the accounts
+(users, groups, roles), the details of projects that still exist, and the owner
+of each job from the current datastore, which is kept as a dated backup. Jobs
+whose directories are gone are not in the new datastore.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.datastore.setup">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.datastore.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/datastore.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.datastore.setup" title="Link to this definition">¶</a></dt>
 <dd><p>Define the command-line interface for handling services.</p>
@@ -701,6 +712,58 @@ Python environment that holds SEAMM.</p>
 <dt class="sig sig-object py" id="seamm_manager.environment.show">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#show"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.show" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+</section>
+<section id="module-seamm_manager.flowcharts">
+<span id="seamm-manager-flowcharts-module"></span><h2>seamm_manager.flowcharts module<a class="headerlink" href="#module-seamm_manager.flowcharts" title="Link to this heading">¶</a></h2>
+<p>Upgrade an installation’s flowcharts to format 3.0.</p>
+<p>The flowchart of each job (<code class="docutils literal notranslate"><span class="pre">flowchart.flow</span></code> in its directory) and the datastore’s
+record of it are converted from format 2.0 to 3.0 by <code class="docutils literal notranslate"><span class="pre">seamm-flowchart</span> <span class="pre">migrate</span></code>, in the
+installation’s environment. This module wraps it in one step for users: a dry run and
+its summary, a confirmation, then – with the services stopped – the migration itself,
+which backs up the datastore and writes a manifest to undo the file changes.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.migrate">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">migrate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#migrate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.migrate" title="Link to this definition">¶</a></dt>
+<dd><p>Convert the installation’s job flowcharts and datastore to format 3.0.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.notice">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">notice</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#notice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.notice" title="Link to this definition">¶</a></dt>
+<dd><p>A one-line notice for ‘seamm-manager update’ if old flowcharts remain.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.old_job_flowcharts">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">old_job_flowcharts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#old_job_flowcharts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.old_job_flowcharts" title="Link to this definition">¶</a></dt>
+<dd><p>The number of job directories whose flowchart is in format 2.0 (or 1.0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>pathlib.Path</em><em>, </em><em>optional</em>) – The installation’s root; by default the current one.</p></li>
+<li><p><strong>stop_at</strong> (<em>int</em><em>, </em><em>optional</em>) – Stop counting once this many are found.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.setup">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.setup" title="Link to this definition">¶</a></dt>
+<dd><p>Define the command-line interface for the flowcharts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>argparse.ArgumentParser</em>) – The main parser for the application.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.status">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.status" title="Link to this definition">¶</a></dt>
+<dd><p>Report whether any job flowcharts are still in format 2.0.</p>
+</dd></dl>
 
 </section>
 <section id="module-seamm_manager.gui">
@@ -2342,6 +2405,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.datastore.db_version"><code class="docutils literal notranslate"><span class="pre">db_version()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.datastore.ensure"><code class="docutils literal notranslate"><span class="pre">ensure()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.datastore.latest_version"><code class="docutils literal notranslate"><span class="pre">latest_version()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.datastore.rebuild"><code class="docutils literal notranslate"><span class="pre">rebuild()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.datastore.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.datastore.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.datastore.stamp"><code class="docutils literal notranslate"><span class="pre">stamp()</span></code></a></li>
@@ -2357,6 +2421,14 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.environment.remove"><code class="docutils literal notranslate"><span class="pre">remove()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-seamm_manager.flowcharts">seamm_manager.flowcharts module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.migrate"><code class="docutils literal notranslate"><span class="pre">migrate()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.notice"><code class="docutils literal notranslate"><span class="pre">notice()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.old_job_flowcharts"><code class="docutils literal notranslate"><span class="pre">old_job_flowcharts()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.status"><code class="docutils literal notranslate"><span class="pre">status()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.gui">seamm_manager.gui module</a><ul>
@@ -2632,7 +2704,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.9.29.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

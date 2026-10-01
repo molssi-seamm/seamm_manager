@@ -60,6 +60,14 @@ seamm\_manager.environment module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.flowcharts module
+--------------------------------
+
+.. automodule:: seamm_manager.flowcharts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.gui module
 -------------------------
 
