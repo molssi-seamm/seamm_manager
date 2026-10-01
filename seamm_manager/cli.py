@@ -6,6 +6,7 @@ from . import apps
 from . import cache
 from . import datastore
 from . import environment
+from . import flowcharts
 from . import install
 from . import services
 from . import show
@@ -32,6 +33,7 @@ def setup(parser):
     cache.setup(subparser)
     datastore.setup(subparser)
     environment.setup(subparser)
+    flowcharts.setup(subparser)
     install.setup(subparser)
     show.setup(subparser)
     uninstall.setup(subparser)

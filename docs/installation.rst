@@ -57,6 +57,33 @@ be. ``--no-constraints``
 ignores the lock and takes the newest releases. ``--latest`` also asks PyPI directly, so
 a release made today is picked up rather than waiting for the nightly list.
 
+If the installation still has job flowcharts in the old format 2.0 and the updated SEAMM
+can convert them, ``update`` ends with a short notice saying so. It never converts them
+itself.
+
+Converting the flowcharts to format 3.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SEAMM 2026.10 introduced flowchart format 3.0. To convert an installation's job
+flowcharts, and the jobs database's record of them, after updating:
+
+.. code-block:: console
+
+    $ seamm-manager flowcharts status     # how many are still in format 2.0
+    $ seamm-manager flowcharts migrate
+
+``migrate`` first shows what it would change and asks for confirmation. It then stops
+the JobServer and web interface, backs up the jobs database, renames each job's original
+flowchart to ``flowchart.v2.flow`` (unchanged) beside the new ``flowchart.flow``,
+converts the database, restarts the services, and says where the backup and the manifest
+of file changes are. Back up the ``Jobs`` directory first. ``--dry-run`` stops after the
+report; ``--yes`` skips the question.
+
+Moving the jobs database aside and letting the web interface rebuild it is *not* a
+conversion: the rebuilt database keeps no accounts and converts nothing.
+``seamm-manager datastore rebuild`` keeps the accounts and job owners, but converts
+nothing either.
+
 The environment
 ---------------
 

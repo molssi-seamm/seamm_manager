@@ -33,6 +33,13 @@ Command                               What it does
                                       services (launchd on macOS, systemd on Linux).
 ``apps create|delete|show|update``    Desktop apps for the flowchart editor and services.
 ``datastore show|update``             Inspect or migrate the jobs database.
+``datastore rebuild``                 Rebuild the jobs database from the job directories,
+                                      keeping the accounts and job owners; the old database is
+                                      kept as a dated backup.
+``flowcharts status``                 Report how many job flowcharts are still in format 2.0.
+``flowcharts migrate``                Convert the job flowcharts and the jobs database to
+                                      flowchart format 3.0 (dry run and confirmation first;
+                                      ``--dry-run``, ``--yes``).
 ``refresh-cache``                     Re-read the package list from Zenodo.
 ===================================== ==========================================================
 

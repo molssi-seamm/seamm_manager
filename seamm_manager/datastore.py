@@ -43,6 +43,13 @@ def setup(parser):
     tmp_parser = subparser.add_parser("update")
     tmp_parser.set_defaults(func=update)
 
+    # Rebuild
+    tmp_parser = subparser.add_parser(
+        "rebuild",
+        help="Rebuild the datastore from the job directories, keeping the accounts",
+    )
+    tmp_parser.set_defaults(func=rebuild)
+
 
 def _alembic():
     """The environment's alembic executable, or None.
@@ -121,14 +128,24 @@ def ensure(default_project="default"):
     if not my.uv.exists or my.uv.which("python") is None:
         return False
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    if not db_path.exists():
-        print(f"Creating the datastore {db_path}")
-    code = (
-        "import seamm_datastore\n"
-        f"seamm_datastore.connect(database_uri='sqlite:///{db_path}', "
-        f"datastore_location='{db_path.parent}', initialize=True, "
-        f"default_project='{default_project}')\n"
-    )
+    projects = db_path.parent / "projects"
+    if not db_path.exists() and any(projects.glob("*/*/job_data.json")):
+        # There are jobs already: build the datastore from them
+        print(f"Creating the datastore {db_path} from the jobs in {projects}")
+        code = (
+            "import seamm_datastore\n"
+            f"print(seamm_datastore.build_from_jobs(r'{db_path}', r'{projects}', "
+            f"default_project='{default_project}'))\n"
+        )
+    else:
+        if not db_path.exists():
+            print(f"Creating the datastore {db_path}")
+        code = (
+            "import seamm_datastore\n"
+            f"seamm_datastore.connect(database_uri='sqlite:///{db_path}', "
+            f"datastore_location='{db_path.parent}', initialize=True, "
+            f"default_project='{default_project}')\n"
+        )
     result = subprocess.run(
         [str(my.uv.python), "-c", code], capture_output=True, text=True
     )
@@ -275,6 +292,85 @@ def update():
                 )
 
 
+def rebuild():
+    """Rebuild the datastore from the job directories.
+
+    The job directories hold each job's flowchart and job_data.json, which is what
+    the datastore records. A new datastore is built from them, keeping the accounts
+    (users, groups, roles), the details of projects that still exist, and the owner
+    of each job from the current datastore, which is kept as a dated backup. Jobs
+    whose directories are gone are not in the new datastore.
+    """
+    import datetime
+
+    db_path = my.root / "Jobs" / "seamm.db"
+    projects = db_path.parent / "projects"
+    if not my.uv.exists or my.uv.which("python") is None:
+        print(f"There is no SEAMM environment in {my.root}")
+        return
+    n_dirs = len(list(projects.glob("*/*/job_data.json")))
+    print(f"Rebuilding the datastore {db_path} from {n_dirs} job directories")
+
+    when = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    new = db_path.with_name(f"seamm.db.rebuilding-{when}")
+    keep = db_path if db_path.exists() else None
+
+    services = [installation_service_name(s) for s in ("jobserver", "webui")]
+    stopped = [s for s in services if mgr.is_running(s)]
+    for service in stopped:
+        print(f"Stopping the service {service}")
+        mgr.stop(service)
+    try:
+        code = (
+            "import seamm_datastore\n"
+            f"result = seamm_datastore.build_from_jobs(r'{new}', r'{projects}', "
+            f"keep_from={repr(str(keep)) if keep else None})\n"
+            "print('RESULT', result['projects'], result['jobs'])\n"
+        )
+        result = subprocess.run(
+            [str(my.uv.python), "-c", code], capture_output=True, text=True
+        )
+        skipped = [
+            line
+            for line in result.stdout.splitlines() + result.stderr.splitlines()
+            if "not imported:" in line or "Could not read the job data" in line
+        ]
+        counts = [
+            line.split()[1:]
+            for line in result.stdout.splitlines()
+            if line.startswith("RESULT")
+        ]
+        if result.returncode != 0 or not counts:
+            print("   ...the rebuild failed; the datastore is unchanged:")
+            print("\n".join("      " + x for x in result.stderr.splitlines()[-8:]))
+            for suffix in ("", "-wal", "-shm"):
+                Path(str(new) + suffix).unlink(missing_ok=True)
+            return
+        n_projects, n_jobs = counts[0]
+        if keep is not None:
+            backup = db_path.with_name(f"seamm.db.bak-{when}-before-rebuild")
+            for suffix in ("", "-wal", "-shm"):
+                old = Path(str(db_path) + suffix)
+                if old.exists():
+                    old.rename(str(backup) + suffix)
+            print(f"   The previous datastore is kept as {backup}")
+        new.rename(db_path)
+        print(f"   Imported {n_jobs} jobs in {n_projects} projects.")
+        if skipped:
+            print(f"   {len(skipped)} job directories were not imported:")
+            print("\n".join("      " + x for x in skipped[:20]))
+        revision = unversioned_revision(db_path)
+        if revision is not None:
+            try:
+                stamp(revision)
+            except Exception as e:
+                print(f"   (could not record the database's version: {e})")
+    finally:
+        for service in stopped:
+            print(f"Starting the service {service}")
+            mgr.start(service)
+
+
 def update_db():
     """Update the database to the latest version."""
     db_path = my.root / "Jobs" / "seamm.db"
@@ -330,11 +426,19 @@ def _find_path():
     pathlib.Path
         The path to the alembic installation, or None if not present.
     """
+    # The installed files list alembic.ini, except for an editable install (e.g. a
+    # development checkout), whose files are its source directory.
     code = (
         "import importlib.metadata as m\n"
         "files = [p for p in (m.files('seamm-datastore') or []) "
         "if 'alembic.ini' in str(p)]\n"
-        "print(files[0].locate().parent if files else '')\n"
+        "if files:\n"
+        "    print(files[0].locate().parent)\n"
+        "else:\n"
+        "    import pathlib, seamm_datastore\n"
+        "    ini = pathlib.Path(seamm_datastore.__file__).parent / 'database' / "
+        "'alembic.ini'\n"
+        "    print(ini.parent if ini.exists() else '')\n"
     )
     result = subprocess.run(
         [str(my.uv.python), "-c", code], capture_output=True, text=True

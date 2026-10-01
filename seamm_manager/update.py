@@ -165,6 +165,11 @@ def update():
         if mgr.is_installed(service_name):
             mgr.restart(service_name)
             print(f"Restarted the {service_name} because it was updated.")
+
+    # Point at the flowchart upgrade if old job flowcharts remain (report only)
+    from .flowcharts import notice
+
+    notice()
     return 0
 
 
