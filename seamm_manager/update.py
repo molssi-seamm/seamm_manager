@@ -120,8 +120,14 @@ def update():
     latest = getattr(my.options, "latest", False)
     if my.options.all:
         update_packages("all", gui_only=my.options.gui_only, latest=latest)
+        update_webui()
     else:
-        update_packages(my.options.modules, gui_only=my.options.gui_only, latest=latest)
+        # seamm-webui lives in its own environment, not the package list
+        modules = [m for m in my.options.modules if m != "seamm-webui"]
+        if len(modules) < len(my.options.modules):
+            update_webui()
+        if modules:
+            update_packages(modules, gui_only=my.options.gui_only, latest=latest)
 
     if my.development:
         update_development_environment()
@@ -171,6 +177,41 @@ def update():
 
     notice()
     return 0
+
+
+def update_webui():
+    """Update the web interface's own environment (venv-webui), if this installation
+    has one, and restart its service if anything in it changed.
+
+    seamm-webui is not in the package list and lives in its own environment, so
+    updating the main environment never touched it: an installation kept its old web
+    interface, and the datastore inside it, until it was updated by hand.
+    """
+    from .install import install_seamm_webui
+    from .uv import Uv
+
+    webui = Uv(my.root, name="venv-webui", python_version=my.uv.python_version)
+    if not webui.exists:
+        return
+    before = {k: v["version"] for k, v in webui.list().items()}
+    install_seamm_webui(update=True)
+    after = {k: v["version"] for k, v in webui.list().items()}
+    changed = {
+        name: (before.get(name), version)
+        for name, version in after.items()
+        if before.get(name) != version
+    }
+    if not changed:
+        print("   The web interface is up to date.")
+        return
+    for name in ("seamm-webui", "seamm-datastore"):
+        if name in changed:
+            old, new = changed[name]
+            print(f"   {name}: {old} -> {new}")
+    service = installation_service_name("webui")
+    if mgr.is_installed(service):
+        mgr.restart(service)
+        print(f"Restarted the {service} because the web interface was updated.")
 
 
 def update_packages(

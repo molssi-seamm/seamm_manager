@@ -53,7 +53,9 @@ Updating
 
 updates the manager itself (if PyPI has a newer release), every installed SEAMM package
 (to the versions in the current lock file), and restarts the JobServer if it needs to
-be. ``--no-constraints``
+be. If the installation has the web interface (its own environment, ``venv-webui``), it
+is updated to the newest release on PyPI too, and its service restarted when anything
+in it changed; ``update seamm-webui`` updates just the web interface. ``--no-constraints``
 ignores the lock and takes the newest releases. ``--latest`` also asks PyPI directly, so
 a release made today is picked up rather than waiting for the nightly list.
 
