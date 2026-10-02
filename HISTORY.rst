@@ -1,13 +1,15 @@
 =======
 History
 =======
-2026.10.2.2 -- Bugfix: a refused switch no longer changes the current environment
+2026.10.2.3 -- Bugfix: a refused switch no longer changes the current environment
     * After building a new version of the environment, the manager made sure that
       version held the manager's own release. It did so against whatever environment was
       current, so when the switch to the new version was refused (processes started
       through ``<root>/venv`` still running) it changed the environment in use, which the
       versioned environments exist to prevent. The manager's release is now put into the
       new version as part of the build, and the current environment is never touched.
+    * Internal: 2026.10.2.2 was not published; one of its tests passed only on a
+      development build and failed on the release. The test is fixed.
 
 2026.10.2.1 -- Updates build a new environment rather than changing the current one
     * ``<root>/venv`` is now a link to the current version of the environment, kept in
