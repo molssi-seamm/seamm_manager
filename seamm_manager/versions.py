@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 # Set when this run switched environments, so update() need not restart the
 # services a second time.
 switched = False
+# Set when a build put the manager's own release into the new environment, so the
+# callers' sync_manager() must not touch the current environment afterwards.
+synced_manager = False
 
 
 # ---- processes --------------------------------------------------------------
@@ -218,8 +221,20 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
         my.uv.install(specs, constraints=constraints, upgrade=upgrade)
         return True
 
+    global synced_manager
+
     ensure_versioned()
     new = build_version(specs, constraints=constraints, upgrade=upgrade)
+    # The manager's own release goes into the new environment as part of the
+    # build, never into the current one (which may be in use)
+    from .util import sync_manager
+
+    saved, my.uv = my.uv, new
+    try:
+        sync_manager()
+    finally:
+        my.uv = saved
+    synced_manager = True
     return switch(new, force=bool(getattr(my.options, "force", False)))
 
 
