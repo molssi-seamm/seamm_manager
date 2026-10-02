@@ -253,6 +253,30 @@ def test_apply_change_builds_beside_and_switches(root, monkeypatch):
     assert installs[1] == ("new", ["seamm==2"], True)
 
 
+def test_apply_change_syncs_manager_into_new_environment_only(root, monkeypatch):
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="old")
+    synced = []
+    import seamm_manager.util as util
+
+    monkeypatch.setattr(util, "sync_manager", lambda: synced.append(my.uv.path.name))
+    monkeypatch.setattr(
+        Uv, "create", lambda self, python_version=None, seed=True: make_venv(self.path)
+    )
+    monkeypatch.setattr(Uv, "install", lambda self, *a, **k: None)
+    monkeypatch.setattr(Uv, "run", lambda self, *a, **k: None)
+    monkeypatch.setattr(Uv, "freeze", lambda self: "")
+    monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "new"))
+    # The switch is refused: the current environment must still be untouched
+    monkeypatch.setattr(versions, "unsafe_processes", lambda: [(1, "x")])
+    monkeypatch.setattr(versions, "synced_manager", False)
+
+    assert versions.apply_change(["seamm==2"], upgrade=True) is False
+    assert synced == ["new"]
+    assert versions.synced_manager is True
+    assert my.uv.current_version == "old"
+
+
 def test_recreate_style_build_from_scratch(root, monkeypatch):
     make_venv(root / "venv")
     my.uv.migrate_to_versioned(name="old")

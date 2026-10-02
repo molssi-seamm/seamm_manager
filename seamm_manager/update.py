@@ -331,8 +331,11 @@ def update_packages(
         print("Everything is up to date.")
 
     # Whether or not anything else changed: the environment must hold this
-    # manager's release (the package list lags a release by up to a day).
-    if sync_manager() is not None:
+    # manager's release (the package list lags a release by up to a day). A
+    # build of a new version has already done this in the new environment.
+    from . import versions as _versions
+
+    if not _versions.synced_manager and sync_manager() is not None:
         path = write_environment_snapshot("update-manager")
         print(f"the environment is recorded in {path.name}")
 
