@@ -22,13 +22,19 @@ Command                               What it does
                                       (datastore update, the codes' installers) after an
                                       interrupted install.
 ``update --all`` / ``update <names>`` Update the manager, then the packages, to the versions in
-                                      the published lock; restarts the JobServer when needed.
+                                      the published lock, in a new version of the environment
+                                      (see below); restarts the JobServer when needed.
 ``show``                              List the SEAMM packages with installed and available
                                       versions.
 ``uninstall <names>`` / ``--all``     Remove packages (running their plug-in uninstallers);
                                       ``--all`` removes the whole environment.
 ``environment show|create|recreate``  Inspect, create, or rebuild ``<root>/venv`` from scratch
-``environment remove``                (``recreate`` reinstalls what was there).
+``environment remove``                (``recreate`` builds a fresh version with the SEAMM
+                                      packages that were there and switches to it).
+``environment versions|switch``       The versions of the environment; switch to one, go back
+``environment rollback|prune``        to the previous one, or remove old unused ones.
+``compare <flowchart> -a X -b Y``     Run a flowchart in two environments (versions,
+                                      installations) and compare every result file.
 ``services create|start|stop|...``    Manage the JobServer and web-interface background
                                       services (launchd on macOS, systemd on Linux).
 ``apps create|delete|show|update``    Desktop apps for the flowchart editor and services.
@@ -42,6 +48,22 @@ Command                               What it does
                                       ``--dry-run``, ``--yes``).
 ``refresh-cache``                     Re-read the package list from Zenodo.
 ===================================== ==========================================================
+
+Versions of the environment
+---------------------------
+
+``<root>/venv`` is a link to the current version of the environment, in
+``<root>/venvs/<date and time>``. ``install`` and ``update`` never change the current
+version while it may be in use: they build the next version beside it from a copy of
+the current one plus the change, switch the link, and restart the services so that
+they run from it. Jobs already running keep the version they started in, and the
+services and apps always name the real path, never the link, since Python does not
+follow the link when it starts (``--in-place`` changes the current environment
+directly instead, which is only safe with no jobs running). ``environment versions``
+lists the versions and the processes using each; ``rollback`` and ``switch`` move
+the link; ``prune`` removes versions that are old, unused and not among the newest
+two. A switch is refused while a process started through the link is running (a job
+begun before the first versioned update), and ``--force`` overrides that.
 
 Versions and the lock file
 --------------------------

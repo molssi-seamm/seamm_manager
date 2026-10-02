@@ -1,6 +1,24 @@
 =======
 History
 =======
+2026.10.2.1 -- Updates build a new environment rather than changing the current one
+    * ``<root>/venv`` is now a link to the current version of the environment, kept in
+      ``<root>/venvs/<date and time>``. ``update`` and ``install`` build the next version
+      from a copy of the current one plus the change, switch the link, and restart the
+      services from it, so a job that is running never sees a half-updated environment.
+      The first such update moves an existing ``venv`` into place itself, safely while
+      jobs run. ``--in-place`` keeps the old behaviour.
+    * New ``environment versions``, ``switch``, ``rollback`` and ``prune`` commands;
+      ``environment recreate`` now builds a fresh version and switches to it instead of
+      deleting the environment first. A switch is refused, and the new version kept
+      ready, while a process started through the link is still running (``--force``
+      overrides).
+    * New ``compare`` command: runs a flowchart in two environments -- two versions, or
+      two installations -- and compares every file the runs produce, numbers within a
+      tolerance and timestamps ignored. Use it to check a new version before switching.
+    * The development packages of a development installation are updated in the new
+      version with everything else, not in the current environment.
+
 2026.10.2 -- Documentation: the upgrade guide for flowchart format 3.0
     * The installation page's section on converting the flowcharts to format 3.0 now
       points to the step-by-step guide in the main SEAMM documentation, *Upgrading to
