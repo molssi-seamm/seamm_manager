@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=77b25824"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.versions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""Versioned environments: build a new one beside the current, switch, prune.</span>
+
+<span class="sd">The rule this module enforces: **a running job never sees a half-updated</span>
+<span class="sd">environment**. SEAMM imports lazily in places, so updating ``&lt;root&gt;/venv`` in</span>
+<span class="sd">place while a job runs can mix two versions inside one process. Instead an</span>
+<span class="sd">update builds ``&lt;root&gt;/venvs/&lt;stamp&gt;`` from the current environment, applies</span>
+<span class="sd">the change there, and switches the ``venv`` link. Processes started from the</span>
+<span class="sd">old environment keep it until ``prune`` finds nothing using it.</span>
+
+<span class="sd">Processes that were started *through the link* (``&lt;root&gt;/venv/bin/...``) are</span>
+<span class="sd">the exception: CPython does not resolve the link when locating a venv, so</span>
+<span class="sd">they would follow it to the new environment. `unsafe_processes` finds them</span>
+<span class="sd">and `switch` refuses while any exist, unless forced. After the first</span>
+<span class="sd">migration every launcher embeds the real path, so this only matters for jobs</span>
+<span class="sd">that were already running then.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uv</span><span class="w"> </span><span class="kn">import</span> <span class="n">UvError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Set when this run switched environments, so update() need not restart the</span>
+<span class="c1"># services a second time.</span>
+<span class="n">switched</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="c1"># ---- processes --------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="processes_using">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.processes_using">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">processes_using</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The processes whose executable or command line names a path under `prefix`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prefix : str or pathlib.Path</span>
+<span class="sd">        A directory; matched as ``str(prefix) + "/"``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    [(pid, str)]</span>
+<span class="sd">        The pid and a short description (name plus the matching argument).</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+    <span class="n">prefix</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/"</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">process</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span><span class="s2">"pid"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"cmdline"</span><span class="p">,</span> <span class="s2">"exe"</span><span class="p">]):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">info</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cmdline"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"exe"</span><span class="p">):</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">"exe"</span><span class="p">])</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="c1"># The last match is the most telling: the script, not the interpreter</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">info</span><span class="p">[</span><span class="s2">"pid"</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'?'</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">matches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="unsafe_processes">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.unsafe_processes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unsafe_processes</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Processes started through the ``venv`` link rather than a real path."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_print_processes</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">heading</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">processes</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">pid</span><span class="si">:</span><span class="s2">&gt;7</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="c1"># ---- migration ----------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="ensure_versioned">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.ensure_versioned">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_versioned</span><span class="p">(</span><span class="n">relink</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make the installation versioned if it is not yet. Returns True if migrated.</span>
+
+<span class="sd">    Renaming the directory is safe while jobs run (the inodes do not change). The</span>
+<span class="sd">    launchers are then rewritten to the real path and running services</span>
+<span class="sd">    restarted, so that from here on nothing new is started through the link.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">is_versioned</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">migrate_to_versioned</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Moved the environment to </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions_dir</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">name</span><span class="si">}</span><span class="s2">;"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> links to it."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">relink</span><span class="p">:</span>
+        <span class="n">relink_launchers</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="relink_launchers">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.relink_launchers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">relink_launchers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Point this installation's services and apps at the environment's real path.</span>
+
+<span class="sd">    Running services are restarted so they run from it; stopped ones stay stopped.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">relink_services</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.apps</span><span class="w"> </span><span class="kn">import</span> <span class="n">relink_apps</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">restarted</span> <span class="o">=</span> <span class="n">relink_services</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># services may be absent, or the platform unsupported</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not relink the services: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">restarted</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">relinked</span> <span class="o">=</span> <span class="n">relink_apps</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not relink the apps: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">relinked</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">restarted</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">restarted</span><span class="p">)</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">relinked</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updated the apps </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">relinked</span><span class="p">)</span><span class="si">}</span><span class="s2"> to run from </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---- building and switching --------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="build_version">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.build_version">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">from_freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Build a new versioned environment and return its ``Uv``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    specs : [str]</span>
+<span class="sd">        Requirement specifiers to install or upgrade, as `Uv.install` takes.</span>
+<span class="sd">    constraints : pathlib.Path = None</span>
+<span class="sd">        The lock file, if any.</span>
+<span class="sd">    upgrade : bool = False</span>
+<span class="sd">        Whether `specs` may move versions (an update) or only fill gaps.</span>
+<span class="sd">    from_freeze : bool = True</span>
+<span class="sd">        Start from an exact copy of the current environment (``uv pip freeze``,</span>
+<span class="sd">        which keeps editable and local installs), then apply `specs`; the result</span>
+<span class="sd">        is what an in-place update would have produced. False builds from</span>
+<span class="sd">        scratch with only `specs` -- the clean rebuild ``recreate`` wants.</span>
+<span class="sd">    name : str = None</span>
+<span class="sd">        The version's name; default from the time.</span>
+<span class="sd">    """</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">new_version_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span>
+    <span class="n">new</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">UvError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Building the new environment </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">new</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">from_freeze</span> <span class="ow">and</span> <span class="n">current</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="n">freeze</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">freeze</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                <span class="s2">"w"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"-freeze.txt"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+                <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">freeze</span><span class="p">)</span>
+                <span class="n">frozen</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">fd</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"   copying the current environment's packages"</span><span class="p">)</span>
+                <span class="n">new</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"pip"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="s2">"--python"</span><span class="p">,</span> <span class="n">new</span><span class="o">.</span><span class="n">python</span><span class="p">,</span> <span class="s2">"-r"</span><span class="p">,</span> <span class="n">frozen</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="n">frozen</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">specs</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   applying </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span><span class="si">}</span><span class="s2"> change(s)"</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new</span></div>
+
+
+
+<div class="viewcode-block" id="switch">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.switch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make `new` the current environment and relink the launchers.</span>
+
+<span class="sd">    Refuses if processes started through the link exist (see the module</span>
+<span class="sd">    docstring), unless `force`. Returns True if switched.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">switched</span>
+
+    <span class="n">unsafe</span> <span class="o">=</span> <span class="n">unsafe_processes</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">unsafe</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+        <span class="n">_print_processes</span><span class="p">(</span>
+            <span class="n">unsafe</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"These processes were started through </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> and would see the "</span>
+            <span class="s2">"new environment if it were switched now:"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"The new environment is ready at </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">. Wait for them to finish, "</span>
+            <span class="s2">"then run 'seamm-manager environment switch', or use --force."</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">switch_to</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">real_path</span><span class="p">)</span>
+    <span class="n">switched</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> now links to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">relink_launchers</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="apply_change">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.apply_change">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_change</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">in_place</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Install or update `specs` in the installation's environment, safely.</span>
+
+<span class="sd">    With an existing environment (and not `in_place`), builds a new version from</span>
+<span class="sd">    the current one, applies the change there and switches. Otherwise, or for a</span>
+<span class="sd">    fresh install, installs into the environment directly.</span>
+
+<span class="sd">    Returns True if the change is now in the current environment (installed in</span>
+<span class="sd">    place, or built and switched), False if it was built but the switch was</span>
+<span class="sd">    refused (see `switch`). The caller records the snapshot afterwards.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">in_place</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">in_place</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"in_place"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">or</span> <span class="n">in_place</span><span class="p">:</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="n">ensure_versioned</span><span class="p">()</span>
+    <span class="n">new</span> <span class="o">=</span> <span class="n">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span></div>
+
+
+
+<span class="c1"># ---- prune and rollback ------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_created</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">T%H-%M-%S"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="prune">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.prune">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prune</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">min_age_days</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remove old versions that nothing uses.</span>
+
+<span class="sd">    Keeps the current version and the newest `keep` versions in all (for</span>
+<span class="sd">    rollback), anything younger than `min_age_days`, and anything a running</span>
+<span class="sd">    process uses. Returns the paths removed (or that would be, with `dry_run`).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">is_versioned</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"The environment is not versioned; nothing to prune."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span>
+    <span class="n">versions</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions</span><span class="p">()]</span>
+    <span class="n">newest</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">versions</span><span class="p">[</span><span class="o">-</span><span class="n">keep</span><span class="p">:])</span> <span class="k">if</span> <span class="n">keep</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">cutoff</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">min_age_days</span><span class="p">)</span>
+    <span class="n">removed</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">versions</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="n">current</span> <span class="ow">or</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">newest</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">_created</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Keeping </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: younger than </span><span class="si">{</span><span class="n">min_age_days</span><span class="si">}</span><span class="s2"> day(s)."</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">users</span> <span class="o">=</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">users</span><span class="p">:</span>
+            <span class="n">_print_processes</span><span class="p">(</span><span class="n">users</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Keeping </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: in use by"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">_size</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Would remove </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removing </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">removed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">removed</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Nothing to prune."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">removed</span></div>
+
+
+
+<div class="viewcode-block" id="rollback">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.rollback">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rollback</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Switch back to the version `name`, by default the one before the current."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">is_versioned</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"The environment is not versioned; there is nothing to roll back to."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">versions</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions</span><span class="p">()]</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">older</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">versions</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">&lt;</span> <span class="n">current</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">older</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"There is no older version to roll back to."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">older</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions_dir</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">versions</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">versions</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no version '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'. Versions: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="n">current</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> is already the current version."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">switch</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_size</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"B"</span><span class="p">,</span> <span class="s2">"kB"</span><span class="p">,</span> <span class="s2">"MB"</span><span class="p">,</span> <span class="s2">"GB"</span><span class="p">,</span> <span class="s2">"TB"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">"B"</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">total</span> <span class="o">/=</span> <span class="mi">1000</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> PB"</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

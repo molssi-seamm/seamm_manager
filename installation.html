@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=52372788"></script>
+    <script src="_static/documentation_options.js?v=77b25824"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -119,13 +119,41 @@ and how to convert your own flowcharts.</p>
 </section>
 <section id="the-environment">
 <h2>The environment<a class="headerlink" href="#the-environment" title="Link to this heading">¶</a></h2>
-<p>Everything Python lives in <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code>. If it is ever damaged,</p>
+<p>Everything Python lives in <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code>. You never need to activate it; the
+manager, the services and the apps all use its interpreter directly.</p>
+<p>The environment is <em>versioned</em>: <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code> is a link to the current version,
+which lives in <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venvs/&lt;date</span> <span class="pre">and</span> <span class="pre">time&gt;</span></code>. An update never changes the
+environment that running jobs are using. Instead it builds a new version beside the
+current one, from a copy of the current one plus the changes, and switches the link
+when it is done; the services are restarted so they run from the new version, and
+jobs that were already running finish in the old one. The first update with this
+manager moves an existing <code class="docutils literal notranslate"><span class="pre">venv</span></code> directory into <code class="docutils literal notranslate"><span class="pre">venvs/</span></code> itself, which is safe
+while jobs run.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>versions<span class="w">     </span><span class="c1"># the versions, and what uses them</span>
+<span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>rollback<span class="w">     </span><span class="c1"># back to the previous version</span>
+<span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>prune<span class="w">        </span><span class="c1"># remove old, unused versions</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">prune</span></code> keeps the current version, the newest two for <code class="docutils literal notranslate"><span class="pre">rollback</span></code>, anything
+younger than a day and anything a running process uses. A switch is refused, and the
+new version left ready for <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code>, if a process started <em>through</em> the
+link, for example a job begun before the environment was versioned, is still running;
+<code class="docutils literal notranslate"><span class="pre">--force</span></code> switches anyway. <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--in-place</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">--in-place</span></code> change
+the current environment directly, as earlier versions of the manager did; do that only
+when no jobs are running.</p>
+<p>If the environment is ever damaged,</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>recreate
 </pre></div>
 </div>
-<p>deletes and rebuilds it and reinstalls the packages that were in it, in well under
-a minute. <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">show</span></code> describes it. You never need to activate it; the
-manager, the services and the apps all use its interpreter directly.</p>
+<p>builds a fresh version from scratch with the SEAMM packages that were in it, in well
+under a minute, and switches to it. <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">show</span></code> describes the environment.</p>
+<p>To check a new version before switching to it, run a flowchart in both:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>seamm-manager<span class="w"> </span>compare<span class="w"> </span>my.flow<span class="w"> </span>-a<span class="w"> </span>current<span class="w"> </span>-b<span class="w"> </span>newest
+</pre></div>
+</div>
+<p>runs the flowchart with each version and compares every file the two runs produce
+(numbers within a tolerance, timestamps and the like ignored); see <code class="docutils literal notranslate"><span class="pre">compare</span> <span class="pre">--help</span></code>
+for the other things a side can be, such as another installation’s root.</p>
 </section>
 <section id="conda">
 <h2>Conda<a class="headerlink" href="#conda" title="Link to this heading">¶</a></h2>
@@ -244,7 +272,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

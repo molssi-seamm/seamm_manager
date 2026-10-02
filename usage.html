@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=52372788"></script>
+    <script src="_static/documentation_options.js?v=77b25824"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -71,7 +71,8 @@ interrupted install.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> / <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">&lt;names&gt;</span></code></p></td>
 <td><p>Update the manager, then the packages, to the versions in
-the published lock; restarts the JobServer when needed.</p></td>
+the published lock, in a new version of the environment
+(see below); restarts the JobServer when needed.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">show</span></code></p></td>
 <td><p>List the SEAMM packages with installed and available
@@ -85,36 +86,62 @@ versions.</p></td>
 <td><p>Inspect, create, or rebuild <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> from scratch</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code></p></td>
-<td><p>(<code class="docutils literal notranslate"><span class="pre">recreate</span></code> reinstalls what was there).</p></td>
+<td><p>(<code class="docutils literal notranslate"><span class="pre">recreate</span></code> builds a fresh version with the SEAMM
+packages that were there and switches to it).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create|start|stop|...</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions|switch</span></code></p></td>
+<td><p>The versions of the environment; switch to one, go back</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">rollback|prune</span></code></p></td>
+<td><p>to the previous one, or remove old unused ones.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">compare</span> <span class="pre">&lt;flowchart&gt;</span> <span class="pre">-a</span> <span class="pre">X</span> <span class="pre">-b</span> <span class="pre">Y</span></code></p></td>
+<td><p>Run a flowchart in two environments (versions,
+installations) and compare every result file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">services</span> <span class="pre">create|start|stop|...</span></code></p></td>
 <td><p>Manage the JobServer and web-interface background
 services (launchd on macOS, systemd on Linux).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">apps</span> <span class="pre">create|delete|show|update</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">apps</span> <span class="pre">create|delete|show|update</span></code></p></td>
 <td><p>Desktop apps for the flowchart editor and services.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">show|update</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">show|update</span></code></p></td>
 <td><p>Inspect or migrate the jobs database.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">rebuild</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">datastore</span> <span class="pre">rebuild</span></code></p></td>
 <td><p>Rebuild the jobs database from the job directories,
 keeping the accounts and job owners; the old database is
 kept as a dated backup.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code></p></td>
 <td><p>Report how many job flowcharts are still in format 2.0.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">migrate</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">migrate</span></code></p></td>
 <td><p>Convert the job flowcharts and the jobs database to
 flowchart format 3.0 (dry run and confirmation first;
 <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code>, <code class="docutils literal notranslate"><span class="pre">--yes</span></code>).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">refresh-cache</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">refresh-cache</span></code></p></td>
 <td><p>Re-read the package list from Zenodo.</p></td>
 </tr>
 </tbody>
 </table>
+<section id="versions-of-the-environment">
+<h2>Versions of the environment<a class="headerlink" href="#versions-of-the-environment" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> is a link to the current version of the environment, in
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;date</span> <span class="pre">and</span> <span class="pre">time&gt;</span></code>. <code class="docutils literal notranslate"><span class="pre">install</span></code> and <code class="docutils literal notranslate"><span class="pre">update</span></code> never change the current
+version while it may be in use: they build the next version beside it from a copy of
+the current one plus the change, switch the link, and restart the services so that
+they run from it. Jobs already running keep the version they started in, and the
+services and apps always name the real path, never the link, since Python does not
+follow the link when it starts (<code class="docutils literal notranslate"><span class="pre">--in-place</span></code> changes the current environment
+directly instead, which is only safe with no jobs running). <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code>
+lists the versions and the processes using each; <code class="docutils literal notranslate"><span class="pre">rollback</span></code> and <code class="docutils literal notranslate"><span class="pre">switch</span></code> move
+the link; <code class="docutils literal notranslate"><span class="pre">prune</span></code> removes versions that are old, unused and not among the newest
+two. A switch is refused while a process started through the link is running (a job
+begun before the first versioned update), and <code class="docutils literal notranslate"><span class="pre">--force</span></code> overrides that.</p>
+</section>
 <section id="versions-and-the-lock-file">
 <h2>Versions and the lock file<a class="headerlink" href="#versions-and-the-lock-file" title="Link to this heading">¶</a></h2>
 <p>The package list and a <em>lock file</em> – the pinned versions of every SEAMM package and
@@ -242,6 +269,7 @@ import it there.</p>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#versions-of-the-environment">Versions of the environment</a></li>
 <li><a class="reference internal" href="#versions-and-the-lock-file">Versions and the lock file</a></li>
 <li><a class="reference internal" href="#several-installations">Several installations</a></li>
 <li><a class="reference internal" href="#trying-a-new-release-beside-production">Trying a new release beside production</a></li>
@@ -297,7 +325,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

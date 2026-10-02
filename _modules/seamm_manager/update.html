@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=52372788"></script>
+    <script src="../../_static/documentation_options.js?v=77b25824"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -126,6 +126,22 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--in-place"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Change the current environment directly rather than building a new "</span>
+            <span class="s2">"version beside it and switching. Not safe while jobs run."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--force"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Switch to the new environment even if processes started through "</span>
+            <span class="s2">"&lt;root&gt;/venv (jobs begun before the environment was versioned) exist."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"modules"</span><span class="p">,</span>
         <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -161,8 +177,11 @@
     <span class="n">initial_version</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">package_info</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">service_packages</span><span class="p">}</span>
 
     <span class="n">latest</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"latest"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># In a development installation the development tools are upgraded in the</span>
+    <span class="c1"># same new environment as the packages, never in place (see versions.py).</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="n">_development_specs</span><span class="p">()</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
-        <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
+        <span class="n">update_packages</span><span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
         <span class="n">update_webui</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># seamm-webui lives in its own environment, not the package list</span>
@@ -170,9 +189,11 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">modules</span><span class="p">):</span>
             <span class="n">update_webui</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">modules</span><span class="p">:</span>
-            <span class="n">update_packages</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">)</span>
+            <span class="n">update_packages</span><span class="p">(</span>
+                <span class="n">modules</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gui_only</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="n">latest</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span>
+            <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"in_place"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
         <span class="n">update_development_environment</span><span class="p">()</span>
 
     <span class="c1"># Keep the desktop apps current (version, and the macOS launcher)</span>
@@ -211,7 +232,10 @@
         <span class="ow">and</span> <span class="n">Version</span><span class="p">(</span><span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">])</span>
         <span class="o">&gt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">])</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
+
+        <span class="c1"># A switch to a new environment version already restarted the services</span>
+        <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_versions</span><span class="o">.</span><span class="n">switched</span><span class="p">:</span>
             <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because it was updated."</span><span class="p">)</span>
 
@@ -264,9 +288,18 @@
 <div class="viewcode-block" id="update_packages">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_packages">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_packages</span><span class="p">(</span>
-    <span class="n">to_update</span><span class="p">,</span> <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update_text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="kc">False</span>
+    <span class="n">to_update</span><span class="p">,</span>
+    <span class="n">gui_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">update_text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">latest</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">extra</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Update SEAMM components and plug-ins.</span>
+
+<span class="sd">    `extra` names further packages (the development tools) to upgrade along</span>
+<span class="sd">    with any SEAMM package that changes; they do not by themselves cause a</span>
+<span class="sd">    rebuild.</span>
 
 <span class="sd">    The version to update to normally comes from the nightly package list, and</span>
 <span class="sd">    the install is constrained to the matching lock file. With ``latest`` each</span>
@@ -336,7 +369,11 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Updating with uv (no constraints)."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating with uv, constrained to the published lock </span><span class="si">{</span><span class="n">lock</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-        <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.versions</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_change</span>
+
+        <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Also updating the development packages </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">apply_change</span><span class="p">([</span><span class="o">*</span><span class="n">specs</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">[])],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"done; the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -362,13 +399,19 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_development_specs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The development tools, from the package metadata."""</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">package_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"development packages"</span><span class="p">,</span> <span class="n">development_packages</span><span class="p">))</span>
+
+
 <div class="viewcode-block" id="update_development_environment">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.update_development_environment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_development_environment</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Update packages needed for development."""</span>
-    <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">package_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"development packages"</span><span class="p">,</span> <span class="n">development_packages</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Update packages needed for development, in place (``--in-place`` only;</span>
+<span class="sd">    otherwise they are upgraded in the new environment with the packages)."""</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">_development_specs</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating development packages </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">packages</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">packages</span><span class="p">),</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+    <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">packages</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 
@@ -418,7 +461,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>

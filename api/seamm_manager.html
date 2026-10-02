@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=52372788"></script>
+    <script src="../_static/documentation_options.js?v=77b25824"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -71,6 +71,13 @@
 script launcher of bundles made by older versions with the compiled one
 (a script makes Apple Silicon Macs without Rosetta ask to install it).
 Apps that are not installed are left alone. Returns the names refreshed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.apps.relink_apps">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.apps.</span></span><span class="sig-name descname"><span class="pre">relink_apps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/apps.html#relink_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.apps.relink_apps" title="Link to this definition">¶</a></dt>
+<dd><p>Recreate the installed apps so that they run from the environment’s real
+path (see <code class="docutils literal notranslate"><span class="pre">versions</span></code>). Returns the names recreated.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -131,6 +138,114 @@ Apps that are not installed are left alone. Returns the names refreshed.</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="module-seamm_manager.compare">
+<span id="seamm-manager-compare-module"></span><h2>seamm_manager.compare module<a class="headerlink" href="#module-seamm_manager.compare" title="Link to this heading">¶</a></h2>
+<p>The ‘compare’ command: run one flowchart in two environments and diff the
+results.</p>
+<p>The comparison harness of the parallel-execution campaign (phase 0). Each side
+is an installation root, an environment directory, or a version of this
+installation’s environment (<code class="docutils literal notranslate"><span class="pre">venvs/&lt;stamp&gt;</span></code>); the flowchart runs with each
+side’s <code class="docutils literal notranslate"><span class="pre">run_flowchart</span></code> in its own working directory, with the same arguments,
+and the two trees are compared file by file:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.json</span></code>: parsed, compared with a numeric tolerance; keys whose names say
+they are volatile (times, dates, versions, hosts, paths) are ignored;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.csv</span></code>: cell by cell, numbers with tolerance;</p></li>
+<li><p>structure and data files (<code class="docutils literal notranslate"><span class="pre">.xyz</span></code>, <code class="docutils literal notranslate"><span class="pre">.extxyz</span></code>, <code class="docutils literal notranslate"><span class="pre">.sdf</span></code>, <code class="docutils literal notranslate"><span class="pre">.mmcif</span></code>, <code class="docutils literal notranslate"><span class="pre">.cif</span></code>,
+<code class="docutils literal notranslate"><span class="pre">.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">.dat</span></code>): token by token, numbers with tolerance;</p></li>
+<li><p>text (<code class="docutils literal notranslate"><span class="pre">.out</span></code>, <code class="docutils literal notranslate"><span class="pre">.txt</span></code>, <code class="docutils literal notranslate"><span class="pre">.log</span></code>, <code class="docutils literal notranslate"><span class="pre">.inp</span></code>, …): line by line after
+normalizing timestamps, durations, versions and the working directories;</p></li>
+<li><p>anything else: size only.</p></li>
+</ul>
+<p>Files present on one side only are reported. The exit status is 0 when every
+file agrees within tolerance.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare_csv">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Differences between two CSV texts.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare_json">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare_json" title="Link to this definition">¶</a></dt>
+<dd><p>Differences between two parsed JSON values, as [‘where: what’, …].</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare_numeric_text">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare_numeric_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare_numeric_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare_numeric_text" title="Link to this definition">¶</a></dt>
+<dd><p>Differences between two texts compared token by token, numbers with
+tolerance (structure files).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare_text">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare_text" title="Link to this definition">¶</a></dt>
+<dd><p>Differences between two texts after normalization, as a few diff lines.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.compare_trees">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">compare_trees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('harness_run.log',)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#compare_trees"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.compare_trees" title="Link to this definition">¶</a></dt>
+<dd><p>Compare two result trees.</p>
+<p><cite>replacements</cite> are further (old, new) text substitutions made before
+comparing text and JSON, e.g. the two installations’ roots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>status is one of ‘identical’, ‘within tolerance’, ‘different’, ‘only in a’,
+‘only in b’, ‘not compared’.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[(relative path, status, details)]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.normalize_text">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">normalize_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#normalize_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.normalize_text" title="Link to this definition">¶</a></dt>
+<dd><p>The lines of <cite>text</cite> that are not expected to vary between runs, with the
+given (old, new) replacements applied first (the working directories).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.report">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_details</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.report" title="Link to this definition">¶</a></dt>
+<dd><p>Print the comparison and return True if everything agrees.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.resolve_environment">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">resolve_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#resolve_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.resolve_environment" title="Link to this definition">¶</a></dt>
+<dd><p>The environment directory and installation root for a side’s spec.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The environment (holding <code class="docutils literal notranslate"><span class="pre">bin/run_flowchart</span></code>) and the root it belongs to.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>(pathlib.Path, pathlib.Path)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.run_flowchart">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">run_flowchart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flowchart</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#run_flowchart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.run_flowchart" title="Link to this definition">¶</a></dt>
+<dd><p>Run <cite>flowchart</cite> with <cite>environment</cite>’s run_flowchart in <cite>directory</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.compare.setup">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.compare.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/compare.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.compare.setup" title="Link to this definition">¶</a></dt>
+<dd><p>Define the command-line interface for the comparison.</p>
 </dd></dl>
 
 </section>
@@ -688,6 +803,16 @@ Python environment that holds SEAMM.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.environment.migrate">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">migrate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#migrate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.migrate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.environment.prune">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">prune</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#prune"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.prune" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.environment.recreate">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">recreate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#recreate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.recreate" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -695,6 +820,11 @@ Python environment that holds SEAMM.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.environment.remove">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.remove" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.environment.rollback">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#rollback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.rollback" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -711,6 +841,16 @@ Python environment that holds SEAMM.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.environment.show">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#show"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.show" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.environment.switch">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#switch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.switch" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.environment.versions">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.environment.</span></span><span class="sig-name descname"><span class="pre">versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/environment.html#versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.environment.versions" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -1806,6 +1946,16 @@ run directly as <code class="docutils literal notranslate"><span class="pre">pyt
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.services.relink_services">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">relink_services</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#relink_services"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.relink_services" title="Link to this definition">¶</a></dt>
+<dd><p>Recreate this installation’s jobserver and dashboard services so that they
+run from the environment’s real path (see <code class="docutils literal notranslate"><span class="pre">versions</span></code>). The web interface
+has its own environment and is left alone.</p>
+<p>A running service is restarted; a stopped one is recreated but left stopped.
+Returns the names of the services restarted.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.services.restart">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.services.</span></span><span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/services.html#restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.services.restart" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1923,13 +2073,17 @@ uninstallers (for the external codes) have run.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.update.update_development_environment">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_development_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_development_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_development_environment" title="Link to this definition">¶</a></dt>
-<dd><p>Update packages needed for development.</p>
+<dd><p>Update packages needed for development, in place (<code class="docutils literal notranslate"><span class="pre">--in-place</span></code> only;
+otherwise they are upgraded in the new environment with the packages).</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.update.update_packages">
-<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_packages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_update</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gui_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_packages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_packages" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">update_packages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_update</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gui_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#update_packages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.update_packages" title="Link to this definition">¶</a></dt>
 <dd><p>Update SEAMM components and plug-ins.</p>
+<p><cite>extra</cite> names further packages (the development tools) to upgrade along
+with any SEAMM package that changes; they do not by themselves cause a
+rebuild.</p>
 <p>The version to update to normally comes from the nightly package list, and
 the install is constrained to the matching lock file. With <code class="docutils literal notranslate"><span class="pre">latest</span></code> each
 package’s newest release on PyPI is used when it is newer than the list’s,
@@ -2145,6 +2299,19 @@ None if nothing was done.</p>
 installed into it from PyPI with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span></code>; the interpreter itself
 comes from <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">python</span> <span class="pre">install</span></code>. Nothing here touches conda: the external
 codes’ own environments are handled by the plug-in installers.</p>
+<section id="versioned-environments">
+<h3>Versioned environments<a class="headerlink" href="#versioned-environments" title="Link to this heading">¶</a></h3>
+<p>Once an installation is <em>versioned</em>, <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> is a symlink to the
+current environment, which lives in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;stamp&gt;/</span></code>. An update
+builds a new environment beside the current one and switches the link, so a
+running job – which imports lazily from the environment it started in – never
+sees a half-updated environment. Everything that launches a process (services,
+apps, the JobServer’s own jobs) must embed the <em>real</em> path, because CPython
+does not resolve the symlink when it locates a venv: a process started as
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv/bin/python</span></code> would follow the link to whatever is current. So
+<code class="docutils literal notranslate"><span class="pre">bin_path</span></code>, <code class="docutils literal notranslate"><span class="pre">python</span></code>, <code class="docutils literal notranslate"><span class="pre">bin()</span></code> and <code class="docutils literal notranslate"><span class="pre">which()</span></code> all return paths under
+<code class="docutils literal notranslate"><span class="pre">real_path</span></code>, and <code class="docutils literal notranslate"><span class="pre">path</span></code> stays the logical <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> for messages.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seamm_manager.uv.</span></span><span class="sig-name descname"><span class="pre">Uv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'venv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">python_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'3.12'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv" title="Link to this definition">¶</a></dt>
@@ -2176,6 +2343,12 @@ codes’ own environments are handled by the plug-in installers.</p>
 <dd><p>Create the environment, installing the interpreter if needed.</p>
 <p><code class="docutils literal notranslate"><span class="pre">seed</span></code> adds pip to the environment, which some tools (and the docs
 builds) expect to find as <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.current_version">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">current_version</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.current_version" title="Link to this definition">¶</a></dt>
+<dd><p>The current version’s name, or None if not versioned.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -2235,16 +2408,42 @@ the upgrade).</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.is_versioned">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_versioned</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.is_versioned" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <cite>path</cite> is a symlink into <cite>versions_dir</cite>.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.list">
 <span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.list" title="Link to this definition">¶</a></dt>
 <dd><p>The installed packages: <code class="docutils literal notranslate"><span class="pre">{normalized</span> <span class="pre">name:</span> <span class="pre">{&quot;version&quot;:</span> <span class="pre">str}}</span></code>.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.migrate_to_versioned">
+<span class="sig-name descname"><span class="pre">migrate_to_versioned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.migrate_to_versioned"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.migrate_to_versioned" title="Link to this definition">¶</a></dt>
+<dd><p>Turn a plain <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> directory into a versioned environment.</p>
+<p>The directory is renamed into <cite>versions_dir</cite> and <cite>path</cite> becomes a symlink
+to it. The rename keeps every inode, so processes running from it are
+unaffected. The scripts’ shebangs and the <code class="docutils literal notranslate"><span class="pre">activate</span></code> scripts, which
+name the old path, are rewritten to the new one so that anything started
+from them afterwards is tied to this version, not to the link.</p>
+<p>Returns the version name, or None if there was nothing to migrate (already
+versioned, or no environment).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.new_version_name">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">new_version_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">now</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.new_version_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.new_version_name" title="Link to this definition">¶</a></dt>
+<dd><p>A version name from the time: <code class="docutils literal notranslate"><span class="pre">2026-10-02T15-04-05</span></code>.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.path">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.path" title="Link to this definition">¶</a></dt>
-<dd><p>The environment directory.</p>
+<dd><p>The environment’s logical path, <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> (a symlink once the
+installation is versioned). Use for messages; see <cite>real_path</cite>.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -2259,10 +2458,22 @@ the upgrade).</p>
 <dd><p>The ‘X.Y.Z’ version of the environment’s interpreter, or None.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.real_path">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">real_path</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.real_path" title="Link to this definition">¶</a></dt>
+<dd><p><cite>path</cite> with a symlink
+resolved, so that paths embedded in launchers survive a switch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The directory the environment really lives in</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.remove">
 <span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.remove" title="Link to this definition">¶</a></dt>
-<dd><p>Delete the environment directory.</p>
+<dd><p>Delete the environment: the real directory, and the link if versioned.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2277,6 +2488,21 @@ the upgrade).</p>
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.run" title="Link to this definition">¶</a></dt>
 <dd><p>Run <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">&lt;args&gt;</span></code> and return the CompletedProcess.</p>
 <p>Raises UvError with uv’s output if the command fails and <code class="docutils literal notranslate"><span class="pre">check</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.switch_to">
+<span class="sig-name descname"><span class="pre">switch_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.switch_to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.switch_to" title="Link to this definition">¶</a></dt>
+<dd><p>Atomically point <cite>path</cite> (the <code class="docutils literal notranslate"><span class="pre">venv</span></code> symlink) at <cite>target</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>target</strong> (<em>pathlib.Path</em><em> or </em><em>str</em>) – The versioned environment directory, under <cite>versions_dir</cite>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#seamm_manager.uv.UvError" title="seamm_manager.uv.UvError"><strong>UvError</strong></a> – If <cite>path</cite> is a real directory (migrate first) or <cite>target</cite> is not an
+    environment.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -2298,6 +2524,24 @@ reinstall with <code class="docutils literal notranslate"><span class="pre">--re
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.uv">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">uv</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.uv" title="Link to this definition">¶</a></dt>
 <dd><p>The uv executable.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.version" title="Link to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">Uv</span></code> for the versioned environment <code class="docutils literal notranslate"><span class="pre">name</span></code> (which need not exist).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.versions">
+<span class="sig-name descname"><span class="pre">versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.versions" title="Link to this definition">¶</a></dt>
+<dd><p>The versioned environments, oldest first, as (name, path) pairs.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="seamm_manager.uv.Uv.versions_dir">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">versions_dir</span></span><a class="headerlink" href="#seamm_manager.uv.Uv.versions_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Where the versioned environments live, <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2329,6 +2573,116 @@ reinstall with <code class="docutils literal notranslate"><span class="pre">--re
 </dd></dl>
 
 </section>
+<section id="module-seamm_manager.versions">
+<span id="seamm-manager-versions-module"></span><h2>seamm_manager.versions module<a class="headerlink" href="#module-seamm_manager.versions" title="Link to this heading">¶</a></h2>
+<p>Versioned environments: build a new one beside the current, switch, prune.</p>
+<p>The rule this module enforces: <strong>a running job never sees a half-updated
+environment</strong>. SEAMM imports lazily in places, so updating <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> in
+place while a job runs can mix two versions inside one process. Instead an
+update builds <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;stamp&gt;</span></code> from the current environment, applies
+the change there, and switches the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link. Processes started from the
+old environment keep it until <code class="docutils literal notranslate"><span class="pre">prune</span></code> finds nothing using it.</p>
+<p>Processes that were started <em>through the link</em> (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv/bin/...</span></code>) are
+the exception: CPython does not resolve the link when locating a venv, so
+they would follow it to the new environment. <cite>unsafe_processes</cite> finds them
+and <cite>switch</cite> refuses while any exist, unless forced. After the first
+migration every launcher embeds the real path, so this only matters for jobs
+that were already running then.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.apply_change">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">apply_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">specs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upgrade</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_place</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#apply_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.apply_change" title="Link to this definition">¶</a></dt>
+<dd><p>Install or update <cite>specs</cite> in the installation’s environment, safely.</p>
+<p>With an existing environment (and not <cite>in_place</cite>), builds a new version from
+the current one, applies the change there and switches. Otherwise, or for a
+fresh install, installs into the environment directly.</p>
+<p>Returns True if the change is now in the current environment (installed in
+place, or built and switched), False if it was built but the switch was
+refused (see <cite>switch</cite>). The caller records the snapshot afterwards.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.build_version">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">build_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">specs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upgrade</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_freeze</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#build_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.build_version" title="Link to this definition">¶</a></dt>
+<dd><p>Build a new versioned environment and return its <code class="docutils literal notranslate"><span class="pre">Uv</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>specs</strong> (<em>[</em><em>str</em><em>]</em>) – Requirement specifiers to install or upgrade, as <cite>Uv.install</cite> takes.</p></li>
+<li><p><strong>constraints</strong> (<em>pathlib.Path = None</em>) – The lock file, if any.</p></li>
+<li><p><strong>upgrade</strong> (<em>bool = False</em>) – Whether <cite>specs</cite> may move versions (an update) or only fill gaps.</p></li>
+<li><p><strong>from_freeze</strong> (<em>bool = True</em>) – Start from an exact copy of the current environment (<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">freeze</span></code>,
+which keeps editable and local installs), then apply <cite>specs</cite>; the result
+is what an in-place update would have produced. False builds from
+scratch with only <cite>specs</cite> – the clean rebuild <code class="docutils literal notranslate"><span class="pre">recreate</span></code> wants.</p></li>
+<li><p><strong>name</strong> (<em>str = None</em>) – The version’s name; default from the time.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.ensure_versioned">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">ensure_versioned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relink</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#ensure_versioned"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.ensure_versioned" title="Link to this definition">¶</a></dt>
+<dd><p>Make the installation versioned if it is not yet. Returns True if migrated.</p>
+<p>Renaming the directory is safe while jobs run (the inodes do not change). The
+launchers are then rewritten to the real path and running services
+restarted, so that from here on nothing new is started through the link.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.processes_using">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">processes_using</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#processes_using"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.processes_using" title="Link to this definition">¶</a></dt>
+<dd><p>The processes whose executable or command line names a path under <cite>prefix</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefix</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – A directory; matched as <code class="docutils literal notranslate"><span class="pre">str(prefix)</span> <span class="pre">+</span> <span class="pre">&quot;/&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pid and a short description (name plus the matching argument).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[(pid, str)]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.prune">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_age_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#prune"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.prune" title="Link to this definition">¶</a></dt>
+<dd><p>Remove old versions that nothing uses.</p>
+<p>Keeps the current version and the newest <cite>keep</cite> versions in all (for
+rollback), anything younger than <cite>min_age_days</cite>, and anything a running
+process uses. Returns the paths removed (or that would be, with <cite>dry_run</cite>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.relink_launchers">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">relink_launchers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#relink_launchers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.relink_launchers" title="Link to this definition">¶</a></dt>
+<dd><p>Point this installation’s services and apps at the environment’s real path.</p>
+<p>Running services are restarted so they run from it; stopped ones stay stopped.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.rollback">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#rollback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.rollback" title="Link to this definition">¶</a></dt>
+<dd><p>Switch back to the version <cite>name</cite>, by default the one before the current.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.switch">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#switch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.switch" title="Link to this definition">¶</a></dt>
+<dd><p>Make <cite>new</cite> the current environment and relink the launchers.</p>
+<p>Refuses if processes started through the link exist (see the module
+docstring), unless <cite>force</cite>. Returns True if switched.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.unsafe_processes">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">unsafe_processes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#unsafe_processes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.unsafe_processes" title="Link to this definition">¶</a></dt>
+<dd><p>Processes started through the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link rather than a real path.</p>
+</dd></dl>
+
+</section>
 <section id="module-seamm_manager">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-seamm_manager" title="Link to this heading">¶</a></h2>
 <p>seamm_manager
@@ -2352,6 +2706,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.apps.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.refresh_apps"><code class="docutils literal notranslate"><span class="pre">refresh_apps()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.apps.relink_apps"><code class="docutils literal notranslate"><span class="pre">relink_apps()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.apps.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
@@ -2364,6 +2719,20 @@ The installer/updater for SEAMM.</p>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.cli">seamm_manager.cli module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.cli.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-seamm_manager.compare">seamm_manager.compare module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.compare.compare"><code class="docutils literal notranslate"><span class="pre">compare()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.compare_csv"><code class="docutils literal notranslate"><span class="pre">compare_csv()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.compare_json"><code class="docutils literal notranslate"><span class="pre">compare_json()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.compare_numeric_text"><code class="docutils literal notranslate"><span class="pre">compare_numeric_text()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.compare_text"><code class="docutils literal notranslate"><span class="pre">compare_text()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.compare_trees"><code class="docutils literal notranslate"><span class="pre">compare_trees()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.normalize_text"><code class="docutils literal notranslate"><span class="pre">normalize_text()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.report"><code class="docutils literal notranslate"><span class="pre">report()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.resolve_environment"><code class="docutils literal notranslate"><span class="pre">resolve_environment()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.run_flowchart"><code class="docutils literal notranslate"><span class="pre">run_flowchart()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.compare.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.conda">seamm_manager.conda module</a><ul>
@@ -2427,10 +2796,15 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#module-seamm_manager.environment">seamm_manager.environment module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.environment.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.ensure"><code class="docutils literal notranslate"><span class="pre">ensure()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.environment.migrate"><code class="docutils literal notranslate"><span class="pre">migrate()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.environment.prune"><code class="docutils literal notranslate"><span class="pre">prune()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.recreate"><code class="docutils literal notranslate"><span class="pre">recreate()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.remove"><code class="docutils literal notranslate"><span class="pre">remove()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.environment.rollback"><code class="docutils literal notranslate"><span class="pre">rollback()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.environment.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.environment.switch"><code class="docutils literal notranslate"><span class="pre">switch()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.environment.versions"><code class="docutils literal notranslate"><span class="pre">versions()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.flowcharts">seamm_manager.flowcharts module</a><ul>
@@ -2585,6 +2959,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.services.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.free_port"><code class="docutils literal notranslate"><span class="pre">free_port()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.refresh_service_bundles"><code class="docutils literal notranslate"><span class="pre">refresh_service_bundles()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.services.relink_services"><code class="docutils literal notranslate"><span class="pre">relink_services()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.restart"><code class="docutils literal notranslate"><span class="pre">restart()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.same_root_services"><code class="docutils literal notranslate"><span class="pre">same_root_services()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.services.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
@@ -2637,30 +3012,52 @@ The installer/updater for SEAMM.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.uv">seamm_manager.uv module</a><ul>
+<li><a class="reference internal" href="#versioned-environments">Versioned environments</a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv"><code class="docutils literal notranslate"><span class="pre">Uv</span></code></a><ul>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.bin"><code class="docutils literal notranslate"><span class="pre">Uv.bin()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.bin_path"><code class="docutils literal notranslate"><span class="pre">Uv.bin_path</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.create"><code class="docutils literal notranslate"><span class="pre">Uv.create()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.current_version"><code class="docutils literal notranslate"><span class="pre">Uv.current_version</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.exists"><code class="docutils literal notranslate"><span class="pre">Uv.exists</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.freeze"><code class="docutils literal notranslate"><span class="pre">Uv.freeze()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.install"><code class="docutils literal notranslate"><span class="pre">Uv.install()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.installed_requirements"><code class="docutils literal notranslate"><span class="pre">Uv.installed_requirements()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.is_versioned"><code class="docutils literal notranslate"><span class="pre">Uv.is_versioned</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.list"><code class="docutils literal notranslate"><span class="pre">Uv.list()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.migrate_to_versioned"><code class="docutils literal notranslate"><span class="pre">Uv.migrate_to_versioned()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.new_version_name"><code class="docutils literal notranslate"><span class="pre">Uv.new_version_name()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.path"><code class="docutils literal notranslate"><span class="pre">Uv.path</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.python"><code class="docutils literal notranslate"><span class="pre">Uv.python</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.python_version_installed"><code class="docutils literal notranslate"><span class="pre">Uv.python_version_installed()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.real_path"><code class="docutils literal notranslate"><span class="pre">Uv.real_path</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.remove"><code class="docutils literal notranslate"><span class="pre">Uv.remove()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.report_conflicts"><code class="docutils literal notranslate"><span class="pre">Uv.report_conflicts()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.run"><code class="docutils literal notranslate"><span class="pre">Uv.run()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.switch_to"><code class="docutils literal notranslate"><span class="pre">Uv.switch_to()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.tool_upgrade"><code class="docutils literal notranslate"><span class="pre">Uv.tool_upgrade()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.uninstall"><code class="docutils literal notranslate"><span class="pre">Uv.uninstall()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.uv"><code class="docutils literal notranslate"><span class="pre">Uv.uv</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.version"><code class="docutils literal notranslate"><span class="pre">Uv.version()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.versions"><code class="docutils literal notranslate"><span class="pre">Uv.versions()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.Uv.versions_dir"><code class="docutils literal notranslate"><span class="pre">Uv.versions_dir</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.Uv.which"><code class="docutils literal notranslate"><span class="pre">Uv.which()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#seamm_manager.uv.UvError"><code class="docutils literal notranslate"><span class="pre">UvError</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.find_uv"><code class="docutils literal notranslate"><span class="pre">find_uv()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-seamm_manager.versions">seamm_manager.versions module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.versions.apply_change"><code class="docutils literal notranslate"><span class="pre">apply_change()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.build_version"><code class="docutils literal notranslate"><span class="pre">build_version()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.ensure_versioned"><code class="docutils literal notranslate"><span class="pre">ensure_versioned()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.processes_using"><code class="docutils literal notranslate"><span class="pre">processes_using()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.prune"><code class="docutils literal notranslate"><span class="pre">prune()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.relink_launchers"><code class="docutils literal notranslate"><span class="pre">relink_launchers()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.rollback"><code class="docutils literal notranslate"><span class="pre">rollback()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.switch"><code class="docutils literal notranslate"><span class="pre">switch()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.unsafe_processes"><code class="docutils literal notranslate"><span class="pre">unsafe_processes()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager">Module contents</a></li>
@@ -2715,7 +3112,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

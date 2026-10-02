@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.apps &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>seamm_manager.apps &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=52372788"></script>
+    <script src="../../_static/documentation_options.js?v=77b25824"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.apps</a></li> 
       </ul>
@@ -41,6 +41,7 @@
 <span class="sd">"""Handle the apps for SEAMM."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.resources</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 
@@ -290,6 +291,49 @@
 
 
 
+<div class="viewcode-block" id="relink_apps">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.relink_apps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">relink_apps</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Recreate the installed apps so that they run from the environment's real</span>
+<span class="sd">    path (see ``versions``). Returns the names recreated."""</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">get_apps</span><span class="p">()</span>
+    <span class="n">packages</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"seamm_manager"</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"data"</span>
+    <span class="n">icons_path</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">/</span> <span class="n">icons</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">relinked</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">app_lower</span><span class="p">,</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">app_names</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="n">installation_app_name</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+        <span class="n">package</span> <span class="o">=</span> <span class="n">app_package</span><span class="p">[</span><span class="n">app_lower</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">app_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">apps</span> <span class="ow">or</span> <span class="n">package</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="c1"># The same executables create() uses</span>
+        <span class="n">bin_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span>
+            <span class="s2">"seamm-dashboard"</span> <span class="k">if</span> <span class="n">app_lower</span> <span class="o">==</span> <span class="s2">"dashboard"</span> <span class="k">else</span> <span class="n">app</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">bin_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">packages</span><span class="p">[</span><span class="n">package</span><span class="p">][</span><span class="s2">"version"</span><span class="p">])</span>
+        <span class="n">user_only</span> <span class="o">=</span> <span class="n">apps</span><span class="p">[</span><span class="n">app_name</span><span class="p">]</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">())</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">app_lower</span> <span class="o">==</span> <span class="s2">"dashboard"</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="s2">"--port"</span><span class="p">,</span> <span class="mi">55066</span> <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span> <span class="k">else</span> <span class="mi">55055</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">app_lower</span> <span class="o">==</span> <span class="s2">"jobserver"</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--root"</span><span class="p">,</span> <span class="n">root</span><span class="p">]</span>
+        <span class="n">delete_app</span><span class="p">(</span><span class="n">app_name</span><span class="p">,</span> <span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">create_app</span><span class="p">(</span>
+            <span class="n">bin_path</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">user_only</span><span class="o">=</span><span class="n">user_only</span><span class="p">,</span>
+            <span class="n">icons</span><span class="o">=</span><span class="n">icons_path</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">relinked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">relinked</span></div>
+
+
+
 <div class="viewcode-block" id="refresh_apps">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.apps.refresh_apps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">refresh_apps</span><span class="p">():</span>
@@ -342,7 +386,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.apps</a></li> 
       </ul>

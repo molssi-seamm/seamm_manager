@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.compare &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=77b25824"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.compare</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.compare</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""The 'compare' command: run one flowchart in two environments and diff the</span>
+<span class="sd">results.</span>
+
+<span class="sd">The comparison harness of the parallel-execution campaign (phase 0). Each side</span>
+<span class="sd">is an installation root, an environment directory, or a version of this</span>
+<span class="sd">installation's environment (``venvs/&lt;stamp&gt;``); the flowchart runs with each</span>
+<span class="sd">side's ``run_flowchart`` in its own working directory, with the same arguments,</span>
+<span class="sd">and the two trees are compared file by file:</span>
+
+<span class="sd">- ``.json``: parsed, compared with a numeric tolerance; keys whose names say</span>
+<span class="sd">  they are volatile (times, dates, versions, hosts, paths) are ignored;</span>
+<span class="sd">- ``.csv``: cell by cell, numbers with tolerance;</span>
+<span class="sd">- structure and data files (``.xyz``, ``.extxyz``, ``.sdf``, ``.mmcif``, ``.cif``,</span>
+<span class="sd">  ``.pdb``, ``.dat``): token by token, numbers with tolerance;</span>
+<span class="sd">- text (``.out``, ``.txt``, ``.log``, ``.inp``, ...): line by line after</span>
+<span class="sd">  normalizing timestamps, durations, versions and the working directories;</span>
+<span class="sd">- anything else: size only.</span>
+
+<span class="sd">Files present on one side only are reported. The exit status is 0 when every</span>
+<span class="sd">file agrees within tolerance.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+
+<span class="n">JSON_SUFFIXES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">".json"</span><span class="p">}</span>
+<span class="n">CSV_SUFFIXES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">".csv"</span><span class="p">}</span>
+<span class="n">NUMERIC_TEXT_SUFFIXES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">".xyz"</span><span class="p">,</span>
+    <span class="s2">".extxyz"</span><span class="p">,</span>
+    <span class="s2">".sdf"</span><span class="p">,</span>
+    <span class="s2">".mol"</span><span class="p">,</span>
+    <span class="s2">".mmcif"</span><span class="p">,</span>
+    <span class="s2">".cif"</span><span class="p">,</span>
+    <span class="s2">".pdb"</span><span class="p">,</span>
+    <span class="s2">".dat"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">TEXT_SUFFIXES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">".out"</span><span class="p">,</span>
+    <span class="s2">".txt"</span><span class="p">,</span>
+    <span class="s2">".log"</span><span class="p">,</span>
+    <span class="s2">".inp"</span><span class="p">,</span>
+    <span class="s2">".in"</span><span class="p">,</span>
+    <span class="s2">".yaml"</span><span class="p">,</span>
+    <span class="s2">".yml"</span><span class="p">,</span>
+    <span class="s2">".flow"</span><span class="p">,</span>
+    <span class="s2">".rst"</span><span class="p">,</span>
+    <span class="s2">".md"</span><span class="p">,</span>
+    <span class="s2">".sh"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># Keys in JSON whose values are expected to differ between runs</span>
+<span class="n">VOLATILE_KEY_PARTS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"time"</span><span class="p">,</span>
+    <span class="s2">"date"</span><span class="p">,</span>
+    <span class="s2">"version"</span><span class="p">,</span>
+    <span class="s2">"host"</span><span class="p">,</span>
+    <span class="s2">"path"</span><span class="p">,</span>
+    <span class="s2">"directory"</span><span class="p">,</span>
+    <span class="s2">"pid"</span><span class="p">,</span>
+    <span class="s2">"root"</span><span class="p">,</span>
+    <span class="s2">"uuid"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Lines or parts of text lines that are expected to differ between runs</span>
+<span class="n">VOLATILE_LINE_PATTERNS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b\d</span><span class="si">{4}</span><span class="s2">[./-]\d</span><span class="si">{2}</span><span class="s2">[./-]\d</span><span class="si">{2}</span><span class="s2">\b"</span><span class="p">),</span>  <span class="c1"># dates</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b\d{1,2}:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">(\.\d+)?\b"</span><span class="p">),</span>  <span class="c1"># times and durations</span>
+    <span class="c1"># "Elapsed time: ...", "WALL-CLOCK TIME = ...", "CPU_TIME:SEC=...",</span>
+    <span class="c1"># "TOTAL JOB TIME:" (not \b: an underscore, as in CPU_TIME, is a word character)</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?&lt;![a-z])time(?![a-z])\s*(\[\d+\])?\s*[:=]"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b(Process|Elapsed|Wall|CPU|Total|Computation)\s+time\b"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\bversion\b"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b"</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b\d+(\.\d+)?\s*(s|sec|seconds|ms|min|minutes|h|hours)\b"</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b(hostname|host name|running on|job id|pid)\b"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">NUMBER</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^[-+]?(\d+\.?\d*|\.\d+)([eEdD][-+]?\d+)?$"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Define the command-line interface for the comparison."""</span>
+    <span class="n">subparser</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"compare"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Run a flowchart in two environments and compare the results, e.g. "</span>
+            <span class="s2">"the current environment and a newly built version before switching."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">compare</span><span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"flowchart"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"The flowchart (.flow) to run."</span><span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-a"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"current"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The first environment: 'current' (this installation's), a version of "</span>
+            <span class="s2">"it (e.g. 2026-10-02T14-21-58 or 'previous'), an environment "</span>
+            <span class="s2">"directory, or another installation's root. Default </span><span class="si">%(default)s</span><span class="s2">."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-b"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"newest"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The second environment, likewise; 'newest' is the newest version of "</span>
+            <span class="s2">"this installation's environment. Default </span><span class="si">%(default)s</span><span class="s2">."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--work"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Where to run (subdirectories a/ and b/). Default: a temporary directory."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--keep"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Keep the working directories afterwards."</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--rtol"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0e-6</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Relative tolerance, default </span><span class="si">%(default)s</span><span class="s2">."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--atol"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0e-9</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Absolute tolerance, default </span><span class="si">%(default)s</span><span class="s2">."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--no-run"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Only compare existing a/ and b/ under --work; do not run the flowchart."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"args"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Arguments for the flowchart, after '--'."</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ---- environments ------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="resolve_environment">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.resolve_environment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The environment directory and installation root for a side's spec.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (pathlib.Path, pathlib.Path)</span>
+<span class="sd">        The environment (holding ``bin/run_flowchart``) and the root it belongs to.</span>
+<span class="sd">    """</span>
+    <span class="n">uv</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="o">==</span> <span class="s2">"current"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">uv</span><span class="o">.</span><span class="n">real_path</span><span class="p">,</span> <span class="n">uv</span><span class="o">.</span><span class="n">root</span>
+    <span class="n">versions</span> <span class="o">=</span> <span class="n">uv</span><span class="o">.</span><span class="n">versions</span><span class="p">()</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">versions</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="o">==</span> <span class="s2">"newest"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">versions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"This installation's environment has no versions yet."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">versions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">uv</span><span class="o">.</span><span class="n">root</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="o">==</span> <span class="s2">"previous"</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">uv</span><span class="o">.</span><span class="n">current_version</span>
+        <span class="n">older</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">versions</span> <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">&lt;</span> <span class="n">current</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">older</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"There is no previous version of the environment."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">older</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">uv</span><span class="o">.</span><span class="n">root</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">versions</span><span class="p">)[</span><span class="n">spec</span><span class="p">],</span> <span class="n">uv</span><span class="o">.</span><span class="n">root</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"bin"</span> <span class="o">/</span> <span class="s2">"run_flowchart"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"venvs"</span> <span class="k">else</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="n">root</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"venv"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"venv"</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">env</span><span class="p">,</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">' is not 'current', 'newest', 'previous', a version "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">), an environment or an installation root."</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="run_flowchart">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.run_flowchart">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_flowchart</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">flowchart</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Run `flowchart` with `environment`'s run_flowchart in `directory`."""</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">exe</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"bin"</span> <span class="o">/</span> <span class="s2">"run_flowchart"</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">exe</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">flowchart</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="s2">"--root"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">"harness_run.log"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">log</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">command</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="n">directory</span><span class="p">,</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="n">log</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="s2">"SEAMM_ROOT"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">)},</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span></div>
+
+
+
+<span class="c1"># ---- comparison ---------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_number</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">NUMBER</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_float</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="s2">"e"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"d"</span><span class="p">,</span> <span class="s2">"e"</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_close</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">atol</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_volatile_key</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">part</span> <span class="ow">in</span> <span class="n">k</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">VOLATILE_KEY_PARTS</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="compare_json">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare_json">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_json</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Differences between two parsed JSON values, as ['where: what', ...]."""</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">b</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">_volatile_key</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">a</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">: only in b"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">: only in a"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">compare_json</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">where</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2"> items"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)):</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">compare_json</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]"</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="c1"># True == 1 in Python; a boolean must stay a boolean</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="ow">or</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">b</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_close</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">b</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_close</span><span class="p">(</span><span class="n">_to_float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">_to_float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">b</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">:</span>
+        <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">b</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">diffs</span></div>
+
+
+
+<div class="viewcode-block" id="compare_csv">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare_csv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_csv</span><span class="p">(</span><span class="n">text_a</span><span class="p">,</span> <span class="n">text_b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Differences between two CSV texts."""</span>
+    <span class="n">rows_a</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">text_a</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
+    <span class="n">rows_b</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">text_b</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows_a</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows_b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows_a</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows_b</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">]</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">ra</span><span class="p">,</span> <span class="n">rb</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">rows_a</span><span class="p">,</span> <span class="n">rows_b</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rb</span><span class="p">):</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"row </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rb</span><span class="p">)</span><span class="si">}</span><span class="s2"> columns"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ra</span><span class="p">,</span> <span class="n">rb</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_close</span><span class="p">(</span><span class="n">_to_float</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">_to_float</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+                    <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"row </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> col </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">y</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"row </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> col </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">y</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">diffs</span></div>
+
+
+
+<div class="viewcode-block" id="compare_numeric_text">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare_numeric_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_numeric_text</span><span class="p">(</span><span class="n">text_a</span><span class="p">,</span> <span class="n">text_b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Differences between two texts compared token by token, numbers with</span>
+<span class="sd">    tolerance (structure files)."""</span>
+    <span class="n">lines_a</span><span class="p">,</span> <span class="n">lines_b</span> <span class="o">=</span> <span class="n">text_a</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="n">text_b</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines_a</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines_b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines_a</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines_b</span><span class="p">)</span><span class="si">}</span><span class="s2"> lines"</span><span class="p">]</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">la</span><span class="p">,</span> <span class="n">lb</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">lines_a</span><span class="p">,</span> <span class="n">lines_b</span><span class="p">)):</span>
+        <span class="n">ta</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">lb</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ta</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tb</span><span class="p">):</span>
+            <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"line </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">la</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">lb</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ta</span><span class="p">,</span> <span class="n">tb</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_number</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_close</span><span class="p">(</span><span class="n">_to_float</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">_to_float</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+                    <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"line </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">y</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"line </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">!r}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">y</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">diffs</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_text">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.normalize_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">replacements</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""The lines of `text` that are not expected to vary between runs, with the</span>
+<span class="sd">    given (old, new) replacements applied first (the working directories)."""</span>
+    <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="n">replacements</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">VOLATILE_LINE_PATTERNS</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">kept</span></div>
+
+
+
+<div class="viewcode-block" id="compare_text">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_text</span><span class="p">(</span><span class="n">text_a</span><span class="p">,</span> <span class="n">text_b</span><span class="p">,</span> <span class="n">replacements</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Differences between two texts after normalization, as a few diff lines."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">difflib</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">normalize_text</span><span class="p">(</span><span class="n">text_a</span><span class="p">,</span> <span class="n">replacements</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">normalize_text</span><span class="p">(</span><span class="n">text_b</span><span class="p">,</span> <span class="n">replacements</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">line</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">difflib</span><span class="o">.</span><span class="n">unified_diff</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lineterm</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"---"</span><span class="p">,</span> <span class="s2">"+++"</span><span class="p">,</span> <span class="s2">"@@"</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">diff</span></div>
+
+
+
+<div class="viewcode-block" id="compare_trees">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare_trees">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_trees</span><span class="p">(</span>
+    <span class="n">dir_a</span><span class="p">,</span>
+    <span class="n">dir_b</span><span class="p">,</span>
+    <span class="n">rtol</span><span class="o">=</span><span class="mf">1.0e-6</span><span class="p">,</span>
+    <span class="n">atol</span><span class="o">=</span><span class="mf">1.0e-9</span><span class="p">,</span>
+    <span class="n">ignore</span><span class="o">=</span><span class="p">(</span><span class="s2">"harness_run.log"</span><span class="p">,),</span>
+    <span class="n">replacements</span><span class="o">=</span><span class="p">(),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Compare two result trees.</span>
+
+<span class="sd">    `replacements` are further (old, new) text substitutions made before</span>
+<span class="sd">    comparing text and JSON, e.g. the two installations' roots.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    [(relative path, status, details)]</span>
+<span class="sd">        status is one of 'identical', 'within tolerance', 'different', 'only in a',</span>
+<span class="sd">        'only in b', 'not compared'.</span>
+<span class="sd">    """</span>
+    <span class="n">dir_a</span><span class="p">,</span> <span class="n">dir_b</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dir_a</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="n">dir_b</span><span class="p">)</span>
+    <span class="n">files_a</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">dir_a</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dir_a</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()}</span>
+    <span class="n">files_b</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">dir_b</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dir_b</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()}</span>
+    <span class="c1"># Longest first, so that ~/SEAMM does not eat the front of ~/SEAMM_DEV</span>
+    <span class="n">replacements</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dir_a</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="s2">"&lt;WORK&gt;"</span><span class="p">),</span>
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dir_b</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span> <span class="s2">"&lt;WORK&gt;"</span><span class="p">),</span>
+            <span class="o">*</span><span class="n">replacements</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files_a</span> <span class="o">|</span> <span class="n">files_b</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">rel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">files_b</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rel</span><span class="p">,</span> <span class="s2">"only in a"</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">rel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">files_a</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rel</span><span class="p">,</span> <span class="s2">"only in b"</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="k">continue</span>
+        <span class="n">pa</span><span class="p">,</span> <span class="n">pb</span> <span class="o">=</span> <span class="n">dir_a</span> <span class="o">/</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dir_b</span> <span class="o">/</span> <span class="n">rel</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="n">rel</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="n">JSON_SUFFIXES</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">_load_json</span><span class="p">(</span><span class="n">pa</span><span class="p">,</span> <span class="n">replacements</span><span class="p">),</span> <span class="n">_load_json</span><span class="p">(</span><span class="n">pb</span><span class="p">,</span> <span class="n">replacements</span><span class="p">)</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="n">compare_json</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">)</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">_status</span><span class="p">(</span><span class="n">diffs</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="n">CSV_SUFFIXES</span><span class="p">:</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="n">compare_csv</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">)</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">_status</span><span class="p">(</span><span class="n">diffs</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="n">NUMERIC_TEXT_SUFFIXES</span><span class="p">:</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="n">compare_numeric_text</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">)</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">_status</span><span class="p">(</span><span class="n">diffs</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="n">TEXT_SUFFIXES</span> <span class="ow">or</span> <span class="n">_looks_like_text</span><span class="p">(</span><span class="n">pa</span><span class="p">):</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="n">compare_text</span><span class="p">(</span>
+                    <span class="n">pa</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">),</span>
+                    <span class="n">pb</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">),</span>
+                    <span class="n">replacements</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">_status</span><span class="p">(</span><span class="n">diffs</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="o">==</span> <span class="n">pb</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sa</span><span class="p">,</span> <span class="n">sb</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span> <span class="n">pb</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">sa</span> <span class="o">==</span> <span class="n">sb</span> <span class="k">else</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sa</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">sb</span><span class="si">}</span><span class="s2"> bytes"</span><span class="p">]</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">"not compared"</span> <span class="k">if</span> <span class="n">sa</span> <span class="o">==</span> <span class="n">sb</span> <span class="k">else</span> <span class="s2">"different"</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">UnicodeDecodeError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">diffs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"could not compare: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">"different"</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rel</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">diffs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_json</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">replacements</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Parse a JSON file, skipping a SEAMM header line such as</span>
+<span class="sd">    ``!MolSSI job_data 1.0`` and applying the text `replacements` (paths)."""</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"!"</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">text</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="n">replacements</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_status</span><span class="p">(</span><span class="n">diffs</span><span class="p">,</span> <span class="n">identical</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">diffs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"different"</span>
+    <span class="k">return</span> <span class="s2">"identical"</span> <span class="k">if</span> <span class="n">identical</span> <span class="k">else</span> <span class="s2">"within tolerance"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_looks_like_text</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="mi">4096</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()[:</span><span class="n">sample</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\0</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="report">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">max_details</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Print the comparison and return True if everything agrees."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>
+
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rel</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">diffs</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">counts</span><span class="p">[</span><span class="n">status</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"identical"</span><span class="p">,</span> <span class="s2">"within tolerance"</span><span class="p">,</span> <span class="s2">"not compared"</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">diffs</span><span class="p">[:</span><span class="n">max_details</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">diffs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_details</span><span class="p">:</span>
+            <span class="n">detail</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"; ... </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">diffs</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">max_details</span><span class="si">}</span><span class="s2"> more"</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">rel</span><span class="p">),</span> <span class="n">status</span><span class="p">,</span> <span class="n">detail</span><span class="p">[:</span><span class="mi">200</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="p">(</span><span class="s2">"File"</span><span class="p">,</span> <span class="s2">"Status"</span><span class="p">,</span> <span class="s2">"Details"</span><span class="p">),</span> <span class="n">tablefmt</span><span class="o">=</span><span class="s2">"simple"</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">()</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">status</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Compared </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> files: </span><span class="si">{</span><span class="n">summary</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"different"</span><span class="p">,</span> <span class="s2">"only in a"</span><span class="p">,</span> <span class="s2">"only in b"</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">results</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---- the command ---------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="compare">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.compare.compare">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare</span><span class="p">():</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span>
+    <span class="n">flowchart</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">flowchart</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">flowchart</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The flowchart </span><span class="si">{</span><span class="n">flowchart</span><span class="si">}</span><span class="s2"> does not exist."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">env_a</span><span class="p">,</span> <span class="n">root_a</span> <span class="o">=</span> <span class="n">resolve_environment</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">env_b</span><span class="p">,</span> <span class="n">root_b</span> <span class="o">=</span> <span class="n">resolve_environment</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">env_a</span> <span class="o">==</span> <span class="n">env_b</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Both sides are the same environment, </span><span class="si">{</span><span class="n">env_a</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="n">work</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">work</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">work</span>
+        <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"seamm-compare-"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">work</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dir_a</span><span class="p">,</span> <span class="n">dir_b</span> <span class="o">=</span> <span class="n">work</span> <span class="o">/</span> <span class="s2">"a"</span><span class="p">,</span> <span class="n">work</span> <span class="o">/</span> <span class="s2">"b"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a: </span><span class="si">{</span><span class="n">env_a</span><span class="si">}</span><span class="s2"> (root </span><span class="si">{</span><span class="n">root_a</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"b: </span><span class="si">{</span><span class="n">env_b</span><span class="si">}</span><span class="s2"> (root </span><span class="si">{</span><span class="n">root_b</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"working in </span><span class="si">{</span><span class="n">work</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">no_run</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">directory</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">env_a</span><span class="p">,</span> <span class="n">root_a</span><span class="p">,</span> <span class="n">dir_a</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="n">env_b</span><span class="p">,</span> <span class="n">root_b</span><span class="p">,</span> <span class="n">dir_b</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">directory</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"running </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> ..."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">" "</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">run_flowchart</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">flowchart</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"ok"</span>
+                <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"exit </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2"> (see </span><span class="si">{</span><span class="n">directory</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'harness_run.log'</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+
+    <span class="n">roots</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="k">if</span> <span class="n">root_a</span> <span class="o">!=</span> <span class="n">root_b</span><span class="p">:</span>
+        <span class="n">roots</span> <span class="o">=</span> <span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">root_a</span><span class="p">),</span> <span class="s2">"&lt;ROOT&gt;"</span><span class="p">),</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">root_b</span><span class="p">),</span> <span class="s2">"&lt;ROOT&gt;"</span><span class="p">))</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">compare_trees</span><span class="p">(</span>
+        <span class="n">dir_a</span><span class="p">,</span> <span class="n">dir_b</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">atol</span><span class="p">,</span> <span class="n">replacements</span><span class="o">=</span><span class="n">roots</span>
+    <span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">report</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">keep</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">work</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">work</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">keep</span> <span class="ow">or</span> <span class="n">options</span><span class="o">.</span><span class="n">work</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The runs are kept in </span><span class="si">{</span><span class="n">work</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="mi">1</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.compare</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

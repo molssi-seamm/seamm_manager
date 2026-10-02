@@ -28,6 +28,14 @@ seamm\_manager.cli module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.compare module
+-----------------------------
+
+.. automodule:: seamm_manager.compare
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.conda module
 ---------------------------
 
@@ -192,6 +200,14 @@ seamm\_manager.uv module
 ------------------------
 
 .. automodule:: seamm_manager.uv
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+seamm\_manager.versions module
+------------------------------
+
+.. automodule:: seamm_manager.versions
    :members:
    :show-inheritance:
    :undoc-members:

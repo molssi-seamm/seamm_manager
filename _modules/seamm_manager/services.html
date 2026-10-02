@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.10.2 documentation</title>
+    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=52372788"></script>
+    <script src="../../_static/documentation_options.js?v=77b25824"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>
@@ -263,6 +263,72 @@
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">relinked</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_argument</span><span class="p">(</span><span class="n">arguments</span><span class="p">,</span> <span class="n">flag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The value following `flag` in a launcher's argument list, or None."""</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="n">flag</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="relink_services">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.relink_services">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">relink_services</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Recreate this installation's jobserver and dashboard services so that they</span>
+<span class="sd">    run from the environment's real path (see ``versions``). The web interface</span>
+<span class="sd">    has its own environment and is left alone.</span>
+
+<span class="sd">    A running service is restarted; a stopped one is recreated but left stopped.</span>
+<span class="sd">    Returns the names of the services restarted.</span>
+<span class="sd">    """</span>
+    <span class="n">restarted</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"jobserver"</span><span class="p">,</span> <span class="s2">"dashboard"</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">service_name</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">exe_path</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seamm-</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exe_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">running</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"running"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># The arguments the service currently has: port and dashboard name</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">arguments</span> <span class="o">=</span> <span class="n">_program_arguments</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">arguments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">exe_path</span><span class="p">)</span> <span class="ow">in</span> <span class="n">arguments</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># already runs from the real path</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">_argument</span><span class="p">(</span><span class="n">arguments</span><span class="p">,</span> <span class="s2">"--port"</span><span class="p">)</span>
+        <span class="n">dashboard_name</span> <span class="o">=</span> <span class="n">_argument</span><span class="p">(</span><span class="n">arguments</span><span class="p">,</span> <span class="s2">"--dashboard-name"</span><span class="p">)</span>
+        <span class="n">create_service</span><span class="p">(</span>
+            <span class="n">service</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="k">if</span> <span class="n">port</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">dashboard_name</span><span class="o">=</span><span class="n">dashboard_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">running</span><span class="p">:</span>
+            <span class="n">restarted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">restarted</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_program_arguments</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The launcher's argument list for the service `name`."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">"Darwin"</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">plistlib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ProgramArguments"</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">"Service"</span><span class="p">][</span><span class="s2">"ExecStart"</span><span class="p">])</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_port_available</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
@@ -583,7 +649,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>

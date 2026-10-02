@@ -93,15 +93,50 @@ and how to convert your own flowcharts.
 The environment
 ---------------
 
-Everything Python lives in ``~/SEAMM/venv``. If it is ever damaged,
+Everything Python lives in ``~/SEAMM/venv``. You never need to activate it; the
+manager, the services and the apps all use its interpreter directly.
+
+The environment is *versioned*: ``~/SEAMM/venv`` is a link to the current version,
+which lives in ``~/SEAMM/venvs/<date and time>``. An update never changes the
+environment that running jobs are using. Instead it builds a new version beside the
+current one, from a copy of the current one plus the changes, and switches the link
+when it is done; the services are restarted so they run from the new version, and
+jobs that were already running finish in the old one. The first update with this
+manager moves an existing ``venv`` directory into ``venvs/`` itself, which is safe
+while jobs run.
+
+.. code-block:: console
+
+    $ seamm-manager environment versions     # the versions, and what uses them
+    $ seamm-manager environment rollback     # back to the previous version
+    $ seamm-manager environment prune        # remove old, unused versions
+
+``prune`` keeps the current version, the newest two for ``rollback``, anything
+younger than a day and anything a running process uses. A switch is refused, and the
+new version left ready for ``environment switch``, if a process started *through* the
+link, for example a job begun before the environment was versioned, is still running;
+``--force`` switches anyway. ``update --in-place`` and ``install --in-place`` change
+the current environment directly, as earlier versions of the manager did; do that only
+when no jobs are running.
+
+If the environment is ever damaged,
 
 .. code-block:: console
 
     $ seamm-manager environment recreate
 
-deletes and rebuilds it and reinstalls the packages that were in it, in well under
-a minute. ``environment show`` describes it. You never need to activate it; the
-manager, the services and the apps all use its interpreter directly.
+builds a fresh version from scratch with the SEAMM packages that were in it, in well
+under a minute, and switches to it. ``environment show`` describes the environment.
+
+To check a new version before switching to it, run a flowchart in both:
+
+.. code-block:: console
+
+    $ seamm-manager compare my.flow -a current -b newest
+
+runs the flowchart with each version and compares every file the two runs produce
+(numbers within a tolerance, timestamps and the like ignored); see ``compare --help``
+for the other things a side can be, such as another installation's root.
 
 Conda
 -----
