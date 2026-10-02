@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=77b25824"></script>
+    <script src="_static/documentation_options.js?v=404ad24e"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,15 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.2.2 – Bugfix: a refused switch no longer changes the current environment</dt><dd><ul class="simple">
+<li><p>After building a new version of the environment, the manager made sure that
+version held the manager’s own release. It did so against whatever environment was
+current, so when the switch to the new version was refused (processes started
+through <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> still running) it changed the environment in use, which the
+versioned environments exist to prevent. The manager’s release is now put into the
+new version as part of the build, and the current environment is never touched.</p></li>
+</ul>
+</dd>
 <dt>2026.10.2.1 – Updates build a new environment rather than changing the current one</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> is now a link to the current version of the environment, kept in
 <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;date</span> <span class="pre">and</span> <span class="pre">time&gt;</span></code>. <code class="docutils literal notranslate"><span class="pre">update</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span></code> build the next version
@@ -406,7 +415,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

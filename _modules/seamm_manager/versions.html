@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.2.1 documentation</title>
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=77b25824"></script>
+    <script src="../../_static/documentation_options.js?v=404ad24e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
@@ -69,6 +69,9 @@
 <span class="c1"># Set when this run switched environments, so update() need not restart the</span>
 <span class="c1"># services a second time.</span>
 <span class="n">switched</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># Set when a build put the manager's own release into the new environment, so the</span>
+<span class="c1"># callers' sync_manager() must not touch the current environment afterwards.</span>
+<span class="n">synced_manager</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="c1"># ---- processes --------------------------------------------------------------</span>
@@ -276,8 +279,20 @@
         <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 
+    <span class="k">global</span> <span class="n">synced_manager</span>
+
     <span class="n">ensure_versioned</span><span class="p">()</span>
     <span class="n">new</span> <span class="o">=</span> <span class="n">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
+    <span class="c1"># The manager's own release goes into the new environment as part of the</span>
+    <span class="c1"># build, never into the current one (which may be in use)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_manager</span>
+
+    <span class="n">saved</span><span class="p">,</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="p">,</span> <span class="n">new</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sync_manager</span><span class="p">()</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">saved</span>
+    <span class="n">synced_manager</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span></div>
 
 
@@ -404,7 +419,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
