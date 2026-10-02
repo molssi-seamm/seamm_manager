@@ -86,6 +86,10 @@ conversion: the rebuilt database keeps no accounts and converts nothing.
 ``seamm-manager datastore rebuild`` keeps the accounts and job owners, but converts
 nothing either.
 
+`Upgrading to flowchart format 3.0 <https://molssi-seamm.github.io/getting_started/installation/upgrading_format3.html>`_, in the main SEAMM documentation, is the
+step-by-step guide, including the messages you may see, how to undo the conversion,
+and how to convert your own flowcharts.
+
 The environment
 ---------------
 
