@@ -3,6 +3,7 @@
 """Handle the apps for SEAMM."""
 
 import importlib
+import importlib.resources
 from pathlib import Path
 import platform
 
@@ -235,6 +236,46 @@ def update():
             print(f"Updated the app '{app_name}' to version {version}.")
         else:
             print(f"App '{app_name}' was not installed.")
+
+
+def relink_apps():
+    """Recreate the installed apps so that they run from the environment's real
+    path (see ``versions``). Returns the names recreated."""
+    apps = get_apps()
+    packages = my.uv.list()
+    data_path = importlib.resources.files("seamm_manager") / "data"
+    icons_path = data_path / icons
+    root = str(my.root)
+    relinked = []
+    for app_lower, app in app_names.items():
+        app_name = installation_app_name(app)
+        package = app_package[app_lower]
+        if app_name not in apps or package not in packages:
+            continue
+        # The same executables create() uses
+        bin_path = my.uv.which(
+            "seamm-dashboard" if app_lower == "dashboard" else app.lower()
+        )
+        if bin_path is None:
+            continue
+        version = str(packages[package]["version"])
+        user_only = apps[app_name].is_relative_to(Path.home())
+        args = []
+        if app_lower == "dashboard":
+            args = ["--root", root, "--port", 55066 if my.development else 55055]
+        elif app_lower == "jobserver":
+            args = ["--root", root]
+        delete_app(app_name, missing_ok=True)
+        create_app(
+            bin_path,
+            *args,
+            name=app_name,
+            version=version,
+            user_only=user_only,
+            icons=icons_path,
+        )
+        relinked.append(app_name)
+    return relinked
 
 
 def refresh_apps():

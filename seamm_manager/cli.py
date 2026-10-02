@@ -4,6 +4,7 @@
 
 from . import apps
 from . import cache
+from . import compare
 from . import datastore
 from . import environment
 from . import flowcharts
@@ -31,6 +32,7 @@ def setup(parser):
     subparser = parser.add_subparsers()
 
     cache.setup(subparser)
+    compare.setup(subparser)
     datastore.setup(subparser)
     environment.setup(subparser)
     flowcharts.setup(subparser)
