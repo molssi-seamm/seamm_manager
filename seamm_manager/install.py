@@ -101,6 +101,22 @@ def setup(parser):
         ),
     )
     subparser.add_argument(
+        "--in-place",
+        action="store_true",
+        help=(
+            "Change the current environment directly rather than building a new "
+            "version beside it and switching. Not safe while jobs run."
+        ),
+    )
+    subparser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Switch to the new environment even if processes started through "
+            "<root>/venv (jobs begun before the environment was versioned) exist."
+        ),
+    )
+    subparser.add_argument(
         "modules",
         nargs="*",
         default=None,
@@ -268,7 +284,9 @@ def install_packages(
             print("Installing with uv (no constraints).")
         else:
             print(f"Installing with uv, constrained to the published lock {lock.name}.")
-        my.uv.install(specs, constraints=lock, upgrade=update)
+        from .versions import apply_change
+
+        apply_change(specs, constraints=lock, upgrade=update)
         path = write_environment_snapshot("install")
         print(f"done; the environment is recorded in {path.name}")
     else:
@@ -315,6 +333,15 @@ def install_packages(
 def install_development_environment():
     """Install packages needed for development, from the package list's
     'development packages' (falling back to a built-in list)."""
-    packages = my.package_metadata.get("development packages", development_packages)
-    print(f"Installing development packages {' '.join(packages)}")
-    my.uv.install(list(packages))
+    packages = list(
+        my.package_metadata.get("development packages", development_packages)
+    )
+    installed = my.uv.list()
+    missing = [p for p in packages if p.lower().replace("_", "-") not in installed]
+    if not missing:
+        print("The development packages are installed.")
+        return
+    print(f"Installing development packages {' '.join(missing)}")
+    from .versions import apply_change
+
+    apply_change(missing)

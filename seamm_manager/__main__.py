@@ -28,14 +28,19 @@ def _same_path(a, b):
 def own_installation_root(prefix=None):
     """The SEAMM root this manager runs from, if it is an installation's own copy.
 
-    The copy in ``<root>/venv`` (which the desktop app "SEAMM-Manager (<name>)" and
-    ``<root>/venv/bin/seamm-manager`` run) works on that installation. None for the
+    The copy in ``<root>/venv`` or ``<root>/venvs/<stamp>`` (which the desktop app
+    "SEAMM-Manager (<name>)" and ``<root>/venv/bin/seamm-manager`` run) works on
+    that installation. None for the
     manager installed as a uv tool, or any environment not inside a SEAMM root.
     """
     prefix = Path(sys.prefix if prefix is None else prefix)
-    if not prefix.name.startswith("venv"):
+    if prefix.parent.name == "venvs":
+        # A versioned environment, <root>/venvs/<stamp>
+        root = prefix.parent.parent
+    elif prefix.name.startswith("venv"):
+        root = prefix.parent
+    else:
         return None
-    root = prefix.parent
     try:
         if (root / "Jobs").is_dir() or any(root.glob("*.ini")):
             return root

@@ -221,6 +221,69 @@ def refresh_service_bundles():
     return relinked
 
 
+def _argument(arguments, flag):
+    """The value following `flag` in a launcher's argument list, or None."""
+    items = iter(arguments)
+    for item in items:
+        if item == flag:
+            return next(items, None)
+    return None
+
+
+def relink_services():
+    """Recreate this installation's jobserver and dashboard services so that they
+    run from the environment's real path (see ``versions``). The web interface
+    has its own environment and is left alone.
+
+    A running service is restarted; a stopped one is recreated but left stopped.
+    Returns the names of the services restarted.
+    """
+    restarted = []
+    for service in ("jobserver", "dashboard"):
+        name = service_name(service)
+        if not mgr.is_installed(name):
+            continue
+        exe_path = my.uv.which(f"seamm-{service}") or my.uv.which(service)
+        if exe_path is None:
+            continue
+        status = mgr.status(name)
+        running = status.get("running", False)
+        # The arguments the service currently has: port and dashboard name
+        try:
+            arguments = _program_arguments(name)
+        except Exception:
+            arguments = []
+        if str(exe_path) in arguments:
+            continue  # already runs from the real path
+        port = _argument(arguments, "--port")
+        dashboard_name = _argument(arguments, "--dashboard-name")
+        create_service(
+            service,
+            force=True,
+            port=int(port) if port else None,
+            dashboard_name=dashboard_name,
+        )
+        if running:
+            restarted.append(name)
+        else:
+            mgr.stop(name, ignore_errors=True)
+    return restarted
+
+
+def _program_arguments(name):
+    """The launcher's argument list for the service `name`."""
+    path = mgr.file_path(name)
+    if system == "Darwin":
+        with open(path, "rb") as fd:
+            return list(plistlib.load(fd).get("ProgramArguments", []))
+    import configparser
+    import shlex
+
+    config = configparser.ConfigParser()
+    config.read(path)
+    return shlex.split(config["Service"]["ExecStart"])
+
+
 def _port_available(port):
     """Whether nothing is listening on the port on this machine."""
     import socket

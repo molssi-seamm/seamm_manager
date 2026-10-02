@@ -7,8 +7,22 @@
 installed into it from PyPI with ``uv pip install``; the interpreter itself
 comes from ``uv python install``. Nothing here touches conda: the external
 codes' own environments are handled by the plug-in installers.
+
+Versioned environments
+----------------------
+Once an installation is *versioned*, ``<root>/venv`` is a symlink to the
+current environment, which lives in ``<root>/venvs/<stamp>/``. An update
+builds a new environment beside the current one and switches the link, so a
+running job -- which imports lazily from the environment it started in -- never
+sees a half-updated environment. Everything that launches a process (services,
+apps, the JobServer's own jobs) must embed the *real* path, because CPython
+does not resolve the symlink when it locates a venv: a process started as
+``<root>/venv/bin/python`` would follow the link to whatever is current. So
+``bin_path``, ``python``, ``bin()`` and ``which()`` all return paths under
+``real_path``, and ``path`` stays the logical ``<root>/venv`` for messages.
 """
 
+from datetime import datetime
 import json
 import logging
 import os
@@ -23,6 +37,7 @@ from packaging.utils import canonicalize_name
 logger = logging.getLogger(__name__)
 
 DEFAULT_PYTHON = "3.12"
+VERSIONS_DIR = "venvs"
 
 
 def normalize(name):
@@ -41,6 +56,37 @@ def find_uv():
         if candidate.exists():
             uv = str(candidate)
     return uv
+
+
+def _rewrite_paths(venv, old, new):
+    """Replace the exact text `old` with `new` in the small text files of the
+    environment's ``bin`` directory: the console scripts' shebangs and the
+    ``activate`` scripts. Binary and large files are left alone."""
+    bin_dir = venv / ("Scripts" if os.name == "nt" else "bin")
+    if not bin_dir.is_dir():
+        return 0
+    count = 0
+    old_b, new_b = old.encode(), new.encode()
+    for item in bin_dir.iterdir():
+        if not item.is_file() or item.is_symlink():
+            continue
+        try:
+            if item.stat().st_size > 1_000_000:
+                continue
+            data = item.read_bytes()
+        except OSError:
+            continue
+        if old_b not in data:
+            continue
+        try:
+            data.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        mode = item.stat().st_mode
+        item.write_bytes(data.replace(old_b, new_b))
+        os.chmod(item, mode)
+        count += 1
+    return count
 
 
 class UvError(RuntimeError):
@@ -86,12 +132,131 @@ class Uv(object):
 
     @property
     def path(self):
-        """The environment directory."""
+        """The environment's logical path, ``<root>/venv`` (a symlink once the
+        installation is versioned). Use for messages; see `real_path`."""
         return self.root / self.name
 
     @property
+    def real_path(self):
+        """The directory the environment really lives in: `path` with a symlink
+        resolved, so that paths embedded in launchers survive a switch."""
+        path = self.path
+        if path.is_symlink():
+            try:
+                return path.resolve()
+            except OSError:
+                return path
+        return path
+
+    @property
     def bin_path(self):
-        return self.path / ("Scripts" if os.name == "nt" else "bin")
+        return self.real_path / ("Scripts" if os.name == "nt" else "bin")
+
+    # ---- versions -----------------------------------------------------------
+
+    @property
+    def versions_dir(self):
+        """Where the versioned environments live, ``<root>/venvs``."""
+        return self.root / VERSIONS_DIR
+
+    @property
+    def is_versioned(self):
+        """Whether `path` is a symlink into `versions_dir`."""
+        path = self.path
+        if not path.is_symlink():
+            return False
+        try:
+            return path.resolve().parent == self.versions_dir.resolve()
+        except OSError:
+            return False
+
+    def versions(self):
+        """The versioned environments, oldest first, as (name, path) pairs."""
+        if not self.versions_dir.is_dir():
+            return []
+        result = []
+        for item in sorted(self.versions_dir.iterdir()):
+            if item.is_dir() and (item / "pyvenv.cfg").exists():
+                result.append((item.name, item))
+        return result
+
+    @property
+    def current_version(self):
+        """The current version's name, or None if not versioned."""
+        return self.real_path.name if self.is_versioned else None
+
+    @staticmethod
+    def new_version_name(now=None):
+        """A version name from the time: ``2026-10-02T15-04-05``."""
+        now = datetime.now() if now is None else now
+        return now.strftime("%Y-%m-%dT%H-%M-%S")
+
+    def version(self, name):
+        """A ``Uv`` for the versioned environment ``name`` (which need not exist)."""
+        return Uv(
+            self.root,
+            name=f"{VERSIONS_DIR}/{name}",
+            python_version=self.python_version,
+        )
+
+    def switch_to(self, target):
+        """Atomically point `path` (the ``venv`` symlink) at `target`.
+
+        Parameters
+        ----------
+        target : pathlib.Path or str
+            The versioned environment directory, under `versions_dir`.
+
+        Raises
+        ------
+        UvError
+            If `path` is a real directory (migrate first) or `target` is not an
+            environment.
+        """
+        target = Path(target)
+        if self.path.exists() and not self.path.is_symlink():
+            raise UvError(
+                f"{self.path} is a directory, not a link to a versioned "
+                "environment; migrate it first."
+            )
+        if not (target / "pyvenv.cfg").exists():
+            raise UvError(f"{target} is not a Python environment.")
+        # A relative link, so the root can be moved as a whole.
+        try:
+            link_target = target.relative_to(self.root)
+        except ValueError:
+            link_target = target
+        tmp = self.root / f".{self.name}-switch-{os.getpid()}"
+        if tmp.exists() or tmp.is_symlink():
+            tmp.unlink()
+        tmp.symlink_to(link_target, target_is_directory=True)
+        os.replace(tmp, self.path)
+        logger.info(f"{self.path} -> {link_target}")
+
+    def migrate_to_versioned(self, name=None):
+        """Turn a plain ``<root>/venv`` directory into a versioned environment.
+
+        The directory is renamed into `versions_dir` and `path` becomes a symlink
+        to it. The rename keeps every inode, so processes running from it are
+        unaffected. The scripts' shebangs and the ``activate`` scripts, which
+        name the old path, are rewritten to the new one so that anything started
+        from them afterwards is tied to this version, not to the link.
+
+        Returns the version name, or None if there was nothing to migrate (already
+        versioned, or no environment).
+        """
+        path = self.path
+        if path.is_symlink() or not (path / "pyvenv.cfg").exists():
+            return None
+        name = self.new_version_name() if name is None else name
+        target = self.versions_dir / name
+        self.versions_dir.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            raise UvError(f"{target} already exists.")
+        os.rename(path, target)
+        _rewrite_paths(target, str(path), str(target))
+        self.switch_to(target)
+        return name
 
     @property
     def python(self):
@@ -163,9 +328,15 @@ class Uv(object):
         self.run(*args)
 
     def remove(self):
-        """Delete the environment directory."""
-        if self.path.exists():
-            shutil.rmtree(self.path)
+        """Delete the environment: the real directory, and the link if versioned."""
+        path = self.path
+        if path.is_symlink():
+            real = self.real_path
+            path.unlink()
+            if real.is_dir():
+                shutil.rmtree(real)
+        elif path.exists():
+            shutil.rmtree(path)
 
     def python_version_installed(self):
         """The 'X.Y.Z' version of the environment's interpreter, or None."""

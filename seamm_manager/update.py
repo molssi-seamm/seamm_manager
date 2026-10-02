@@ -86,6 +86,22 @@ def setup(parser):
         ),
     )
     subparser.add_argument(
+        "--in-place",
+        action="store_true",
+        help=(
+            "Change the current environment directly rather than building a new "
+            "version beside it and switching. Not safe while jobs run."
+        ),
+    )
+    subparser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Switch to the new environment even if processes started through "
+            "<root>/venv (jobs begun before the environment was versioned) exist."
+        ),
+    )
+    subparser.add_argument(
         "modules",
         nargs="*",
         default=None,
@@ -118,8 +134,11 @@ def update():
     initial_version = {p: package_info(p)[0] for p in service_packages}
 
     latest = getattr(my.options, "latest", False)
+    # In a development installation the development tools are upgraded in the
+    # same new environment as the packages, never in place (see versions.py).
+    extra = _development_specs() if my.development else None
     if my.options.all:
-        update_packages("all", gui_only=my.options.gui_only, latest=latest)
+        update_packages("all", gui_only=my.options.gui_only, latest=latest, extra=extra)
         update_webui()
     else:
         # seamm-webui lives in its own environment, not the package list
@@ -127,9 +146,11 @@ def update():
         if len(modules) < len(my.options.modules):
             update_webui()
         if modules:
-            update_packages(modules, gui_only=my.options.gui_only, latest=latest)
+            update_packages(
+                modules, gui_only=my.options.gui_only, latest=latest, extra=extra
+            )
 
-    if my.development:
+    if my.development and getattr(my.options, "in_place", False):
         update_development_environment()
 
     # Keep the desktop apps current (version, and the macOS launcher)
@@ -168,7 +189,10 @@ def update():
         and Version(final_version["seamm-jobserver"])
         > Version(initial_version["seamm-jobserver"])
     ):
-        if mgr.is_installed(service_name):
+        from . import versions as _versions
+
+        # A switch to a new environment version already restarted the services
+        if mgr.is_installed(service_name) and not _versions.switched:
             mgr.restart(service_name)
             print(f"Restarted the {service_name} because it was updated.")
 
@@ -215,9 +239,18 @@ def update_webui():
 
 
 def update_packages(
-    to_update, gui_only=False, progress=None, update_text=None, latest=False
+    to_update,
+    gui_only=False,
+    progress=None,
+    update_text=None,
+    latest=False,
+    extra=None,
 ):
     """Update SEAMM components and plug-ins.
+
+    `extra` names further packages (the development tools) to upgrade along
+    with any SEAMM package that changes; they do not by themselves cause a
+    rebuild.
 
     The version to update to normally comes from the nightly package list, and
     the install is constrained to the matching lock file. With ``latest`` each
@@ -287,7 +320,11 @@ def update_packages(
             print("Updating with uv (no constraints).")
         else:
             print(f"Updating with uv, constrained to the published lock {lock.name}.")
-        my.uv.install(specs, constraints=lock, upgrade=True)
+        from .versions import apply_change
+
+        if extra:
+            print(f"Also updating the development packages {' '.join(extra)}")
+        apply_change([*specs, *(extra or [])], constraints=lock, upgrade=True)
         path = write_environment_snapshot("update")
         print(f"done; the environment is recorded in {path.name}")
     else:
@@ -312,11 +349,17 @@ def update_packages(
                 run_plugin_installer(package, "update")
 
 
+def _development_specs():
+    """The development tools, from the package metadata."""
+    return list(my.package_metadata.get("development packages", development_packages))
+
+
 def update_development_environment():
-    """Update packages needed for development."""
-    packages = my.package_metadata.get("development packages", development_packages)
+    """Update packages needed for development, in place (``--in-place`` only;
+    otherwise they are upgraded in the new environment with the packages)."""
+    packages = _development_specs()
     print(f"Updating development packages {' '.join(packages)}")
-    my.uv.install(list(packages), upgrade=True)
+    my.uv.install(packages, upgrade=True)
 
 
 def _newer_manager_release():

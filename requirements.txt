@@ -1,6 +1,7 @@
 
 packaging
 platformdirs
+psutil
 pmw
 pyyaml
 requests

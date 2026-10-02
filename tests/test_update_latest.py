@@ -9,6 +9,8 @@ from seamm_manager.util import pypi_latest
 
 
 class _Uv:
+    exists = False  # a fresh environment: changes go in directly
+
     def __init__(self, installed):
         self.installed = installed
         self.calls = []
