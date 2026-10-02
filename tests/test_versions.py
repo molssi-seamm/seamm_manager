@@ -224,6 +224,11 @@ def test_apply_change_in_place_for_fresh_or_requested(root, monkeypatch):
 def test_apply_change_builds_beside_and_switches(root, monkeypatch):
     make_venv(root / "venv")
     installs = []
+    # The manager's self-sync is a no-op on a development build but runs on a
+    # clean release checkout, where the stubbed uv below would break it
+    import seamm_manager.util as util
+
+    monkeypatch.setattr(util, "sync_manager", lambda: None)
 
     def fake_create(self, python_version=None, seed=True):
         make_venv(self.path)
