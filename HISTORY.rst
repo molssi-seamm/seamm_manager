@@ -1,6 +1,12 @@
 =======
 History
 =======
+2026.10.2 -- Documentation: the upgrade guide for flowchart format 3.0
+    * The installation page's section on converting the flowcharts to format 3.0 now
+      points to the step-by-step guide in the main SEAMM documentation, *Upgrading to
+      flowchart format 3.0*, which also covers the messages you may see, undoing the
+      conversion and converting your own flowcharts.
+
 2026.10.1.1 -- Bugfix: update now updates the web interface too
     * The web interface lives in its own environment (``venv-webui``), which ``update``
       never touched: an installation kept its old web interface, and the old datastore
