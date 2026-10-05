@@ -1,6 +1,20 @@
 =======
 History
 =======
+2026.10.5 -- Stopped services stay stopped; hand-built code environments left alone
+    * A service stopped on purpose stays stopped through an environment change or an
+      update, which restart only the services that were running (#26).
+    * ``environment recreate --latest`` takes each package's newest release on PyPI,
+      not the package list's, which lags a release by up to a day (#27).
+    * A plug-in's installer leaves alone a conda environment named in its .ini file
+      that SEAMM did not make, such as a hand-built MLFF environment, instead of
+      applying SEAMM's environment file to it (#28). An environment SEAMM made before
+      it began marking them, under a name of the user's choosing, is now treated as
+      the user's too.
+    * ``update`` no longer runs the installer of a package it has refused as not a
+      SEAMM package (#29).
+    * ``install`` writes ``<root>/taskserver.ini`` -- the TaskServer's capacity, the
+      physical cores and half the memory -- if it is missing.
 2026.10.2.3 -- Bugfix: a refused switch no longer changes the current environment
     * After building a new version of the environment, the manager made sure that
       version held the manager's own release. It did so against whatever environment was

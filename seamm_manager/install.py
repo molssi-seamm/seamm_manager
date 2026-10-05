@@ -2,6 +2,7 @@
 
 """Install requested components of SEAMM."""
 
+from pathlib import Path
 import platform
 
 from packaging.version import Version
@@ -166,6 +167,7 @@ def install():
         print("This installation has its own copies of the codes' environments.")
 
     environment.ensure(python_version=my.options.python)
+    write_taskserver_ini(my.root)
 
     if my.options.all:
         install_packages(
@@ -194,6 +196,44 @@ def install():
 
     if my.development:
         install_development_environment()
+
+
+def write_taskserver_ini(root):
+    """Write ``<root>/taskserver.ini``, the TaskServer's capacity, if missing.
+
+    The TaskServer (``seamm_scheduler.taskserver``) is the queue that a machine's
+    SEAMM jobs and their calculations can share, used by a queue section with
+    ``scheduler = seamm``. Its capacity is written out explicitly -- this
+    machine's physical cores and half its memory -- rather than left as a
+    silent default, so it can be seen and changed.
+
+    Returns
+    -------
+    pathlib.Path or None
+        The file, if it was written.
+    """
+    import psutil
+
+    path = Path(root).expanduser() / "taskserver.ini"
+    if path.exists():
+        return None
+    cores = psutil.cpu_count(logical=False) or psutil.cpu_count() or 1
+    memory = psutil.virtual_memory().total // 2
+    gigabytes = max(1, int(memory // 1024**3))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "[taskserver]\n"
+        "# The TaskServer: the queue for this machine's cores and memory that\n"
+        "# SEAMM jobs and their calculations can share, used by a queue section\n"
+        '# with "scheduler = seamm" (see seamm_scheduler.taskserver). Written by\n'
+        "# seamm-manager on install: this machine's physical cores and half its\n"
+        "# memory, leaving the rest for the desktop and everything else. Change\n"
+        "# them as you like.\n"
+        f"cores = {cores}\n"
+        f"memory = {gigabytes} GB\n"
+    )
+    print(f"Wrote {path}: the TaskServer may use {cores} cores and {gigabytes} GB.")
+    return path
 
 
 def install_seamm_webui(update=False):
@@ -321,7 +361,9 @@ def install_packages(
         elif package == "seamm-jobserver":
             # (The service is "jobserver", not the package's name, which this
             # used to restart -- a service that never exists.)
-            mgr.restart(installation_service_name("jobserver"), ignore_errors=True)
+            from .services import restart_if_running
+
+            restart_if_running(installation_service_name("jobserver"), mgr)
 
         # See if the package has an installer
         if not metadata["gui-only"] and not gui_only:
