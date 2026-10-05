@@ -172,6 +172,14 @@ seamm\_manager.show module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.torch\_support module
+------------------------------------
+
+.. automodule:: seamm_manager.torch_support
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.uninstall module
 -------------------------------
 

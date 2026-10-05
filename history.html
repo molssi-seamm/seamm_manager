@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=99beb745"></script>
+    <script src="_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,23 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.5.1 – PyTorch chosen for the machine; hand-built environments recognised</dt><dd><ul class="simple">
+<li><p>A plug-in whose code needs PyTorch (<code class="docutils literal notranslate"><span class="pre">torch_managed</span></code> in its installer:
+xnn-step first) no longer takes whatever torch PyPI serves. The installer
+reads the NVIDIA driver’s CUDA ceiling from <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>, installs torch
+from the matching PyTorch index (<code class="docutils literal notranslate"><span class="pre">seamm_manager.torch_support</span></code>), puts the
+rest of the environment file’s pip part on that index too, leaves a torch
+that works alone, never replaces one that does not without <code class="docutils literal notranslate"><span class="pre">--torch-tag</span></code>
+(it may have been built on purpose), and checks afterwards that torch sees
+the GPU and the code imports. A machine with no driver – a cluster’s login
+node – is asked to decide: <code class="docutils literal notranslate"><span class="pre">torch-build</span> <span class="pre">=</span> <span class="pre">&lt;tag&gt;</span></code> in the plug-in’s .ini or
+<code class="docutils literal notranslate"><span class="pre">--torch-tag</span></code> (#31).</p></li>
+<li><p>Whether a conda environment is SEAMM’s is now read from conda’s own history
+(created <code class="docutils literal notranslate"><span class="pre">--file</span> <span class="pre">seamm-&lt;step&gt;.yml</span></code>), not only from the records SEAMM
+leaves when it applies a file: an environment SEAMM once updated by mistake
+has the records but is not SEAMM’s.</p></li>
+</ul>
+</dd>
 <dt>2026.10.5 – Stopped services stay stopped; hand-built code environments left alone</dt><dd><ul class="simple">
 <li><p>A service stopped on purpose stays stopped through an environment change or an
 update, which restart only the services that were running (#26).</p></li>
@@ -433,7 +450,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

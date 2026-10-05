@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.conda &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>seamm_manager.conda &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=99beb745"></script>
+    <script src="../../_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.conda</a></li> 
       </ul>
@@ -324,7 +324,9 @@
 
 <div class="viewcode-block" id="Conda.create_environment">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.conda.Conda.create_environment">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_environment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">conda_only</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Create a Conda environment.</span>
 
 <span class="sd">        Parameters</span>
@@ -336,7 +338,21 @@
 <span class="sd">            environment file.</span>
 <span class="sd">        force : bool = False</span>
 <span class="sd">            Whether to overwrite an existing environment.</span>
+<span class="sd">        conda_only : bool = False</span>
+<span class="sd">            Create from the file's conda part alone, leaving its ``pip:``</span>
+<span class="sd">            section to the caller (which may need to install torch from a</span>
+<span class="sd">            particular index before anything that depends on it).</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">conda_only</span><span class="p">:</span>
+            <span class="c1"># The stripped copy keeps the file's own name: conda records the</span>
+            <span class="c1"># create command in the environment's history, and the name</span>
+            <span class="c1"># seamm-&lt;step&gt;.yml there is how a SEAMM-made environment is later</span>
+            <span class="c1"># recognised (InstallerBase._not_ours).</span>
+            <span class="n">conda_text</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">split_environment_file</span><span class="p">(</span><span class="n">environment_file</span><span class="p">)</span>
+            <span class="n">tmpdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"seamm-env-"</span><span class="p">))</span>
+            <span class="n">stripped</span> <span class="o">=</span> <span class="n">tmpdir</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">environment_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">stripped</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">conda_text</span><span class="p">)</span>
+            <span class="n">environment_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">environment_file</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -808,7 +824,12 @@
 <div class="viewcode-block" id="Conda.update_environment">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.conda.Conda.update_environment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_environment</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pip_policy</span><span class="o">=</span><span class="s2">"conservative"</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">environment_file</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">pip_policy</span><span class="o">=</span><span class="s2">"conservative"</span><span class="p">,</span>
+        <span class="n">index_args</span><span class="o">=</span><span class="p">(),</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Update a Conda environment from an environment file.</span>
 
@@ -825,7 +846,8 @@
 <span class="sd">            driver-matched build. ``"conservative"`` (the default) applies the</span>
 <span class="sd">            conda part with conda, then bare pip names without upgrading (they</span>
 <span class="sd">            must merely be present) and requirements with a version specifier</span>
-<span class="sd">            with ``-U`` (kept current within their spec).</span>
+<span class="sd">            with ``-U`` (kept current within their spec). ``index_args`` go</span>
+<span class="sd">            to those pip steps (the torch index pair).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">environment_file</span><span class="p">)</span>
@@ -852,9 +874,17 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">bare</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_pip_in_environment</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">bare</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pip_in_environment</span><span class="p">(</span>
+                    <span class="n">prefix</span><span class="p">,</span> <span class="n">bare</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="n">specified</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_pip_in_environment</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">specified</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pip_in_environment</span><span class="p">(</span>
+                    <span class="n">prefix</span><span class="p">,</span>
+                    <span class="n">specified</span><span class="p">,</span>
+                    <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span>
+                    <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span><span class="p">,</span>
+                <span class="p">)</span>
         <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Calling conda, returncode = </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Output:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)</span>
@@ -864,14 +894,54 @@
                 <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_pip_in_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Run pip in the environment for the given requirements."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pip_in_environment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="p">()</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Run pip in the environment for the given requirements.</span>
+
+<span class="sd">        ``index_args`` are pip options placed before the requirements, such as</span>
+<span class="sd">        the ``--index-url``/``--extra-index-url`` pair that keeps torch on the</span>
+<span class="sd">        build the machine needs (:mod:`seamm_manager.torch_support`).</span>
+<span class="sd">        """</span>
         <span class="n">target</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">" -p '</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span>
         <span class="n">flag</span> <span class="o">=</span> <span class="s2">" --upgrade"</span> <span class="k">if</span> <span class="n">upgrade</span> <span class="k">else</span> <span class="s2">""</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">" '</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">'"</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">index_args</span><span class="p">)</span>
         <span class="n">reqs</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">'"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">requirements</span><span class="p">)</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' run</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> pip install</span><span class="si">{</span><span class="n">flag</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">reqs</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="si">}</span><span class="s2">' run</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> pip install</span><span class="si">{</span><span class="n">flag</span><span class="si">}{</span><span class="n">extra</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">reqs</span><span class="si">}</span><span class="s2">"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"command = </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Conda.pip_install">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.conda.Conda.pip_install">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pip_install</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">,</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">        </span><span class="sd">"""``pip install`` the requirements in an environment (name or path)."""</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pip_in_environment</span><span class="p">(</span>
+            <span class="n">prefix</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">requirements</span><span class="p">),</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Conda.run_python">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.conda.Conda.run_python">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Run a Python script (text) with an environment's python and return</span>
+<span class="sd">        its output, stdout then stderr; ``None`` if it could not be run."""</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_environment_path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">conda_exe</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">"-p"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">),</span> <span class="s2">"python"</span><span class="p">,</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="n">script</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"command = </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="n">command</span><span class="p">,</span>
+                <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not run python in </span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_execute</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">poll_interval</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">None</span>
@@ -998,7 +1068,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.conda</a></li> 
       </ul>

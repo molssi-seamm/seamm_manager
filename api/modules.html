@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>seamm_manager &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=99beb745"></script>
+    <script src="../_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>  
@@ -95,9 +95,11 @@
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.is_installed"><code class="docutils literal notranslate"><span class="pre">Conda.is_installed</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.list"><code class="docutils literal notranslate"><span class="pre">Conda.list()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.path"><code class="docutils literal notranslate"><span class="pre">Conda.path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.pip_install"><code class="docutils literal notranslate"><span class="pre">Conda.pip_install()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.prefix"><code class="docutils literal notranslate"><span class="pre">Conda.prefix</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.remove_environment"><code class="docutils literal notranslate"><span class="pre">Conda.remove_environment()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.root_prefix"><code class="docutils literal notranslate"><span class="pre">Conda.root_prefix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.run_python"><code class="docutils literal notranslate"><span class="pre">Conda.run_python()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.search"><code class="docutils literal notranslate"><span class="pre">Conda.search()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.show"><code class="docutils literal notranslate"><span class="pre">Conda.show()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.conda.Conda.uninstall"><code class="docutils literal notranslate"><span class="pre">Conda.uninstall()</span></code></a></li>
@@ -213,10 +215,13 @@
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.setup_parser"><code class="docutils literal notranslate"><span class="pre">InstallerBase.setup_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.shared_codes"><code class="docutils literal notranslate"><span class="pre">InstallerBase.shared_codes</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.show"><code class="docutils literal notranslate"><span class="pre">InstallerBase.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_managed"><code class="docutils literal notranslate"><span class="pre">InstallerBase.torch_managed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_target"><code class="docutils literal notranslate"><span class="pre">InstallerBase.torch_target()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.uninstall"><code class="docutils literal notranslate"><span class="pre">InstallerBase.uninstall()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.InstallerBase.update"><code class="docutils literal notranslate"><span class="pre">InstallerBase.update()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.installer_base.environment_created_by_seamm"><code class="docutils literal notranslate"><span class="pre">environment_created_by_seamm()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.linux">seamm_manager.linux module</a><ul>
@@ -322,6 +327,20 @@
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.show">seamm_manager.show module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.show.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.show.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.torch_support">seamm_manager.torch_support module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.DRIVER_TO_TAG"><code class="docutils literal notranslate"><span class="pre">DRIVER_TO_TAG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.PROBE_KEYS"><code class="docutils literal notranslate"><span class="pre">PROBE_KEYS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.TORCH_INDEX_BASE"><code class="docutils literal notranslate"><span class="pre">TORCH_INDEX_BASE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.assess"><code class="docutils literal notranslate"><span class="pre">assess()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.detect_cuda_driver"><code class="docutils literal notranslate"><span class="pre">detect_cuda_driver()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.install_command"><code class="docutils literal notranslate"><span class="pre">install_command()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.parse_probe"><code class="docutils literal notranslate"><span class="pre">parse_probe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.pip_index_args"><code class="docutils literal notranslate"><span class="pre">pip_index_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.probe_script"><code class="docutils literal notranslate"><span class="pre">probe_script()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.recommend_tag"><code class="docutils literal notranslate"><span class="pre">recommend_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.torch_support.torch_target"><code class="docutils literal notranslate"><span class="pre">torch_target()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.uninstall">seamm_manager.uninstall module</a><ul>
@@ -470,7 +489,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=99beb745"></script>
+    <script src="_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -167,10 +167,25 @@ and a new one goes in the first writable directory of conda’s <code class="doc
 a cluster, whose own directories are read-only, works too. SEAMM’s own environment
 never uses conda’s Python, even when a conda environment is active.</p>
 <p>When a plug-in updates its code environment from its environment file, pip
-packages named without a version (<code class="docutils literal notranslate"><span class="pre">torch</span></code>) are installed only if missing and
-otherwise left as they are, while those with a version specifier are kept current
-within it. So a torch build you installed by hand for your GPU driver survives
-updates; to change it, reinstall it by hand in that environment.</p>
+packages named without a version are installed only if missing and otherwise left
+as they are, while those with a version specifier are kept current within it.</p>
+<p>A plug-in whose code needs PyTorch (xnn-step) installs torch itself rather than
+from its environment file, because PyPI’s default torch bundles the newest CUDA
+runtime, which an older NVIDIA driver cannot run – torch then silently uses the
+CPU. The installer reads the driver’s CUDA version from <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>, installs
+torch from the matching PyTorch index (and the environment’s other pip packages
+from that index too), and checks afterwards that torch sees the GPU and the code
+imports. A torch that works is never replaced, and one that does not – perhaps a
+build you made on purpose – only when you ask. On a machine without a driver,
+such as a cluster’s login node whose compute nodes have the GPUs, it cannot tell
+which build is wanted and says so; choose one with <code class="docutils literal notranslate"><span class="pre">torch-build</span> <span class="pre">=</span> <span class="pre">&lt;tag&gt;</span></code> in the
+plug-in’s <code class="docutils literal notranslate"><span class="pre">.ini</span></code> file (<code class="docutils literal notranslate"><span class="pre">cu128</span></code> for a current driver, <code class="docutils literal notranslate"><span class="pre">cpu</span></code> for no GPU,
+<code class="docutils literal notranslate"><span class="pre">auto</span></code> to detect), or run the plug-in’s installer with <code class="docutils literal notranslate"><span class="pre">--torch-tag</span></code>, e.g.
+<code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv/bin/xnn-step-installer</span> <span class="pre">install</span> <span class="pre">--torch-tag</span> <span class="pre">cu128</span></code>, which also
+replaces a torch that cannot use the GPU.</p>
+<p>An environment that SEAMM did not create – one you built by hand and named in a
+plug-in’s <code class="docutils literal notranslate"><span class="pre">.ini</span></code> file – is left alone. Whether SEAMM created it is read from
+conda’s own history of the environment.</p>
 <p>Licensed codes – ORCA, Gaussian, VASP, FHI-aims – are not installed at all: you
 install them yourself. Installing their plug-in writes a commented template,
 <code class="docutils literal notranslate"><span class="pre">~/SEAMM/&lt;code&gt;.ini</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">vasp.ini</span></code>), for you to edit to say where the code is
@@ -272,7 +287,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

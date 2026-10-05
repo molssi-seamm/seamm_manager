@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=99beb745"></script>
+    <script src="../../_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -42,6 +42,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
@@ -95,6 +96,26 @@
 <span class="s2">"""</span>
 
 
+<div class="viewcode-block" id="environment_created_by_seamm">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.environment_created_by_seamm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">environment_created_by_seamm</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether conda's history says a SEAMM installer created the environment at</span>
+<span class="sd">    ``prefix``: its first command is ``conda env create ... --file</span>
+<span class="sd">    seamm-&lt;step&gt;.yml``. ``None`` when the history cannot be read."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"conda-meta"</span> <span class="o">/</span> <span class="s2">"history"</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">history</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"# cmd:"</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+                    <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\benv\s+create\b"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"--file\s+\S*seamm-[\w.-]+\.ya?ml"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
 <div class="viewcode-block" id="InstallerBase">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InstallerBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -134,6 +155,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_exe_config</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">Configuration</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_file_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1">#: A plug-in whose code needs PyTorch sets this: torch is then installed</span>
+        <span class="c1">#: from the index matching the machine's NVIDIA driver, a working torch is</span>
+        <span class="c1">#: left alone, and the environment is checked after install and update</span>
+        <span class="c1">#: (seamm_manager.torch_support). ``torch_imports`` names the modules the</span>
+        <span class="c1">#: check must import, e.g. ("torch", "xnn", "mdi").</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">torch_managed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">torch_imports</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"torch"</span><span class="p">,)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">conda</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -288,20 +316,27 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_not_ours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Whether ``environment`` exists but was not made by a SEAMM installer.</span>
 
-<span class="sd">        An environment SEAMM made carries a ``seamm-&lt;step&gt;.sha256`` record of the</span>
-<span class="sd">        environment file applied to it; one made before the records existed has</span>
-<span class="sd">        the name SEAMM gives it. Anything else -- a hand-built environment named</span>
-<span class="sd">        in the .ini file (a pinned CUDA torch, a package from a git commit) -- is</span>
-<span class="sd">        the user's, and an update must not apply SEAMM's environment file to it</span>
-<span class="sd">        (seamm_manager#28).</span>
+<span class="sd">        Conda records in ``conda-meta/history`` the command that created an</span>
+<span class="sd">        environment; one SEAMM made was created ``--file seamm-&lt;step&gt;.yml``. That</span>
+<span class="sd">        is the test. An environment with the name SEAMM gives it is SEAMM's; one</span>
+<span class="sd">        whose history cannot be read falls back to the ``seamm-&lt;step&gt;.sha256``</span>
+<span class="sd">        records SEAMM leaves when it applies a file. Anything else -- a</span>
+<span class="sd">        hand-built environment named in the .ini file (a pinned CUDA torch, a</span>
+<span class="sd">        package from a git commit) -- is the user's, and an update must not</span>
+<span class="sd">        apply SEAMM's environment file to it (seamm_manager#28). The records</span>
+<span class="sd">        alone were not enough: an environment SEAMM mistakenly updated once has</span>
+<span class="sd">        them and is still not SEAMM's.</span>
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
             <span class="k">if</span> <span class="n">environment</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">False</span>
-            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"conda-meta"</span>
-            <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"seamm-*.sha256"</span><span class="p">))</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+            <span class="n">created</span> <span class="o">=</span> <span class="n">environment_created_by_seamm</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">created</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="ow">not</span> <span class="n">created</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">((</span><span class="n">prefix</span> <span class="o">/</span> <span class="s2">"conda-meta"</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"seamm-*.sha256"</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
@@ -312,6 +347,109 @@
             <span class="n">marker</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_environment_file_hash</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># never fail an installation over the record</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not record the applied environment file: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># PyTorch in a code environment (torch_managed plug-ins)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+<div class="viewcode-block" id="InstallerBase.torch_target">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_target">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">torch_target</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The torch build this machine needs: ``--torch-tag`` on the command</span>
+<span class="sd">        line, else ``torch-build`` in the plug-in's .ini file (``auto`` detects),</span>
+<span class="sd">        else detection. See :func:`seamm_manager.torch_support.torch_target`."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">torch_support</span>
+
+        <span class="n">forced</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"torch_tag"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">forced</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">forced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">get_values</span><span class="p">(</span><span class="s2">"local"</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torch-build"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">forced</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">return</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">torch_target</span><span class="p">(</span><span class="n">forced</span><span class="o">=</span><span class="n">forced</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_probe_torch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">torch_support</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">run_python</span><span class="p">(</span>
+            <span class="n">environment</span><span class="p">,</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">probe_script</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">torch_imports</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">parse_probe</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_torch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">,</span> <span class="n">apply_file</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Bring the environment's torch into line with the machine, apply the</span>
+<span class="sd">        plug-in's environment file (its pip part on torch's index), and check.</span>
+
+<span class="sd">        Returns True when the environment is usable afterwards. Prints what it</span>
+<span class="sd">        found and did; never replaces a torch that works, and never replaces a</span>
+<span class="sd">        broken one silently -- that takes ``--torch-tag`` (or</span>
+<span class="sd">        ``SEAMM_REFRESH_CODES``), since a user may have built it deliberately.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">torch_support</span>
+
+        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">torch_target</span><span class="p">()</span>
+        <span class="n">probe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_torch</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+        <span class="n">status</span><span class="p">,</span> <span class="n">note</span> <span class="o">=</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">assess</span><span class="p">(</span><span class="n">probe</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    PyTorch: </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">forced</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"torch_tag"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SEAMM_REFRESH_CODES"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">index_args</span> <span class="o">=</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">pip_index_args</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"missing"</span> <span class="ow">or</span> <span class="p">(</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gpu-unusable"</span><span class="p">,</span> <span class="s2">"cpu-on-gpu"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">forced</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">target</span><span class="p">[</span><span class="s2">"tag"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">"!   No NVIDIA driver was found on this machine, so which torch "</span>
+                    <span class="s2">"to install cannot be decided here (a cluster login node, for "</span>
+                    <span class="s2">"instance, has no GPU although its compute nodes do). Set "</span>
+                    <span class="sa">f</span><span class="s2">"'torch-build = &lt;tag&gt;' in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="si">}</span><span class="s2">.ini -- cu128 for a "</span>
+                    <span class="s2">"current NVIDIA driver, cpu for a machine without a GPU -- or "</span>
+                    <span class="s2">"run the installer with --torch-tag, and try again."</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="n">what</span> <span class="o">=</span> <span class="s2">"Installing"</span> <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"missing"</span> <span class="k">else</span> <span class="s2">"Replacing"</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="s2">"index_url"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">"PyPI"</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> torch from </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">target</span><span class="p">[</span><span class="s1">'reason'</span><span class="p">]</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">pip_install</span><span class="p">(</span>
+                <span class="n">environment</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">"torch"</span><span class="p">],</span>
+                <span class="n">upgrade</span><span class="o">=</span><span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"missing"</span><span class="p">),</span>
+                <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gpu-unusable"</span><span class="p">,</span> <span class="s2">"cpu-on-gpu"</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"!   </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">. It is left as it is: it may have been built on purpose. "</span>
+                <span class="sa">f</span><span class="s2">"To replace it with the build for this machine "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">target</span><span class="p">[</span><span class="s1">'tag'</span><span class="p">]</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'undecided'</span><span class="si">}</span><span class="s2">), run the installer again with "</span>
+                <span class="sa">f</span><span class="s2">"--torch-tag </span><span class="si">{</span><span class="n">target</span><span class="p">[</span><span class="s1">'tag'</span><span class="p">]</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'&lt;tag&gt;'</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"gpu-unusable"</span><span class="p">:</span>
+                <span class="c1"># Nothing that depends on torch will work; do not pile on.</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"unknown"</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"!   </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">; the environment is left as it is."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">apply_file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+
+        <span class="n">probe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_torch</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+        <span class="n">status</span><span class="p">,</span> <span class="n">note</span> <span class="o">=</span> <span class="n">torch_support</span><span class="o">.</span><span class="n">assess</span><span class="p">(</span><span class="n">probe</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="n">probe</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"imports"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">!=</span> <span class="s2">"ok"</span> <span class="ow">or</span> <span class="n">failed</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"!   Check of '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">' failed: </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">failed</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"!       </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Checked '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">; imports OK."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
 <div class="viewcode-block" id="InstallerBase.ask_yes_no">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.ask_yes_no">[docs]</a>
@@ -824,6 +962,19 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">):</span>
             <span class="c1"># e.g. a reinstall: 'update' brings the environment up to date.</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Using the existing Conda environment '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">torch_managed</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">apply_file</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">torch_managed</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"    Installing Conda environment '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This "</span>
+                <span class="s2">"may take a minute or two."</span>
+            <span class="p">)</span>
+            <span class="c1"># The conda part first, then torch from the right index, then the</span>
+            <span class="c1"># rest of the pip part on that index too.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">create_environment</span><span class="p">(</span>
+                <span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">conda_only</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">apply_file</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"    Installing Conda environment '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This "</span>
@@ -895,12 +1046,19 @@
         <span class="p">)</span>
         <span class="n">check</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">)</span>
 
+        <span class="n">torch_help</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"For a code that needs PyTorch: the wheel build to install, e.g. cu128, "</span>
+            <span class="s2">"cu118, cpu or default (PyPI's), instead of the one chosen from this "</span>
+            <span class="s2">"machine's NVIDIA driver; also replaces a torch that cannot use the GPU."</span>
+        <span class="p">)</span>
         <span class="c1"># install</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subparser</span><span class="p">[</span><span class="s2">"install"</span><span class="p">]</span> <span class="o">=</span> <span class="n">install</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"install"</span><span class="p">)</span>
+        <span class="n">install</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--torch-tag"</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s2">"TAG"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">torch_help</span><span class="p">)</span>
         <span class="n">install</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">)</span>
 
         <span class="c1"># update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subparser</span><span class="p">[</span><span class="s2">"update"</span><span class="p">]</span> <span class="o">=</span> <span class="n">update</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
+        <span class="n">update</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--torch-tag"</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s2">"TAG"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">torch_help</span><span class="p">)</span>
         <span class="n">update</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">)</span>
 
         <span class="c1"># uninstall</span>
@@ -1052,8 +1210,12 @@
                 <span class="sa">f</span><span class="s2">"    Updating Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">'. This may "</span>
                 <span class="s2">"take a minute or two."</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">torch_managed</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_torch</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">apply_file</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                    <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
             <span class="c1"># Update the configuration file, just in case.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exe_config</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="s2">"installation"</span><span class="p">,</span> <span class="s2">"conda"</span><span class="p">)</span>
             <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">seamm_manager</span><span class="o">.</span><span class="n">find_conda</span><span class="p">()</span>
@@ -1106,7 +1268,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>

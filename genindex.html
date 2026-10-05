@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>Index &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=99beb745"></script>
+    <script src="_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>  
@@ -81,6 +81,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.versions.apply_change">apply_change() (in module seamm_manager.versions)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.ask_yes_no">ask_yes_no() (seamm_manager.installer_base.InstallerBase method)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.assess">assess() (in module seamm_manager.torch_support)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -206,7 +208,11 @@
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.delete_environment">delete_environment() (seamm_manager.conda.Conda method)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.detect_cuda_driver">detect_cuda_driver() (in module seamm_manager.torch_support)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.JSONDecoder.dict_to_object">dict_to_object() (seamm_manager.util.JSONDecoder method)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.DRIVER_TO_TAG">DRIVER_TO_TAG (in module seamm_manager.torch_support)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -222,12 +228,14 @@
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.versions.ensure_versioned">ensure_versioned() (in module seamm_manager.versions)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.environments">environments (seamm_manager.conda.Conda property)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.installer_base.environment_created_by_seamm">environment_created_by_seamm() (in module seamm_manager.installer_base)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.gui.GUI.event_loop">event_loop() (seamm_manager.gui.GUI method)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.environments">environments (seamm_manager.conda.Conda property)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.gui.GUI.event_loop">event_loop() (seamm_manager.gui.GUI method)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.exe_config">exe_config (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.executables_in_path">executables_in_path() (seamm_manager.installer_base.InstallerBase method)</a>
@@ -324,16 +332,18 @@
         <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.install">(seamm_manager.uv.Uv method)</a>
 </li>
       </ul></li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.install_command">install_command() (in module seamm_manager.torch_support)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.install.install_development_environment">install_development_environment() (in module seamm_manager.install)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.mac.install_launcher">install_launcher() (in module seamm_manager.mac)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.install.install_packages">install_packages() (in module seamm_manager.install)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.install.install_seamm_webui">install_seamm_webui() (in module seamm_manager.install)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.install.install_seamm_webui">install_seamm_webui() (in module seamm_manager.install)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.installed_requirements">installed_requirements() (seamm_manager.uv.Uv method)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase">InstallerBase (class in seamm_manager.installer_base)</a>
@@ -464,6 +474,8 @@
 </li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.show">seamm_manager.show</a>
 </li>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.torch_support">seamm_manager.torch_support</a>
+</li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.uninstall">seamm_manager.uninstall</a>
 </li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.update">seamm_manager.update</a>
@@ -509,6 +521,8 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.PackageListUnavailable">PackageListUnavailable</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.parse_probe">parse_probe() (in module seamm_manager.torch_support)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration.path">path (seamm_manager.configuration.Configuration property)</a>
 
       <ul>
@@ -527,13 +541,21 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.pip">pip (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.pip_index_args">pip_index_args() (in module seamm_manager.torch_support)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.pip_install">pip_install() (seamm_manager.conda.Conda method)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.gui.GUI.preferences">preferences() (seamm_manager.gui.GUI method)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.prefix">prefix (seamm_manager.conda.Conda property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.policy.prefixed_environment">prefixed_environment() (in module seamm_manager.policy)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.PROBE_KEYS">PROBE_KEYS (in module seamm_manager.torch_support)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.probe_script">probe_script() (in module seamm_manager.torch_support)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.versions.processes_using">processes_using() (in module seamm_manager.versions)</a>
 </li>
@@ -558,6 +580,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.real_path">real_path (seamm_manager.uv.Uv property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.datastore.rebuild">rebuild() (in module seamm_manager.datastore)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.recommend_tag">recommend_tag() (in module seamm_manager.torch_support)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.environment.recreate">recreate() (in module seamm_manager.environment)</a>
 </li>
@@ -636,6 +660,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.compare.run_flowchart">run_flowchart() (in module seamm_manager.compare)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.run_plugin_installer">run_plugin_installer() (in module seamm_manager.util)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.run_python">run_python() (seamm_manager.conda.Conda method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -804,6 +830,13 @@
 </li>
       </ul></li>
       <li>
+    seamm_manager.torch_support
+
+      <ul>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.torch_support">module</a>
+</li>
+      </ul></li>
+      <li>
     seamm_manager.uninstall
 
       <ul>
@@ -824,6 +857,8 @@
         <li><a href="api/seamm_manager.html#module-seamm_manager.util">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     seamm_manager.uv
 
@@ -831,8 +866,6 @@
         <li><a href="api/seamm_manager.html#module-seamm_manager.uv">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     seamm_manager.versions
 
@@ -966,12 +999,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.naming.tag">tag() (in module seamm_manager.naming)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration.to_string">to_string() (seamm_manager.configuration.Configuration method)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.tool_upgrade">tool_upgrade() (seamm_manager.uv.Uv method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.TORCH_INDEX_BASE">TORCH_INDEX_BASE (in module seamm_manager.torch_support)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_managed">torch_managed (seamm_manager.installer_base.InstallerBase attribute)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.torch_target">torch_target() (in module seamm_manager.torch_support)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_target">(seamm_manager.installer_base.InstallerBase method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1106,7 +1149,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>

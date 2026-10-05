@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=99beb745"></script>
+    <script src="../_static/documentation_options.js?v=f9e9a9ea"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -270,7 +270,7 @@ given (old, new) replacements applied first (the working directories).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.conda.Conda.create_environment">
-<span class="sig-name descname"><span class="pre">create_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.create_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.create_environment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">create_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conda_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.create_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.create_environment" title="Link to this definition">¶</a></dt>
 <dd><p>Create a Conda environment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -279,6 +279,9 @@ given (old, new) replacements applied first (the working directories).</p>
 <li><p><strong>name</strong> (<em>str = None</em>) – The name of the environment. Defaults to that given in the
 environment file.</p></li>
 <li><p><strong>force</strong> (<em>bool = False</em>) – Whether to overwrite an existing environment.</p></li>
+<li><p><strong>conda_only</strong> (<em>bool = False</em>) – Create from the file’s conda part alone, leaving its <code class="docutils literal notranslate"><span class="pre">pip:</span></code>
+section to the caller (which may need to install torch from a
+particular index before anything that depends on it).</p></li>
 </ul>
 </dd>
 </dl>
@@ -397,6 +400,12 @@ environment file.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.conda.Conda.pip_install">
+<span class="sig-name descname"><span class="pre">pip_install</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requirements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upgrade</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.pip_install"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.pip_install" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the requirements in an environment (name or path).</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="seamm_manager.conda.Conda.prefix">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">prefix</span></span><a class="headerlink" href="#seamm_manager.conda.Conda.prefix" title="Link to this definition">¶</a></dt>
@@ -418,6 +427,13 @@ environment file.</p></li>
 <dt class="sig sig-object py" id="seamm_manager.conda.Conda.root_prefix">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">root_prefix</span></span><a class="headerlink" href="#seamm_manager.conda.Conda.root_prefix" title="Link to this definition">¶</a></dt>
 <dd><p>The root prefix of the conda installation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.conda.Conda.run_python">
+<span class="sig-name descname"><span class="pre">run_python</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.run_python"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.run_python" title="Link to this definition">¶</a></dt>
+<dd><p>Run a Python script (text) with an environment’s python and return
+its output, stdout then stderr; <code class="docutils literal notranslate"><span class="pre">None</span></code> if it could not be run.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -496,7 +512,7 @@ environment file.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.conda.Conda.update_environment">
-<span class="sig-name descname"><span class="pre">update_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pip_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'conservative'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.update_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.update_environment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_environment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pip_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'conservative'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/conda.html#Conda.update_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.conda.Conda.update_environment" title="Link to this definition">¶</a></dt>
 <dd><p>Update a Conda environment from an environment file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -509,7 +525,8 @@ package, including a bare <code class="docutils literal notranslate"><span class
 driver-matched build. <code class="docutils literal notranslate"><span class="pre">&quot;conservative&quot;</span></code> (the default) applies the
 conda part with conda, then bare pip names without upgrading (they
 must merely be present) and requirements with a version specifier
-with <code class="docutils literal notranslate"><span class="pre">-U</span></code> (kept current within their spec).</p></li>
+with <code class="docutils literal notranslate"><span class="pre">-U</span></code> (kept current within their spec). <code class="docutils literal notranslate"><span class="pre">index_args</span></code> go
+to those pip steps (the torch index pair).</p></li>
 </ul>
 </dd>
 </dl>
@@ -1276,6 +1293,29 @@ written here.</p>
 <dd><p>Show the current installation status.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.torch_managed">
+<span class="sig-name descname"><span class="pre">torch_managed</span></span><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.torch_managed" title="Link to this definition">¶</a></dt>
+<dd><p>torch is then installed
+from the index matching the machine’s NVIDIA driver, a working torch is
+left alone, and the environment is checked after install and update
+(seamm_manager.torch_support). <code class="docutils literal notranslate"><span class="pre">torch_imports</span></code> names the modules the
+check must import, e.g. (“torch”, “xnn”, “mdi”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A plug-in whose code needs PyTorch sets this</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.torch_target">
+<span class="sig-name descname"><span class="pre">torch_target</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/installer_base.html#InstallerBase.torch_target"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.torch_target" title="Link to this definition">¶</a></dt>
+<dd><p>The torch build this machine needs: <code class="docutils literal notranslate"><span class="pre">--torch-tag</span></code> on the command
+line, else <code class="docutils literal notranslate"><span class="pre">torch-build</span></code> in the plug-in’s .ini file (<code class="docutils literal notranslate"><span class="pre">auto</span></code> detects),
+else detection. See <a class="reference internal" href="#seamm_manager.torch_support.torch_target" title="seamm_manager.torch_support.torch_target"><code class="xref py py-func docutils literal notranslate"><span class="pre">seamm_manager.torch_support.torch_target()</span></code></a>.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.installer_base.InstallerBase.uninstall">
 <span class="sig-name descname"><span class="pre">uninstall</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/installer_base.html#InstallerBase.uninstall"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.installer_base.InstallerBase.uninstall" title="Link to this definition">¶</a></dt>
@@ -1290,6 +1330,14 @@ written here.</p>
 keeps the codes up to date.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.installer_base.environment_created_by_seamm">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.installer_base.</span></span><span class="sig-name descname"><span class="pre">environment_created_by_seamm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/installer_base.html#environment_created_by_seamm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.installer_base.environment_created_by_seamm" title="Link to this definition">¶</a></dt>
+<dd><p>Whether conda’s history says a SEAMM installer created the environment at
+<code class="docutils literal notranslate"><span class="pre">prefix</span></code>: its first command is <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">...</span> <span class="pre">--file</span>
+<span class="pre">seamm-&lt;step&gt;.yml</span></code>. <code class="docutils literal notranslate"><span class="pre">None</span></code> when the history cannot be read.</p>
 </dd></dl>
 
 </section>
@@ -2062,6 +2110,135 @@ replaces them.</p>
 <dd></dd></dl>
 
 </section>
+<section id="module-seamm_manager.torch_support">
+<span id="seamm-manager-torch-support-module"></span><h2>seamm_manager.torch_support module<a class="headerlink" href="#module-seamm_manager.torch_support" title="Link to this heading">¶</a></h2>
+<p>PyTorch for a code environment: which build this machine needs, what an
+environment holds, and whether what it holds works.</p>
+<p>PyTorch wheels bundle their CUDA runtime, so the build a machine needs is set
+by its NVIDIA <em>driver</em>, which <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> reports as a CUDA version ceiling,
+not by any CUDA toolkit installed on it. PyPI’s default wheel bundles the newest
+CUDA runtime, which an older driver cannot run: torch then imports and runs on
+the CPU, and nothing says so. A plug-in whose code needs torch (xnn-step,
+lammps-step’s MLFF engine) therefore installs torch from the PyTorch index that
+matches the driver, leaves a working torch alone, and checks the result.</p>
+<p>The table of driver ceilings to wheel tags is the only part that goes stale:
+update it when PyTorch adds a CUDA build. A machine’s choice can be forced
+with <code class="docutils literal notranslate"><span class="pre">torch-build</span> <span class="pre">=</span> <span class="pre">&lt;tag&gt;</span></code> in the plug-in’s <code class="docutils literal notranslate"><span class="pre">.ini</span></code> file, or
+<code class="docutils literal notranslate"><span class="pre">--torch-tag</span></code> on its installer, for a cluster whose login node has no GPU.</p>
+<p>The same reasoning, worked out by hand for the LAMMPS environment, is in
+<code class="docutils literal notranslate"><span class="pre">lammps-mdi</span></code>’s <code class="docutils literal notranslate"><span class="pre">cuda_utils</span></code>/<code class="docutils literal notranslate"><span class="pre">ml_install</span></code>; this module is the installer’s
+copy of it (lammps-mdi runs inside the code environment, where seamm-manager is
+not installed).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.DRIVER_TO_TAG">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">DRIVER_TO_TAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(((13,</span> <span class="pre">0),</span> <span class="pre">'cu130'),</span> <span class="pre">((12,</span> <span class="pre">1),</span> <span class="pre">'cu128'),</span> <span class="pre">((11,</span> <span class="pre">8),</span> <span class="pre">'cu118'))</span></span><a class="headerlink" href="#seamm_manager.torch_support.DRIVER_TO_TAG" title="Link to this definition">¶</a></dt>
+<dd><p>Minimum driver CUDA ceiling (major, minor) -&gt; the newest PyTorch wheel tag that
+driver can run, newest first. A wheel’s bundled runtime may be newer than the
+driver’s ceiling within the same major version (CUDA’s minor-version
+compatibility), so cu128 runs on any 12.x driver from 12.1; a cu130 wheel needs
+a 13.x driver. Update when PyTorch adds a build.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.PROBE_KEYS">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">PROBE_KEYS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('torch',</span> <span class="pre">'torch_version',</span> <span class="pre">'cuda_build',</span> <span class="pre">'cuda_available',</span> <span class="pre">'mps_available',</span> <span class="pre">'device_count',</span> <span class="pre">'imports')</span></span><a class="headerlink" href="#seamm_manager.torch_support.PROBE_KEYS" title="Link to this definition">¶</a></dt>
+<dd><p>What a probe of an environment reports; see <a class="reference internal" href="#seamm_manager.torch_support.probe_script" title="seamm_manager.torch_support.probe_script"><code class="xref py py-func docutils literal notranslate"><span class="pre">probe_script()</span></code></a></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.TORCH_INDEX_BASE">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">TORCH_INDEX_BASE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://download.pytorch.org/whl'</span></span><a class="headerlink" href="#seamm_manager.torch_support.TORCH_INDEX_BASE" title="Link to this definition">¶</a></dt>
+<dd><p>The PyTorch wheel indexes</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.assess">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">assess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#assess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.assess" title="Link to this definition">¶</a></dt>
+<dd><p>Judge an environment’s torch against the machine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A status and a sentence. Statuses: <code class="docutils literal notranslate"><span class="pre">missing</span></code> (no torch); <code class="docutils literal notranslate"><span class="pre">ok</span></code> (torch
+works for this machine); <code class="docutils literal notranslate"><span class="pre">gpu-unusable</span></code> (a CUDA build that cannot see
+the GPU this machine has: the driver is too old for it); <code class="docutils literal notranslate"><span class="pre">cpu-on-gpu</span></code>
+(a CPU build on a machine with an NVIDIA driver); <code class="docutils literal notranslate"><span class="pre">unknown</span></code> (the probe
+failed).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>(str, str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.detect_cuda_driver">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">detect_cuda_driver</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#detect_cuda_driver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.detect_cuda_driver" title="Link to this definition">¶</a></dt>
+<dd><p>The driver’s CUDA ceiling as <code class="docutils literal notranslate"><span class="pre">(major,</span> <span class="pre">minor)</span></code> from <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> when there is no <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>, it fails, or it reports no GPU.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.install_command">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">install_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'python'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('torch',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#install_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.install_command" title="Link to this definition">¶</a></dt>
+<dd><p>The pip command, as a list, that installs <code class="docutils literal notranslate"><span class="pre">packages</span></code> from the target’s
+index.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.parse_probe">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">parse_probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#parse_probe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.parse_probe" title="Link to this definition">¶</a></dt>
+<dd><p>The probe’s dictionary from the python’s output, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.pip_index_args">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">pip_index_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#pip_index_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.pip_index_args" title="Link to this definition">¶</a></dt>
+<dd><p>The pip options that keep torch on the right index: the target’s index
+first and PyPI as the extra index, so anything that pulls torch in during
+the step still gets the right build. Empty for PyPI’s own wheel.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.probe_script">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">probe_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imports</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#probe_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.probe_script" title="Link to this definition">¶</a></dt>
+<dd><p>Python that prints, as one JSON line, what an environment’s torch is and
+whether the named modules import. Run it with the environment’s python.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.recommend_tag">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">recommend_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">driver</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#recommend_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.recommend_tag" title="Link to this definition">¶</a></dt>
+<dd><p>The wheel tag for a driver <code class="docutils literal notranslate"><span class="pre">(major,</span> <span class="pre">minor)</span></code>: the newest it can run, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if it is older than any build in <a class="reference internal" href="#seamm_manager.torch_support.DRIVER_TO_TAG" title="seamm_manager.torch_support.DRIVER_TO_TAG"><code class="xref py py-data docutils literal notranslate"><span class="pre">DRIVER_TO_TAG</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.torch_target">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">torch_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forced</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detect'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#torch_target"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.torch_target" title="Link to this definition">¶</a></dt>
+<dd><p>Which torch build this machine should have.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>forced</strong> (<em>str</em><em>, </em><em>optional</em>) – A tag to use regardless (<code class="docutils literal notranslate"><span class="pre">cu128</span></code>, <code class="docutils literal notranslate"><span class="pre">cpu</span></code>, <code class="docutils literal notranslate"><span class="pre">default</span></code>), from the
+<code class="docutils literal notranslate"><span class="pre">.ini</span></code> file or the command line. <code class="docutils literal notranslate"><span class="pre">auto</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">None</span></code> detect.</p></li>
+<li><p><strong>system</strong> (<em>str</em><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">platform.system()</span></code>; for tests.</p></li>
+<li><p><strong>driver</strong> (<em>tuple</em><em> or </em><em>None</em><em> or </em><em>&quot;detect&quot;</em>) – The driver’s CUDA ceiling; <code class="docutils literal notranslate"><span class="pre">&quot;detect&quot;</span></code> runs <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">tag</span></code>: the wheel tag, <code class="docutils literal notranslate"><span class="pre">&quot;default&quot;</span></code> for PyPI’s own wheel (macOS, where
+it carries MPS), <code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code> for the CPU build, <code class="docutils literal notranslate"><span class="pre">None</span></code> when nothing can be
+decided (Linux, no <code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code>, nothing forced: the caller decides
+whether to assume a CPU machine); <code class="docutils literal notranslate"><span class="pre">index_url</span></code>: the index for that tag,
+<code class="docutils literal notranslate"><span class="pre">None</span></code> for PyPI; <code class="docutils literal notranslate"><span class="pre">driver</span></code>: what was detected; <code class="docutils literal notranslate"><span class="pre">reason</span></code>: one line
+saying why.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="module-seamm_manager.uninstall">
 <span id="seamm-manager-uninstall-module"></span><h2>seamm_manager.uninstall module<a class="headerlink" href="#module-seamm_manager.uninstall" title="Link to this heading">¶</a></h2>
 <p>Uninstall requested components of SEAMM.</p>
@@ -2789,9 +2966,11 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.is_installed"><code class="docutils literal notranslate"><span class="pre">Conda.is_installed</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.list"><code class="docutils literal notranslate"><span class="pre">Conda.list()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.path"><code class="docutils literal notranslate"><span class="pre">Conda.path()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.conda.Conda.pip_install"><code class="docutils literal notranslate"><span class="pre">Conda.pip_install()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.prefix"><code class="docutils literal notranslate"><span class="pre">Conda.prefix</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.remove_environment"><code class="docutils literal notranslate"><span class="pre">Conda.remove_environment()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.root_prefix"><code class="docutils literal notranslate"><span class="pre">Conda.root_prefix</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.conda.Conda.run_python"><code class="docutils literal notranslate"><span class="pre">Conda.run_python()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.search"><code class="docutils literal notranslate"><span class="pre">Conda.search()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.show"><code class="docutils literal notranslate"><span class="pre">Conda.show()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.conda.Conda.uninstall"><code class="docutils literal notranslate"><span class="pre">Conda.uninstall()</span></code></a></li>
@@ -2907,10 +3086,13 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.setup_parser"><code class="docutils literal notranslate"><span class="pre">InstallerBase.setup_parser()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.shared_codes"><code class="docutils literal notranslate"><span class="pre">InstallerBase.shared_codes</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.show"><code class="docutils literal notranslate"><span class="pre">InstallerBase.show()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.torch_managed"><code class="docutils literal notranslate"><span class="pre">InstallerBase.torch_managed</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.torch_target"><code class="docutils literal notranslate"><span class="pre">InstallerBase.torch_target()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.uninstall"><code class="docutils literal notranslate"><span class="pre">InstallerBase.uninstall()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.installer_base.InstallerBase.update"><code class="docutils literal notranslate"><span class="pre">InstallerBase.update()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#seamm_manager.installer_base.environment_created_by_seamm"><code class="docutils literal notranslate"><span class="pre">environment_created_by_seamm()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.linux">seamm_manager.linux module</a><ul>
@@ -3016,6 +3198,20 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#module-seamm_manager.show">seamm_manager.show module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.show.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.show.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-seamm_manager.torch_support">seamm_manager.torch_support module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.torch_support.DRIVER_TO_TAG"><code class="docutils literal notranslate"><span class="pre">DRIVER_TO_TAG</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.PROBE_KEYS"><code class="docutils literal notranslate"><span class="pre">PROBE_KEYS</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.TORCH_INDEX_BASE"><code class="docutils literal notranslate"><span class="pre">TORCH_INDEX_BASE</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.assess"><code class="docutils literal notranslate"><span class="pre">assess()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.detect_cuda_driver"><code class="docutils literal notranslate"><span class="pre">detect_cuda_driver()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.install_command"><code class="docutils literal notranslate"><span class="pre">install_command()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.parse_probe"><code class="docutils literal notranslate"><span class="pre">parse_probe()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.pip_index_args"><code class="docutils literal notranslate"><span class="pre">pip_index_args()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.probe_script"><code class="docutils literal notranslate"><span class="pre">probe_script()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.recommend_tag"><code class="docutils literal notranslate"><span class="pre">recommend_tag()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.torch_target"><code class="docutils literal notranslate"><span class="pre">torch_target()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.uninstall">seamm_manager.uninstall module</a><ul>
@@ -3156,7 +3352,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

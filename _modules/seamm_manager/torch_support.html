@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seamm_manager.torch_support &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f9e9a9ea"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.torch_support</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seamm_manager.torch_support</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">"""PyTorch for a code environment: which build this machine needs, what an</span>
+<span class="sd">environment holds, and whether what it holds works.</span>
+
+<span class="sd">PyTorch wheels bundle their CUDA runtime, so the build a machine needs is set</span>
+<span class="sd">by its NVIDIA *driver*, which ``nvidia-smi`` reports as a CUDA version ceiling,</span>
+<span class="sd">not by any CUDA toolkit installed on it. PyPI's default wheel bundles the newest</span>
+<span class="sd">CUDA runtime, which an older driver cannot run: torch then imports and runs on</span>
+<span class="sd">the CPU, and nothing says so. A plug-in whose code needs torch (xnn-step,</span>
+<span class="sd">lammps-step's MLFF engine) therefore installs torch from the PyTorch index that</span>
+<span class="sd">matches the driver, leaves a working torch alone, and checks the result.</span>
+
+<span class="sd">The table of driver ceilings to wheel tags is the only part that goes stale:</span>
+<span class="sd">update it when PyTorch adds a CUDA build. A machine's choice can be forced</span>
+<span class="sd">with ``torch-build = &lt;tag&gt;`` in the plug-in's ``.ini`` file, or</span>
+<span class="sd">``--torch-tag`` on its installer, for a cluster whose login node has no GPU.</span>
+
+<span class="sd">The same reasoning, worked out by hand for the LAMMPS environment, is in</span>
+<span class="sd">``lammps-mdi``'s ``cuda_utils``/``ml_install``; this module is the installer's</span>
+<span class="sd">copy of it (lammps-mdi runs inside the code environment, where seamm-manager is</span>
+<span class="sd">not installed).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1">#: The PyTorch wheel indexes</span>
+<span class="n">TORCH_INDEX_BASE</span> <span class="o">=</span> <span class="s2">"https://download.pytorch.org/whl"</span>
+<span class="n">PYPI_INDEX</span> <span class="o">=</span> <span class="s2">"https://pypi.org/simple"</span>
+
+<span class="c1">#: Minimum driver CUDA ceiling (major, minor) -&gt; the newest PyTorch wheel tag that</span>
+<span class="c1">#: driver can run, newest first. A wheel's bundled runtime may be newer than the</span>
+<span class="c1">#: driver's ceiling within the same major version (CUDA's minor-version</span>
+<span class="c1">#: compatibility), so cu128 runs on any 12.x driver from 12.1; a cu130 wheel needs</span>
+<span class="c1">#: a 13.x driver. Update when PyTorch adds a build.</span>
+<span class="n">DRIVER_TO_TAG</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">((</span><span class="mi">13</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">"cu130"</span><span class="p">),</span>
+    <span class="p">((</span><span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"cu128"</span><span class="p">),</span>
+    <span class="p">((</span><span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="s2">"cu118"</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1">#: What a probe of an environment reports; see :func:`probe_script`</span>
+<span class="n">PROBE_KEYS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"torch"</span><span class="p">,</span>
+    <span class="s2">"torch_version"</span><span class="p">,</span>
+    <span class="s2">"cuda_build"</span><span class="p">,</span>
+    <span class="s2">"cuda_available"</span><span class="p">,</span>
+    <span class="s2">"mps_available"</span><span class="p">,</span>
+    <span class="s2">"device_count"</span><span class="p">,</span>
+    <span class="s2">"imports"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="detect_cuda_driver">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.detect_cuda_driver">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect_cuda_driver</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The driver's CUDA ceiling as ``(major, minor)`` from ``nvidia-smi``, or</span>
+<span class="sd">    ``None`` when there is no ``nvidia-smi``, it fails, or it reports no GPU."""</span>
+    <span class="n">smi</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"nvidia-smi"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">smi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">smi</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"nvidia-smi failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"CUDA Version:\s+(\d+)\.(\d+)"</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="recommend_tag">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.recommend_tag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">recommend_tag</span><span class="p">(</span><span class="n">driver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The wheel tag for a driver ``(major, minor)``: the newest it can run, or</span>
+<span class="sd">    ``None`` if it is older than any build in :data:`DRIVER_TO_TAG`."""</span>
+    <span class="k">for</span> <span class="n">minimum</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">DRIVER_TO_TAG</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">driver</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">minimum</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tag</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="torch_target">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.torch_target">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">torch_target</span><span class="p">(</span><span class="n">forced</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s2">"detect"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Which torch build this machine should have.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    forced : str, optional</span>
+<span class="sd">        A tag to use regardless (``cu128``, ``cpu``, ``default``), from the</span>
+<span class="sd">        ``.ini`` file or the command line. ``auto``/``""``/``None`` detect.</span>
+<span class="sd">    system : str, optional</span>
+<span class="sd">        ``platform.system()``; for tests.</span>
+<span class="sd">    driver : tuple or None or "detect"</span>
+<span class="sd">        The driver's CUDA ceiling; ``"detect"`` runs ``nvidia-smi``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        ``tag``: the wheel tag, ``"default"`` for PyPI's own wheel (macOS, where</span>
+<span class="sd">        it carries MPS), ``"cpu"`` for the CPU build, ``None`` when nothing can be</span>
+<span class="sd">        decided (Linux, no ``nvidia-smi``, nothing forced: the caller decides</span>
+<span class="sd">        whether to assume a CPU machine); ``index_url``: the index for that tag,</span>
+<span class="sd">        ``None`` for PyPI; ``driver``: what was detected; ``reason``: one line</span>
+<span class="sd">        saying why.</span>
+<span class="sd">    """</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">system</span> <span class="ow">or</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+    <span class="n">detected</span> <span class="o">=</span> <span class="n">detect_cuda_driver</span><span class="p">()</span> <span class="k">if</span> <span class="n">driver</span> <span class="o">==</span> <span class="s2">"detect"</span> <span class="k">else</span> <span class="n">driver</span>
+    <span class="n">forced</span> <span class="o">=</span> <span class="p">(</span><span class="n">forced</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">forced</span> <span class="ow">and</span> <span class="n">forced</span> <span class="o">!=</span> <span class="s2">"auto"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_target</span><span class="p">(</span><span class="n">forced</span><span class="p">,</span> <span class="n">detected</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"forced to </span><span class="si">{</span><span class="n">forced</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">"Darwin"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_target</span><span class="p">(</span><span class="s2">"default"</span><span class="p">,</span> <span class="n">detected</span><span class="p">,</span> <span class="s2">"macOS: PyPI's wheel, with MPS"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">detected</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_target</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"no NVIDIA driver found (no nvidia-smi)"</span><span class="p">)</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">recommend_tag</span><span class="p">(</span><span class="n">detected</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_target</span><span class="p">(</span>
+            <span class="s2">"cpu"</span><span class="p">,</span>
+            <span class="n">detected</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"driver CUDA </span><span class="si">{</span><span class="n">detected</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">detected</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is older than any PyTorch "</span>
+            <span class="s2">"CUDA build; CPU build"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_target</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">detected</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"driver CUDA </span><span class="si">{</span><span class="n">detected</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">detected</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_target</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">driver</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">):</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">TORCH_INDEX_BASE</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"tag"</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span> <span class="s2">"index_url"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="s2">"driver"</span><span class="p">:</span> <span class="n">driver</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="pip_index_args">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.pip_index_args">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pip_index_args</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The pip options that keep torch on the right index: the target's index</span>
+<span class="sd">    first and PyPI as the extra index, so anything that pulls torch in during</span>
+<span class="sd">    the step still gets the right build. Empty for PyPI's own wheel."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"index_url"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">"--index-url"</span><span class="p">,</span> <span class="n">target</span><span class="p">[</span><span class="s2">"index_url"</span><span class="p">],</span> <span class="s2">"--extra-index-url"</span><span class="p">,</span> <span class="n">PYPI_INDEX</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="probe_script">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.probe_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">probe_script</span><span class="p">(</span><span class="n">imports</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Python that prints, as one JSON line, what an environment's torch is and</span>
+<span class="sd">    whether the named modules import. Run it with the environment's python."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">imports</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">"import json</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"r = {'torch': False, 'torch_version': None, 'cuda_build': None,"</span>
+        <span class="s2">" 'cuda_available': False, 'mps_available': False, 'device_count': 0,"</span>
+        <span class="s2">" 'imports': </span><span class="si">{}</span><span class="s2">}</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"try:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    import torch</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['torch'] = True</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['torch_version'] = torch.__version__</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['cuda_build'] = torch.version.cuda</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['cuda_available'] = bool(torch.cuda.is_available())</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['device_count'] = torch.cuda.device_count() if r['cuda_available']"</span>
+        <span class="s2">" else 0</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    mps = getattr(torch.backends, 'mps', None)</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['mps_available'] = bool(mps is not None and mps.is_available())</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"except Exception as e:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    r['error'] = str(e)</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"for name in </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    try:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"        __import__(name)</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"        r['imports'][name] = True</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    except Exception as e:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"        r['imports'][name] = str(e)</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"print('PROBE ' + json.dumps(r))</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_probe">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.parse_probe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_probe</span><span class="p">(</span><span class="n">output</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The probe's dictionary from the python's output, or ``None``."""</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">((</span><span class="n">output</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"PROBE "</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">6</span><span class="p">:])</span>
+            <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="assess">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.assess">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assess</span><span class="p">(</span><span class="n">probe</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Judge an environment's torch against the machine.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, str)</span>
+<span class="sd">        A status and a sentence. Statuses: ``missing`` (no torch); ``ok`` (torch</span>
+<span class="sd">        works for this machine); ``gpu-unusable`` (a CUDA build that cannot see</span>
+<span class="sd">        the GPU this machine has: the driver is too old for it); ``cpu-on-gpu``</span>
+<span class="sd">        (a CPU build on a machine with an NVIDIA driver); ``unknown`` (the probe</span>
+<span class="sd">        failed).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">probe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"unknown"</span><span class="p">,</span> <span class="s2">"the environment could not be probed"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torch"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"missing"</span><span class="p">,</span> <span class="s2">"torch is not installed"</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torch_version"</span><span class="p">)</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cuda_build"</span><span class="p">)</span>
+    <span class="n">has_gpu</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">target</span> <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"driver"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">has_gpu</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cuda_available"</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"device_count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">"ok"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> (CUDA </span><span class="si">{</span><span class="n">build</span><span class="si">}</span><span class="s2">) sees </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> GPU(s)"</span>
+        <span class="k">if</span> <span class="n">build</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">"gpu-unusable"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> is built for CUDA </span><span class="si">{</span><span class="n">build</span><span class="si">}</span><span class="s2"> but cannot use this "</span>
+                <span class="sa">f</span><span class="s2">"machine's GPU (driver CUDA "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">target</span><span class="p">[</span><span class="s1">'driver'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">target</span><span class="p">[</span><span class="s1">'driver'</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is too old for it)"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"cpu-on-gpu"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> is a CPU build on a machine with a GPU"</span>
+    <span class="k">if</span> <span class="n">build</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"ok"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> (CUDA </span><span class="si">{</span><span class="n">build</span><span class="si">}</span><span class="s2">; no GPU here, runs on the CPU)"</span>
+    <span class="k">if</span> <span class="n">probe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mps_available"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"ok"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> with Apple MPS"</span>
+    <span class="k">return</span> <span class="s2">"ok"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"torch </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2"> (CPU)"</span></div>
+
+
+
+<div class="viewcode-block" id="install_command">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.install_command">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">install_command</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">python</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span> <span class="n">packages</span><span class="o">=</span><span class="p">(</span><span class="s2">"torch"</span><span class="p">,)):</span>
+<span class="w">    </span><span class="sd">"""The pip command, as a list, that installs ``packages`` from the target's</span>
+<span class="sd">    index."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">python</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pip"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="o">*</span><span class="n">pip_index_args</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="o">*</span><span class="n">packages</span><span class="p">]</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">seamm_manager.torch_support</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2021, Paul Saxe.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>
