@@ -20,17 +20,22 @@ Command                               What it does
                                       own environment; ``install development`` adds tooling;
                                       ``--rerun-installers`` redoes the per-package steps
                                       (datastore update, the codes' installers) after an
-                                      interrupted install.
+                                      interrupted install. Writes
+                                      ``<root>/taskserver.ini``, the TaskServer's
+                                      capacity, if it is missing.
 ``update --all`` / ``update <names>`` Update the manager, then the packages, to the versions in
                                       the published lock, in a new version of the environment
-                                      (see below); restarts the JobServer when needed.
+                                      (see below); restarts the services that were
+                                      running, leaving stopped ones stopped.
 ``show``                              List the SEAMM packages with installed and available
                                       versions.
 ``uninstall <names>`` / ``--all``     Remove packages (running their plug-in uninstallers);
                                       ``--all`` removes the whole environment.
 ``environment show|create|recreate``  Inspect, create, or rebuild ``<root>/venv`` from scratch
 ``environment remove``                (``recreate`` builds a fresh version with the SEAMM
-                                      packages that were there and switches to it).
+                                      packages that were there and switches to it;
+                                      ``--latest`` takes each one's newest release on
+                                      PyPI rather than the package list's).
 ``environment versions|switch``       The versions of the environment; switch to one, go back
 ``environment rollback|prune``        to the previous one, or remove old unused ones.
 ``compare <flowchart> -a X -b Y``     Run a flowchart in two environments (versions,
@@ -55,8 +60,8 @@ Versions of the environment
 ``<root>/venv`` is a link to the current version of the environment, in
 ``<root>/venvs/<date and time>``. ``install`` and ``update`` never change the current
 version while it may be in use: they build the next version beside it from a copy of
-the current one plus the change, switch the link, and restart the services so that
-they run from it. Jobs already running keep the version they started in, and the
+the current one plus the change, switch the link, and restart the services that
+were running so that they run from it (a service stopped on purpose stays stopped). Jobs already running keep the version they started in, and the
 services and apps always name the real path, never the link, since Python does not
 follow the link when it starts (``--in-place`` changes the current environment
 directly instead, which is only safe with no jobs running). ``environment versions``

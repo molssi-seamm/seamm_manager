@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e4325657"></script>
+    <script src="../../_static/documentation_options.js?v=99beb745"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>
@@ -40,6 +40,7 @@
 
 <span class="sd">"""Install requested components of SEAMM."""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
@@ -209,6 +210,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"This installation has its own copies of the codes' environments."</span><span class="p">)</span>
 
     <span class="n">environment</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">python</span><span class="p">)</span>
+    <span class="n">write_taskserver_ini</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
         <span class="n">install_packages</span><span class="p">(</span>
@@ -237,6 +239,47 @@
 
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
         <span class="n">install_development_environment</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="write_taskserver_ini">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.install.write_taskserver_ini">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_taskserver_ini</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write ``&lt;root&gt;/taskserver.ini``, the TaskServer's capacity, if missing.</span>
+
+<span class="sd">    The TaskServer (``seamm_scheduler.taskserver``) is the queue that a machine's</span>
+<span class="sd">    SEAMM jobs and their calculations can share, used by a queue section with</span>
+<span class="sd">    ``scheduler = seamm``. Its capacity is written out explicitly -- this</span>
+<span class="sd">    machine's physical cores and half its memory -- rather than left as a</span>
+<span class="sd">    silent default, so it can be seen and changed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pathlib.Path or None</span>
+<span class="sd">        The file, if it was written.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span> <span class="o">/</span> <span class="s2">"taskserver.ini"</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">cores</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span>
+    <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">total</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">gigabytes</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">memory</span> <span class="o">//</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="s2">"[taskserver]</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"# The TaskServer: the queue for this machine's cores and memory that</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"# SEAMM jobs and their calculations can share, used by a queue section</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s1">'# with "scheduler = seamm" (see seamm_scheduler.taskserver). Written by</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="s2">"# seamm-manager on install: this machine's physical cores and half its</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"# memory, leaving the rest for the desktop and everything else. Change</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"# them as you like.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"cores = </span><span class="si">{</span><span class="n">cores</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"memory = </span><span class="si">{</span><span class="n">gigabytes</span><span class="si">}</span><span class="s2"> GB</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Wrote </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: the TaskServer may use </span><span class="si">{</span><span class="n">cores</span><span class="si">}</span><span class="s2"> cores and </span><span class="si">{</span><span class="n">gigabytes</span><span class="si">}</span><span class="s2"> GB."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
 
 
 
@@ -370,7 +413,9 @@
         <span class="k">elif</span> <span class="n">package</span> <span class="o">==</span> <span class="s2">"seamm-jobserver"</span><span class="p">:</span>
             <span class="c1"># (The service is "jobserver", not the package's name, which this</span>
             <span class="c1"># used to restart -- a service that never exists.)</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">installation_service_name</span><span class="p">(</span><span class="s2">"jobserver"</span><span class="p">),</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">restart_if_running</span>
+
+            <span class="n">restart_if_running</span><span class="p">(</span><span class="n">installation_service_name</span><span class="p">(</span><span class="s2">"jobserver"</span><span class="p">),</span> <span class="n">mgr</span><span class="p">)</span>
 
         <span class="c1"># See if the package has an installer</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
@@ -432,7 +477,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>

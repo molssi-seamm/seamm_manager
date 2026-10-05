@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>seamm_manager.services &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e4325657"></script>
+    <script src="../../_static/documentation_options.js?v=99beb745"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>
@@ -308,11 +308,10 @@
             <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="k">if</span> <span class="n">port</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">dashboard_name</span><span class="o">=</span><span class="n">dashboard_name</span><span class="p">,</span>
+            <span class="n">start</span><span class="o">=</span><span class="n">running</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">running</span><span class="p">:</span>
             <span class="n">restarted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">restarted</span></div>
 
 
@@ -385,7 +384,12 @@
 <div class="viewcode-block" id="create_service">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.create_service">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_service</span><span class="p">(</span>
-    <span class="n">service</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dashboard_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">webui_host</span><span class="o">=</span><span class="s2">"0.0.0.0"</span>
+    <span class="n">service</span><span class="p">,</span>
+    <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">dashboard_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">webui_host</span><span class="o">=</span><span class="s2">"0.0.0.0"</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Create and start one of this installation's services.</span>
 
@@ -403,6 +407,9 @@
 <span class="sd">        The dashboard's name. Default: the host name, plus the installation's tag.</span>
 <span class="sd">    webui_host : str = "0.0.0.0"</span>
 <span class="sd">        The address the web interface listens on.</span>
+<span class="sd">    start : bool = True</span>
+<span class="sd">        Start the service once created. False leaves it stopped, never started</span>
+<span class="sd">        even briefly (a service deliberately stopped, recreated by an update).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -481,9 +488,44 @@
     <span class="p">)</span>
     <span class="c1"># The services need the datastore; create it if this is a fresh root.</span>
     <span class="n">datastore</span><span class="o">.</span><span class="n">ensure</span><span class="p">()</span>
-    <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" on port </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">service</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"webui"</span><span class="p">,</span> <span class="s2">"dashboard"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created and started the service </span><span class="si">{</span><span class="n">name</span><span class="si">}{</span><span class="n">where</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">start</span><span class="p">:</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created and started the service </span><span class="si">{</span><span class="n">name</span><span class="si">}{</span><span class="n">where</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created the service </span><span class="si">{</span><span class="n">name</span><span class="si">}{</span><span class="n">where</span><span class="si">}</span><span class="s2">, left stopped as it was"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="is_running">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.is_running">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_running</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether the service ``name`` is installed and running."""</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span> <span class="ow">or</span> <span class="n">mgr</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">is_running</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="restart_if_running">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.services.restart_if_running">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">restart_if_running</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Restart the service ``name`` if it is running; leave a stopped one stopped.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        Whether it was restarted.</span>
+<span class="sd">    """</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span> <span class="ow">or</span> <span class="n">mgr</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_running</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">manager</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The service </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is stopped; it was left stopped."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">manager</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">True</span></div>
 
 
@@ -649,7 +691,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.services</a></li> 
       </ul>

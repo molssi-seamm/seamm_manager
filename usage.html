@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e4325657"></script>
+    <script src="_static/documentation_options.js?v=99beb745"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -67,12 +67,15 @@ environment if needed); <code class="docutils literal notranslate"><span class="
 own environment; <code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">development</span></code> adds tooling;
 <code class="docutils literal notranslate"><span class="pre">--rerun-installers</span></code> redoes the per-package steps
 (datastore update, the codes’ installers) after an
-interrupted install.</p></td>
+interrupted install. Writes
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/taskserver.ini</span></code>, the TaskServer’s
+capacity, if it is missing.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--all</span></code> / <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">&lt;names&gt;</span></code></p></td>
 <td><p>Update the manager, then the packages, to the versions in
 the published lock, in a new version of the environment
-(see below); restarts the JobServer when needed.</p></td>
+(see below); restarts the services that were
+running, leaving stopped ones stopped.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">show</span></code></p></td>
 <td><p>List the SEAMM packages with installed and available
@@ -87,7 +90,9 @@ versions.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code></p></td>
 <td><p>(<code class="docutils literal notranslate"><span class="pre">recreate</span></code> builds a fresh version with the SEAMM
-packages that were there and switches to it).</p></td>
+packages that were there and switches to it;
+<code class="docutils literal notranslate"><span class="pre">--latest</span></code> takes each one’s newest release on
+PyPI rather than the package list’s).</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions|switch</span></code></p></td>
 <td><p>The versions of the environment; switch to one, go back</p></td>
@@ -132,8 +137,8 @@ flowchart format 3.0 (dry run and confirmation first;
 <p><code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> is a link to the current version of the environment, in
 <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;date</span> <span class="pre">and</span> <span class="pre">time&gt;</span></code>. <code class="docutils literal notranslate"><span class="pre">install</span></code> and <code class="docutils literal notranslate"><span class="pre">update</span></code> never change the current
 version while it may be in use: they build the next version beside it from a copy of
-the current one plus the change, switch the link, and restart the services so that
-they run from it. Jobs already running keep the version they started in, and the
+the current one plus the change, switch the link, and restart the services that
+were running so that they run from it (a service stopped on purpose stays stopped). Jobs already running keep the version they started in, and the
 services and apps always name the real path, never the link, since Python does not
 follow the link when it starts (<code class="docutils literal notranslate"><span class="pre">--in-place</span></code> changes the current environment
 directly instead, which is only safe with no jobs running). <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code>
@@ -325,7 +330,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

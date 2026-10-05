@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e4325657"></script>
+    <script src="../../_static/documentation_options.js?v=99beb745"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -282,6 +282,26 @@
                 <span class="n">marker</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_file_hash</span><span class="p">()</span>
                 <span class="ow">and</span> <span class="n">age_days</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">REFRESH_DAYS</span>
             <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_not_ours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Whether ``environment`` exists but was not made by a SEAMM installer.</span>
+
+<span class="sd">        An environment SEAMM made carries a ``seamm-&lt;step&gt;.sha256`` record of the</span>
+<span class="sd">        environment file applied to it; one made before the records existed has</span>
+<span class="sd">        the name SEAMM gives it. Anything else -- a hand-built environment named</span>
+<span class="sd">        in the .ini file (a pinned CUDA torch, a package from a git commit) -- is</span>
+<span class="sd">        the user's, and an update must not apply SEAMM's environment file to it</span>
+<span class="sd">        (seamm_manager#28).</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">environment</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"conda-meta"</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"seamm-*.sha256"</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
@@ -1014,6 +1034,14 @@
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span>
             <span class="k">if</span> <span class="s2">"conda-environment"</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="s2">"conda-environment"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"conda-environment"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_not_ours</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"    The Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">' named in "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="si">}</span><span class="s2">.ini was not created by SEAMM, so it is left as "</span>
+                    <span class="s2">"it is. Update it yourself, or point the .ini file at an "</span>
+                    <span class="s2">"environment SEAMM manages."</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unchanged_since_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
                 <span class="nb">print</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"    The Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">' is up to date (the "</span>
@@ -1078,7 +1106,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>

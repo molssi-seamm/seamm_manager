@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=e4325657"></script>
+    <script src="_static/documentation_options.js?v=99beb745"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,22 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.5 – Stopped services stay stopped; hand-built code environments left alone</dt><dd><ul class="simple">
+<li><p>A service stopped on purpose stays stopped through an environment change or an
+update, which restart only the services that were running (#26).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span> <span class="pre">--latest</span></code> takes each package’s newest release on PyPI,
+not the package list’s, which lags a release by up to a day (#27).</p></li>
+<li><p>A plug-in’s installer leaves alone a conda environment named in its .ini file
+that SEAMM did not make, such as a hand-built MLFF environment, instead of
+applying SEAMM’s environment file to it (#28). An environment SEAMM made before
+it began marking them, under a name of the user’s choosing, is now treated as
+the user’s too.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span></code> no longer runs the installer of a package it has refused as not a
+SEAMM package (#29).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">install</span></code> writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/taskserver.ini</span></code> – the TaskServer’s capacity, the
+physical cores and half the memory – if it is missing.</p></li>
+</ul>
+</dd>
 <dt>2026.10.2.3 – Bugfix: a refused switch no longer changes the current environment</dt><dd><ul class="simple">
 <li><p>After building a new version of the environment, the manager made sure that
 version held the manager’s own release. It did so against whatever environment was
@@ -417,7 +433,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

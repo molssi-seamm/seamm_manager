@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.2.3 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=e4325657"></script>
+    <script src="../../_static/documentation_options.js?v=99beb745"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -222,10 +222,18 @@
         <span class="o">&gt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-datastore"</span><span class="p">])</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_running</span>
+
+            <span class="n">running</span> <span class="o">=</span> <span class="n">is_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">,</span> <span class="n">mgr</span><span class="p">)</span>
             <span class="n">mgr</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
             <span class="n">update_datastore</span><span class="p">()</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because the datastore was updated."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">running</span><span class="p">:</span>
+                <span class="n">mgr</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because the datastore was updated."</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> was stopped; it was left stopped."</span><span class="p">)</span>
     <span class="k">elif</span> <span class="p">(</span>
         <span class="n">initial_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="ow">and</span> <span class="n">final_version</span><span class="p">[</span><span class="s2">"seamm-jobserver"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -236,8 +244,10 @@
 
         <span class="c1"># A switch to a new environment version already restarted the services</span>
         <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_versions</span><span class="o">.</span><span class="n">switched</span><span class="p">:</span>
-            <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service_name</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because it was updated."</span><span class="p">)</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">restart_if_running</span>
+
+            <span class="k">if</span> <span class="n">restart_if_running</span><span class="p">(</span><span class="n">service_name</span><span class="p">,</span> <span class="n">mgr</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service_name</span><span class="si">}</span><span class="s2"> because it was updated."</span><span class="p">)</span>
 
     <span class="c1"># Point at the flowchart upgrade if old job flowcharts remain (report only)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.flowcharts</span><span class="w"> </span><span class="kn">import</span> <span class="n">notice</span>
@@ -280,8 +290,10 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">old</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">service</span> <span class="o">=</span> <span class="n">installation_service_name</span><span class="p">(</span><span class="s2">"webui"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">mgr</span><span class="o">.</span><span class="n">is_installed</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
-        <span class="n">mgr</span><span class="o">.</span><span class="n">restart</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2"> because the web interface was updated."</span><span class="p">)</span></div>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">restart_if_running</span>
+
+        <span class="k">if</span> <span class="n">restart_if_running</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">mgr</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Restarted the </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2"> because the web interface was updated."</span><span class="p">)</span></div>
 
 
 
@@ -391,8 +403,9 @@
     <span class="c1"># See if any packages have an installer</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">to_update</span><span class="p">:</span>
-            <span class="c1"># Skip packages that aren't installed.</span>
-            <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="c1"># Skip packages that aren't installed, and those refused above as</span>
+            <span class="c1"># not SEAMM packages (seamm_manager#29).</span>
+            <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">info</span> <span class="ow">and</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">progress</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">update_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -464,7 +477,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.2.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
