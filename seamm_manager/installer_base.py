@@ -4,6 +4,7 @@
 import argparse
 import logging
 import os
+import re
 from pathlib import Path
 import shutil
 
@@ -57,6 +58,23 @@ prolog = """\
 """
 
 
+def environment_created_by_seamm(prefix):
+    """Whether conda's history says a SEAMM installer created the environment at
+    ``prefix``: its first command is ``conda env create ... --file
+    seamm-<step>.yml``. ``None`` when the history cannot be read."""
+    try:
+        history = Path(prefix) / "conda-meta" / "history"
+        for line in history.read_text(errors="replace").splitlines():
+            if line.startswith("# cmd:"):
+                return bool(
+                    re.search(r"\benv\s+create\b", line)
+                    and re.search(r"--file\s+\S*seamm-[\w.-]+\.ya?ml", line)
+                )
+    except Exception:
+        pass
+    return None
+
+
 class InstallerBase(object):
     """A base class for plug-in installers.
 
@@ -94,6 +112,13 @@ class InstallerBase(object):
         self._exe_config = seamm_manager.Configuration(None)
         self._init_file_name = None
         self.environment = None
+        #: A plug-in whose code needs PyTorch sets this: torch is then installed
+        #: from the index matching the machine's NVIDIA driver, a working torch is
+        #: left alone, and the environment is checked after install and update
+        #: (seamm_manager.torch_support). ``torch_imports`` names the modules the
+        #: check must import, e.g. ("torch", "xnn", "mdi").
+        self.torch_managed = False
+        self.torch_imports = ("torch",)
 
     @property
     def conda(self):
@@ -248,20 +273,27 @@ class InstallerBase(object):
     def _not_ours(self, environment):
         """Whether ``environment`` exists but was not made by a SEAMM installer.
 
-        An environment SEAMM made carries a ``seamm-<step>.sha256`` record of the
-        environment file applied to it; one made before the records existed has
-        the name SEAMM gives it. Anything else -- a hand-built environment named
-        in the .ini file (a pinned CUDA torch, a package from a git commit) -- is
-        the user's, and an update must not apply SEAMM's environment file to it
-        (seamm_manager#28).
+        Conda records in ``conda-meta/history`` the command that created an
+        environment; one SEAMM made was created ``--file seamm-<step>.yml``. That
+        is the test. An environment with the name SEAMM gives it is SEAMM's; one
+        whose history cannot be read falls back to the ``seamm-<step>.sha256``
+        records SEAMM leaves when it applies a file. Anything else -- a
+        hand-built environment named in the .ini file (a pinned CUDA torch, a
+        package from a git commit) -- is the user's, and an update must not
+        apply SEAMM's environment file to it (seamm_manager#28). The records
+        alone were not enough: an environment SEAMM mistakenly updated once has
+        them and is still not SEAMM's.
         """
         try:
             if not self.conda.exists(environment):
                 return False
             if environment == self.environment:
                 return False
-            meta = self.conda.path(environment) / "conda-meta"
-            return not any(meta.glob("seamm-*.sha256"))
+            prefix = self.conda.path(environment)
+            created = environment_created_by_seamm(prefix)
+            if created is not None:
+                return not created
+            return not any((prefix / "conda-meta").glob("seamm-*.sha256"))
         except Exception:
             return False
 
@@ -272,6 +304,106 @@ class InstallerBase(object):
             marker.write_text(self._environment_file_hash() + "\n")
         except Exception as e:  # never fail an installation over the record
             self.logger.debug(f"Could not record the applied environment file: {e}")
+
+    # ------------------------------------------------------------------
+    # PyTorch in a code environment (torch_managed plug-ins)
+    # ------------------------------------------------------------------
+    def torch_target(self):
+        """The torch build this machine needs: ``--torch-tag`` on the command
+        line, else ``torch-build`` in the plug-in's .ini file (``auto`` detects),
+        else detection. See :func:`seamm_manager.torch_support.torch_target`."""
+        from . import torch_support
+
+        forced = getattr(self.options, "torch_tag", None)
+        if not forced:
+            try:
+                forced = self.exe_config.get_values("local").get("torch-build", "")
+            except Exception:
+                forced = ""
+        return torch_support.torch_target(forced=forced)
+
+    def _probe_torch(self, environment):
+        from . import torch_support
+
+        output = self.conda.run_python(
+            environment, torch_support.probe_script(self.torch_imports)
+        )
+        return torch_support.parse_probe(output)
+
+    def _ensure_torch(self, environment, apply_file=True):
+        """Bring the environment's torch into line with the machine, apply the
+        plug-in's environment file (its pip part on torch's index), and check.
+
+        Returns True when the environment is usable afterwards. Prints what it
+        found and did; never replaces a torch that works, and never replaces a
+        broken one silently -- that takes ``--torch-tag`` (or
+        ``SEAMM_REFRESH_CODES``), since a user may have built it deliberately.
+        """
+        from . import torch_support
+
+        target = self.torch_target()
+        probe = self._probe_torch(environment)
+        status, note = torch_support.assess(probe, target)
+        print(f"    PyTorch: {note}.")
+        forced = bool(getattr(self.options, "torch_tag", None)) or bool(
+            os.environ.get("SEAMM_REFRESH_CODES")
+        )
+        index_args = torch_support.pip_index_args(target)
+
+        if status == "missing" or (status in ("gpu-unusable", "cpu-on-gpu") and forced):
+            if target["tag"] is None:
+                print(
+                    "!   No NVIDIA driver was found on this machine, so which torch "
+                    "to install cannot be decided here (a cluster login node, for "
+                    "instance, has no GPU although its compute nodes do). Set "
+                    f"'torch-build = <tag>' in {self.section}.ini -- cu128 for a "
+                    "current NVIDIA driver, cpu for a machine without a GPU -- or "
+                    "run the installer with --torch-tag, and try again."
+                )
+                return False
+            what = "Installing" if status == "missing" else "Replacing"
+            where = target["index_url"] or "PyPI"
+            print(f"    {what} torch from {where} ({target['reason']}).")
+            self.conda.pip_install(
+                environment,
+                ["torch"],
+                upgrade=(status != "missing"),
+                index_args=index_args,
+            )
+        elif status in ("gpu-unusable", "cpu-on-gpu"):
+            print(
+                f"!   {note}. It is left as it is: it may have been built on purpose. "
+                f"To replace it with the build for this machine "
+                f"({target['tag'] or 'undecided'}), run the installer again with "
+                f"--torch-tag {target['tag'] or '<tag>'}."
+            )
+            if status == "gpu-unusable":
+                # Nothing that depends on torch will work; do not pile on.
+                return False
+        elif status == "unknown":
+            print(f"!   {note}; the environment is left as it is.")
+            return False
+
+        if apply_file:
+            self.conda.update_environment(
+                self.environment_file, name=environment, index_args=index_args
+            )
+            self._record_applied(environment)
+
+        probe = self._probe_torch(environment)
+        status, note = torch_support.assess(probe, target)
+        failed = [
+            f"{name}: {err}"
+            for name, err in (probe or {}).get("imports", {}).items()
+            if err is not True
+        ]
+        if status != "ok" or failed:
+            print(f"!   Check of '{environment}' failed: {note}.")
+            for line in failed:
+                print(f"!       {line}")
+            return False
+        print(f"    Checked '{environment}': {note}; imports OK.")
+        return True
 
     def ask_yes_no(self, text, default=None):
         """Ask a simple yes/no question, returning True/False.
@@ -764,6 +896,19 @@ class InstallerBase(object):
         if self.conda.exists(self.environment):
             # e.g. a reinstall: 'update' brings the environment up to date.
             print(f"    Using the existing Conda environment '{self.environment}'.")
+            if self.torch_managed:
+                self._ensure_torch(self.environment, apply_file=False)
+        elif self.torch_managed:
+            print(
+                f"    Installing Conda environment '{self.environment}'. This "
+                "may take a minute or two."
+            )
+            # The conda part first, then torch from the right index, then the
+            # rest of the pip part on that index too.
+            self.conda.create_environment(
+                environment_file, name=self.environment, conda_only=True
+            )
+            self._ensure_torch(self.environment, apply_file=True)
         else:
             print(
                 f"    Installing Conda environment '{self.environment}'. This "
@@ -829,12 +974,19 @@ class InstallerBase(object):
         )
         check.set_defaults(method=self.check)
 
+        torch_help = (
+            "For a code that needs PyTorch: the wheel build to install, e.g. cu128, "
+            "cu118, cpu or default (PyPI's), instead of the one chosen from this "
+            "machine's NVIDIA driver; also replaces a torch that cannot use the GPU."
+        )
         # install
         self.subparser["install"] = install = subparsers.add_parser("install")
+        install.add_argument("--torch-tag", metavar="TAG", help=torch_help)
         install.set_defaults(method=self.install)
 
         # update
         self.subparser["update"] = update = subparsers.add_parser("update")
+        update.add_argument("--torch-tag", metavar="TAG", help=torch_help)
         update.set_defaults(method=self.update)
 
         # uninstall
@@ -977,8 +1129,12 @@ class InstallerBase(object):
                 f"    Updating Conda environment '{environment}'. This may "
                 "take a minute or two."
             )
-            self.conda.update_environment(self.environment_file, name=environment)
-            self._record_applied(environment)
+            if self.torch_managed:
+                if not self._ensure_torch(environment, apply_file=True):
+                    return
+            else:
+                self.conda.update_environment(self.environment_file, name=environment)
+                self._record_applied(environment)
             # Update the configuration file, just in case.
             self.exe_config.set_value("local", "installation", "conda")
             conda_exe = seamm_manager.find_conda()
