@@ -262,11 +262,10 @@ def relink_services():
             force=True,
             port=int(port) if port else None,
             dashboard_name=dashboard_name,
+            start=running,
         )
         if running:
             restarted.append(name)
-        else:
-            mgr.stop(name, ignore_errors=True)
     return restarted
 
 
@@ -330,7 +329,12 @@ def same_root_services(service):
 
 
 def create_service(
-    service, force=False, port=None, dashboard_name=None, webui_host="0.0.0.0"
+    service,
+    force=False,
+    port=None,
+    dashboard_name=None,
+    webui_host="0.0.0.0",
+    start=True,
 ):
     """Create and start one of this installation's services.
 
@@ -348,6 +352,9 @@ def create_service(
         The dashboard's name. Default: the host name, plus the installation's tag.
     webui_host : str = "0.0.0.0"
         The address the web interface listens on.
+    start : bool = True
+        Start the service once created. False leaves it stopped, never started
+        even briefly (a service deliberately stopped, recreated by an update).
 
     Returns
     -------
@@ -426,9 +433,38 @@ def create_service(
     )
     # The services need the datastore; create it if this is a fresh root.
     datastore.ensure()
-    mgr.start(name)
     where = f" on port {port}" if service in ("webui", "dashboard") else ""
-    print(f"Created and started the service {name}{where}")
+    if start:
+        mgr.start(name)
+        print(f"Created and started the service {name}{where}")
+    else:
+        print(f"Created the service {name}{where}, left stopped as it was")
+    return True
+
+
+def is_running(name, manager=None):
+    """Whether the service ``name`` is installed and running."""
+    manager = manager or mgr
+    try:
+        return manager.is_installed(name) and bool(manager.is_running(name))
+    except Exception:
+        return False
+
+
+def restart_if_running(name, manager=None):
+    """Restart the service ``name`` if it is running; leave a stopped one stopped.
+
+    Returns
+    -------
+    bool
+        Whether it was restarted.
+    """
+    manager = manager or mgr
+    if not is_running(name, manager):
+        if manager.is_installed(name):
+            print(f"The service {name} is stopped; it was left stopped.")
+        return False
+    manager.restart(name)
     return True
 
 

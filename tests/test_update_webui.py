@@ -25,12 +25,16 @@ class FakeUv:
 
 
 class FakeMgr:
-    def __init__(self, installed=True):
+    def __init__(self, installed=True, running=True):
         self.installed = installed
+        self.running = running
         self.restarted = []
 
     def is_installed(self, name):
         return self.installed
+
+    def is_running(self, name):
+        return self.installed and self.running
 
     def restart(self, name):
         self.restarted.append(name)
@@ -95,3 +99,15 @@ def test_no_service_not_restarted(setup, monkeypatch):
     upgrade_to(monkeypatch, {"seamm-webui": "2"})
     update.update_webui()
     assert setup.restarted == []
+
+
+def test_stopped_service_left_stopped(setup, monkeypatch, capsys):
+    """seamm_manager#26: an update does not start a service that was stopped."""
+    setup.running = False
+    FakeUv.versions = {"seamm-webui": "2026.8.13.1", "seamm-datastore": "2026.9.25"}
+    upgrade_to(
+        monkeypatch, {"seamm-webui": "2026.10.1.1", "seamm-datastore": "2026.10.1"}
+    )
+    update.update_webui()
+    assert setup.restarted == []
+    assert "left stopped" in capsys.readouterr().out

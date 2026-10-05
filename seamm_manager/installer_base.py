@@ -245,6 +245,26 @@ class InstallerBase(object):
         except Exception:
             return False
 
+    def _not_ours(self, environment):
+        """Whether ``environment`` exists but was not made by a SEAMM installer.
+
+        An environment SEAMM made carries a ``seamm-<step>.sha256`` record of the
+        environment file applied to it; one made before the records existed has
+        the name SEAMM gives it. Anything else -- a hand-built environment named
+        in the .ini file (a pinned CUDA torch, a package from a git commit) -- is
+        the user's, and an update must not apply SEAMM's environment file to it
+        (seamm_manager#28).
+        """
+        try:
+            if not self.conda.exists(environment):
+                return False
+            if environment == self.environment:
+                return False
+            meta = self.conda.path(environment) / "conda-meta"
+            return not any(meta.glob("seamm-*.sha256"))
+        except Exception:
+            return False
+
     def _record_applied(self, environment):
         try:
             marker = self._applied_marker(environment)
@@ -939,6 +959,14 @@ class InstallerBase(object):
             environment = self.environment
             if "conda-environment" in data and data["conda-environment"] != "":
                 environment = data["conda-environment"]
+            if self._not_ours(environment):
+                print(
+                    f"    The Conda environment '{environment}' named in "
+                    f"{self.section}.ini was not created by SEAMM, so it is left as "
+                    "it is. Update it yourself, or point the .ini file at an "
+                    "environment SEAMM manages."
+                )
+                return
             if self._unchanged_since_applied(environment):
                 print(
                     f"    The Conda environment '{environment}' is up to date (the "

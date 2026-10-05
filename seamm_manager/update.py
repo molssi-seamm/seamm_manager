@@ -179,10 +179,18 @@ def update():
         > Version(initial_version["seamm-datastore"])
     ):
         if mgr.is_installed(service_name):
+            from .services import is_running
+
+            running = is_running(service_name, mgr)
             mgr.stop(service_name)
             update_datastore()
-            mgr.start(service_name)
-            print(f"Restarted the {service_name} because the datastore was updated.")
+            if running:
+                mgr.start(service_name)
+                print(
+                    f"Restarted the {service_name} because the datastore was updated."
+                )
+            else:
+                print(f"The {service_name} was stopped; it was left stopped.")
     elif (
         initial_version["seamm-jobserver"] is not None
         and final_version["seamm-jobserver"] is not None
@@ -193,8 +201,10 @@ def update():
 
         # A switch to a new environment version already restarted the services
         if mgr.is_installed(service_name) and not _versions.switched:
-            mgr.restart(service_name)
-            print(f"Restarted the {service_name} because it was updated.")
+            from .services import restart_if_running
+
+            if restart_if_running(service_name, mgr):
+                print(f"Restarted the {service_name} because it was updated.")
 
     # Point at the flowchart upgrade if old job flowcharts remain (report only)
     from .flowcharts import notice
@@ -234,8 +244,10 @@ def update_webui():
             print(f"   {name}: {old} -> {new}")
     service = installation_service_name("webui")
     if mgr.is_installed(service):
-        mgr.restart(service)
-        print(f"Restarted the {service} because the web interface was updated.")
+        from .services import restart_if_running
+
+        if restart_if_running(service, mgr):
+            print(f"Restarted the {service} because the web interface was updated.")
 
 
 def update_packages(
@@ -342,8 +354,9 @@ def update_packages(
     # See if any packages have an installer
     if not metadata["gui-only"] and not gui_only:
         for package in to_update:
-            # Skip packages that aren't installed.
-            if package in info:
+            # Skip packages that aren't installed, and those refused above as
+            # not SEAMM packages (seamm_manager#29).
+            if package in info and package in packages:
                 if progress is not None:
                     progress()
                 if update_text is not None:

@@ -53,6 +53,14 @@ def setup(parser):
         action="store_true",
         help="Switch even if processes started through <root>/venv exist.",
     )
+    tmp.add_argument(
+        "--latest",
+        action="store_true",
+        help=(
+            "Each package's newest release on PyPI, not the published package "
+            "list's, which lags a release by up to a day (as update --latest)."
+        ),
+    )
 
     tmp = subsubparser.add_parser("remove", help="Delete the environment.")
     tmp.set_defaults(func=remove)
@@ -176,9 +184,21 @@ def recreate():
         my.uv.python_version = python_version
     _versions.ensure_versioned()
     print(f"Building a fresh environment with {len(installed)} SEAMM packages.")
-    new = _versions.build_version(
-        installed, constraints=constraints(), from_freeze=False
-    )
+    specs, lock = installed, constraints()
+    if getattr(my.options, "latest", False):
+        # Each package's newest release, unconstrained (seamm_manager#27)
+        from .util import pypi_latest
+
+        specs, lock = [], None
+        for package in installed:
+            version = pypi_latest(package)
+            if version is None:
+                print(f"Could not reach PyPI for {package}; its newest release used.")
+                specs.append(package)
+            else:
+                specs.append(f"{package}=={version}")
+        print("Using each package's newest release on PyPI (--latest).")
+    new = _versions.build_version(specs, constraints=lock, from_freeze=False)
     saved, my.uv = my.uv, new
     try:
         path = write_environment_snapshot("recreate")
