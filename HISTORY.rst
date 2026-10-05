@@ -1,7 +1,7 @@
 =======
 History
 =======
-2026.10.6 -- PyTorch chosen for the machine; hand-built environments recognised
+2026.10.5.1 -- PyTorch chosen for the machine; hand-built environments recognised
     * A plug-in whose code needs PyTorch (``torch_managed`` in its installer:
       xnn-step first) no longer takes whatever torch PyPI serves. The installer
       reads the NVIDIA driver's CUDA ceiling from ``nvidia-smi``, installs torch

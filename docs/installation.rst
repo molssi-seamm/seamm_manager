@@ -153,10 +153,27 @@ a cluster, whose own directories are read-only, works too. SEAMM's own environme
 never uses conda's Python, even when a conda environment is active.
 
 When a plug-in updates its code environment from its environment file, pip
-packages named without a version (``torch``) are installed only if missing and
-otherwise left as they are, while those with a version specifier are kept current
-within it. So a torch build you installed by hand for your GPU driver survives
-updates; to change it, reinstall it by hand in that environment.
+packages named without a version are installed only if missing and otherwise left
+as they are, while those with a version specifier are kept current within it.
+
+A plug-in whose code needs PyTorch (xnn-step) installs torch itself rather than
+from its environment file, because PyPI's default torch bundles the newest CUDA
+runtime, which an older NVIDIA driver cannot run -- torch then silently uses the
+CPU. The installer reads the driver's CUDA version from ``nvidia-smi``, installs
+torch from the matching PyTorch index (and the environment's other pip packages
+from that index too), and checks afterwards that torch sees the GPU and the code
+imports. A torch that works is never replaced, and one that does not -- perhaps a
+build you made on purpose -- only when you ask. On a machine without a driver,
+such as a cluster's login node whose compute nodes have the GPUs, it cannot tell
+which build is wanted and says so; choose one with ``torch-build = <tag>`` in the
+plug-in's ``.ini`` file (``cu128`` for a current driver, ``cpu`` for no GPU,
+``auto`` to detect), or run the plug-in's installer with ``--torch-tag``, e.g.
+``~/SEAMM/venv/bin/xnn-step-installer install --torch-tag cu128``, which also
+replaces a torch that cannot use the GPU.
+
+An environment that SEAMM did not create -- one you built by hand and named in a
+plug-in's ``.ini`` file -- is left alone. Whether SEAMM created it is read from
+conda's own history of the environment.
 
 Licensed codes -- ORCA, Gaussian, VASP, FHI-aims -- are not installed at all: you
 install them yourself. Installing their plug-in writes a commented template,
