@@ -1,6 +1,21 @@
 =======
 History
 =======
+2026.10.6 -- PyTorch chosen for the machine; hand-built environments recognised
+    * A plug-in whose code needs PyTorch (``torch_managed`` in its installer:
+      xnn-step first) no longer takes whatever torch PyPI serves. The installer
+      reads the NVIDIA driver's CUDA ceiling from ``nvidia-smi``, installs torch
+      from the matching PyTorch index (``seamm_manager.torch_support``), puts the
+      rest of the environment file's pip part on that index too, leaves a torch
+      that works alone, never replaces one that does not without ``--torch-tag``
+      (it may have been built on purpose), and checks afterwards that torch sees
+      the GPU and the code imports. A machine with no driver -- a cluster's login
+      node -- is asked to decide: ``torch-build = <tag>`` in the plug-in's .ini or
+      ``--torch-tag`` (#31).
+    * Whether a conda environment is SEAMM's is now read from conda's own history
+      (created ``--file seamm-<step>.yml``), not only from the records SEAMM
+      leaves when it applies a file: an environment SEAMM once updated by mistake
+      has the records but is not SEAMM's.
 2026.10.5 -- Stopped services stay stopped; hand-built code environments left alone
     * A service stopped on purpose stays stopped through an environment change or an
       update, which restart only the services that were running (#26).

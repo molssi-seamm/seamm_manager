@@ -273,7 +273,9 @@ class Conda(object):
         tmp = "\n\t".join(self.environments)
         self.logger.info(f"environments:\n\t{tmp}")
 
-    def create_environment(self, environment_file, name=None, force=False):
+    def create_environment(
+        self, environment_file, name=None, force=False, conda_only=False
+    ):
         """Create a Conda environment.
 
         Parameters
@@ -285,7 +287,21 @@ class Conda(object):
             environment file.
         force : bool = False
             Whether to overwrite an existing environment.
+        conda_only : bool = False
+            Create from the file's conda part alone, leaving its ``pip:``
+            section to the caller (which may need to install torch from a
+            particular index before anything that depends on it).
         """
+        if conda_only:
+            # The stripped copy keeps the file's own name: conda records the
+            # create command in the environment's history, and the name
+            # seamm-<step>.yml there is how a SEAMM-made environment is later
+            # recognised (InstallerBase._not_ours).
+            conda_text, _, _ = split_environment_file(environment_file)
+            tmpdir = Path(tempfile.mkdtemp(prefix="seamm-env-"))
+            stripped = tmpdir / Path(environment_file).name
+            stripped.write_text(conda_text)
+            environment_file = str(stripped)
         if isinstance(environment_file, Path):
             path = str(environment_file)
         else:
@@ -721,7 +737,12 @@ class Conda(object):
         self._execute(command, progress=progress, update=update)
 
     def update_environment(
-        self, environment_file, name=None, update=None, pip_policy="conservative"
+        self,
+        environment_file,
+        name=None,
+        update=None,
+        pip_policy="conservative",
+        index_args=(),
     ):
         """Update a Conda environment from an environment file.
 
@@ -738,7 +759,8 @@ class Conda(object):
             driver-matched build. ``"conservative"`` (the default) applies the
             conda part with conda, then bare pip names without upgrading (they
             must merely be present) and requirements with a version specifier
-            with ``-U`` (kept current within their spec).
+            with ``-U`` (kept current within their spec). ``index_args`` go
+            to those pip steps (the torch index pair).
         """
         if isinstance(environment_file, Path):
             path = str(environment_file)
@@ -765,9 +787,17 @@ class Conda(object):
         try:
             self._execute(command, update=update)
             if bare:
-                self._pip_in_environment(prefix, bare, upgrade=False, update=update)
+                self._pip_in_environment(
+                    prefix, bare, upgrade=False, update=update, index_args=index_args
+                )
             if specified:
-                self._pip_in_environment(prefix, specified, upgrade=True, update=update)
+                self._pip_in_environment(
+                    prefix,
+                    specified,
+                    upgrade=True,
+                    update=update,
+                    index_args=index_args,
+                )
         except subprocess.CalledProcessError as e:
             self.logger.warning(f"Calling conda, returncode = {e.returncode}")
             self.logger.warning(f"Output:\n\n{e.output}\n\n")
@@ -776,14 +806,48 @@ class Conda(object):
             if tmp is not None:
                 Path(tmp.name).unlink(missing_ok=True)
 
-    def _pip_in_environment(self, prefix, requirements, upgrade=False, update=None):
-        """Run pip in the environment for the given requirements."""
+    def _pip_in_environment(
+        self, prefix, requirements, upgrade=False, update=None, index_args=()
+    ):
+        """Run pip in the environment for the given requirements.
+
+        ``index_args`` are pip options placed before the requirements, such as
+        the ``--index-url``/``--extra-index-url`` pair that keeps torch on the
+        build the machine needs (:mod:`seamm_manager.torch_support`).
+        """
         target = "" if prefix is None else f" -p '{str(prefix)}'"
         flag = " --upgrade" if upgrade else ""
+        extra = "".join(f" '{a}'" for a in index_args)
         reqs = " ".join(f"'{r}'" for r in requirements)
-        command = f"'{self.conda_exe}' run{target} pip install{flag} {reqs}"
+        command = f"'{self.conda_exe}' run{target} pip install{flag}{extra} {reqs}"
         self.logger.debug(f"command = {command}")
         self._execute(command, update=update)
+
+    def pip_install(self, environment, requirements, upgrade=False, index_args=()):
+        """``pip install`` the requirements in an environment (name or path)."""
+        prefix = self._resolve_environment_path(environment)
+        self._pip_in_environment(
+            prefix, list(requirements), upgrade=upgrade, index_args=index_args
+        )
+
+    def run_python(self, environment, script, timeout=600):
+        """Run a Python script (text) with an environment's python and return
+        its output, stdout then stderr; ``None`` if it could not be run."""
+        prefix = self._resolve_environment_path(environment)
+        command = [self.conda_exe, "run", "-p", str(prefix), "python", "-c", script]
+        self.logger.debug(f"command = {command}")
+        try:
+            result = subprocess.run(
+                command,
+                stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except (OSError, subprocess.SubprocessError) as e:
+            self.logger.debug(f"Could not run python in {prefix}: {e}")
+            return None
+        return (result.stdout or "") + "\n" + (result.stderr or "")
 
     def _execute(
         self, command, poll_interval=2, progress=True, newline=True, update=None
