@@ -197,6 +197,11 @@ def install():
     if my.development:
         install_development_environment()
 
+    from . import versions as _versions
+
+    # Non-zero if a change was built but not switched to, so scripts notice
+    return 1 if _versions.refused else 0
+
 
 def write_taskserver_ini(root):
     """Write ``<root>/taskserver.ini``, the TaskServer's capacity, if missing.
@@ -317,6 +322,7 @@ def install_packages(
     if progress is not None:
         progress()
 
+    applied = True
     if len(specs) > 0:
         retire_installer(specs, info)
         lock = constraints()
@@ -349,7 +355,8 @@ def install_packages(
     # for every requested package, which is how to recover if an earlier run
     # was interrupted part way through this loop (re-running 'install' alone
     # finds nothing to install and would otherwise skip all of this).
-    changed = {spec.split("==")[0] for spec in specs}
+    # Nothing changed if the new environment was not switched to.
+    changed = {spec.split("==")[0] for spec in specs} if applied else set()
     rerun = getattr(my.options, "rerun_installers", False)
     for package in to_install:
         if progress is not None:

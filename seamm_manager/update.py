@@ -210,7 +210,11 @@ def update():
     from .flowcharts import notice
 
     notice()
-    return 0
+
+    from . import versions as _versions
+
+    # Non-zero if a change was built but not switched to, so scripts notice
+    return 1 if _versions.refused else 0
 
 
 def update_webui():
@@ -323,6 +327,7 @@ def update_packages(
     if progress is not None:
         progress()
 
+    applied = True
     if len(specs) > 0:
         retire_installer(specs, info)
         lock = None if latest else constraints()
@@ -354,8 +359,9 @@ def update_packages(
         path = write_environment_snapshot("update-manager")
         print(f"the environment is recorded in {path.name}")
 
-    # See if any packages have an installer
-    if not metadata["gui-only"] and not gui_only:
+    # See if any packages have an installer (not if the change was not applied:
+    # they would run against the unchanged environment)
+    if applied and not metadata["gui-only"] and not gui_only:
         for package in to_update:
             # Skip packages that aren't installed, and those refused above as
             # not SEAMM packages (seamm_manager#29).

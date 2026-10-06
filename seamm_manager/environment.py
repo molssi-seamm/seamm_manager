@@ -39,7 +39,9 @@ def setup(parser):
         help=(
             "Build a fresh environment from scratch with the SEAMM packages that are "
             "in the current one, then switch to it; the old one stays until pruned. "
-            "The cure for most environment problems."
+            "The cure for most environment problems. It takes the published lock's "
+            "versions, which may move packages back to older releases; use --latest "
+            "to keep up with today's releases."
         ),
     )
     tmp.set_defaults(func=recreate)
@@ -210,7 +212,8 @@ def recreate():
 
         # The plug-ins' own installers, for the codes, run against the new environment
         install_packages(installed, update=True)
-    return 0
+        return 0
+    return 1
 
 
 def versions():

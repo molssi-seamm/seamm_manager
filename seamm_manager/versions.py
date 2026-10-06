@@ -34,6 +34,9 @@ switched = False
 # Set when a build put the manager's own release into the new environment, so the
 # callers' sync_manager() must not touch the current environment afterwards.
 synced_manager = False
+# Set when a change was built but not switched to (a regression, or processes
+# started through the link), so install and update exit non-zero.
+refused = False
 
 
 # ---- processes --------------------------------------------------------------
@@ -254,6 +257,8 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
     finally:
         my.uv = saved
     synced_manager = True
+    global refused
+
     problems = regressions(my.uv, new, specs)
     if problems:
         print(
@@ -264,16 +269,21 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
             "'--no-constraints'); to use the new environment anyway, 'seamm-manager "
             f"environment switch {new.path.name}'."
         )
+        refused = True
         return False
-    return switch(new, force=bool(getattr(my.options, "force", False)))
+    if not switch(new, force=bool(getattr(my.options, "force", False))):
+        refused = True
+        return False
+    return True
 
 
-def regressions(current, new, specs=()):
+def regressions(current, new, specs=(), removing=()):
     """What the new environment version would break, compared to the current one.
 
-    A package moved to an older version that was not asked for, or an installed
-    package's requirements newly unmet (seamm_manager#34). An explicit pin in
-    `specs` (``name==version``) to an older version is allowed.
+    A package moved to an older version that was not asked for, a package removed
+    that was not in `removing`, or an installed package's requirements newly unmet
+    (seamm_manager#34). An explicit pin in `specs` (``name==version``) to an older
+    version is allowed.
 
     Returns
     -------
@@ -297,6 +307,9 @@ def regressions(current, new, specs=()):
     before = {canonicalize_name(k): v["version"] for k, v in current.list().items()}
     after = {canonicalize_name(k): v["version"] for k, v in new.list().items()}
     problems = []
+    removing = {canonicalize_name(name) for name in removing}
+    for name in sorted(before.keys() - after.keys() - removing):
+        problems.append(f"{name} {before[name]} would be removed")
     for name in sorted(before.keys() & after.keys()):
         if name in requested:
             continue

@@ -12,8 +12,16 @@ History
       resolver can satisfy. The packages being changed are now left out of the copy.
     * Before switching to a new version of the environment, the manager compares it
       with the current one. If a package would go back to an older version that was
-      not asked for, or requirements would newly be unmet, the new version is left
-      built but not switched to, with what to run instead.
+      not asked for, would be removed, or requirements would newly be unmet, the new
+      version is left built but not switched to, with what to run instead, and the
+      plug-ins' installers are not run.
+    * ``install``, ``update`` and ``environment recreate`` now exit with status 1 when
+      the change was built but not switched to (for the reason above, or because
+      processes started through ``<root>/venv`` are running), so scripts can tell that
+      nothing changed.
+    * ``environment recreate`` is a deliberate clean rebuild at the lock's versions and
+      is not checked this way; its help and the documentation now say that it may
+      move packages back, and that ``--latest`` keeps today's releases.
     * Bugfix: creating a new installation could fail with "... already exists" when
       its first two environment versions were made within the same second.
     * Removed the support for codes installed in Docker containers, which was no longer

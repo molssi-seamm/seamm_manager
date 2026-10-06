@@ -142,3 +142,71 @@ def test_a_taken_version_name_moves_to_the_next_second(tmp_path):
     (tmp_path / "venvs" / "2026-10-06T16-08-36").mkdir()
     name = versions._free_version_name(current, datetime(2026, 10, 6, 16, 8, 35))
     assert name == "2026-10-06T16-08-37"
+
+
+def test_regressions_reports_a_removed_package_unless_asked_for():
+    current = FakeEnvironment({"seamm-exec": "2026.10.6.1", "torch": "2.8.0"})
+    new = FakeEnvironment({"seamm-exec": "2026.10.6.1"})
+    assert versions.regressions(current, new, ["mbe-step"]) == [
+        "torch 2.8.0 would be removed"
+    ]
+    assert versions.regressions(current, new, [], removing=["Torch"]) == []
+
+
+def _refusing_setup(monkeypatch, switch_result=True):
+    from seamm_manager import my, util
+
+    current = FakeEnvironment({"seamm-exec": "2026.10.6.1"})
+    current.exists = True
+    new = FakeEnvironment({"seamm-exec": "2026.10.6.1"})
+    new.path = SimpleNamespace(name="2026-10-06T14-00-00")
+    monkeypatch.setattr(my, "uv", current)
+    monkeypatch.setattr(my, "options", SimpleNamespace(in_place=False, force=False))
+    monkeypatch.setattr(versions, "ensure_versioned", lambda: None)
+    monkeypatch.setattr(versions, "build_version", lambda *a, **k: new)
+    monkeypatch.setattr(util, "sync_manager", lambda: None)
+    monkeypatch.setattr(versions, "switch", lambda *a, **k: switch_result)
+    monkeypatch.setattr(versions, "refused", False)
+    return new
+
+
+def test_a_refused_switch_is_recorded(monkeypatch):
+    """install and update exit non-zero when a change was built but not
+    switched to, whether for a regression or processes using the link."""
+    _refusing_setup(monkeypatch, switch_result=False)
+    assert versions.apply_change(["mbe-step"]) is False
+    assert versions.refused is True
+
+
+def test_a_successful_switch_is_not_refused(monkeypatch):
+    _refusing_setup(monkeypatch, switch_result=True)
+    assert versions.apply_change(["mbe-step"]) is True
+    assert versions.refused is False
+
+
+def test_update_exits_non_zero_when_refused(monkeypatch):
+    from seamm_manager import my
+    from seamm_manager import update as update_module
+
+    monkeypatch.setattr(
+        my,
+        "options",
+        SimpleNamespace(all=False, modules=["mbe-step"], gui_only=False, latest=False),
+    )
+    monkeypatch.setattr(my, "uv", SimpleNamespace(exists=True))
+    monkeypatch.setattr(my, "development", False, raising=False)
+    monkeypatch.setattr(update_module, "package_info", lambda p: (None, None))
+    monkeypatch.setattr(update_module, "update_packages", lambda *a, **k: None)
+    monkeypatch.setattr(update_module, "installation_service_name", lambda n: n)
+    import seamm_manager.apps
+    import seamm_manager.flowcharts
+    import seamm_manager.services
+
+    monkeypatch.setattr(seamm_manager.apps, "refresh_apps", lambda: None)
+    monkeypatch.setattr(seamm_manager.services, "refresh_service_bundles", lambda: None)
+    monkeypatch.setattr(seamm_manager.flowcharts, "notice", lambda: None)
+
+    monkeypatch.setattr(versions, "refused", True)
+    assert update_module.update() == 1
+    monkeypatch.setattr(versions, "refused", False)
+    assert update_module.update() == 0
