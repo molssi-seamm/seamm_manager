@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=f9e9a9ea"></script>
+    <script src="../_static/documentation_options.js?v=ae463d2f"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -886,9 +886,23 @@ which backs up the datastore and writes a manifest to undo the file changes.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.migration_recorded">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">migration_recorded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#migration_recorded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.migration_recorded" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> records that every job flowchart is
+in format 3.0, so the scan of the job directories can be skipped. The scan
+reads one line of every job’s flowchart, which on a cluster’s network file
+system with tens of thousands of jobs takes many minutes; once no old
+flowchart remains none can appear (seamm 3.0 writes only 3.0), so the
+result is recorded and the scan not repeated. <code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code> always
+scans, and refreshes the record.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.flowcharts.notice">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">notice</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#notice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.notice" title="Link to this definition">¶</a></dt>
 <dd><p>A one-line notice for ‘seamm-manager update’ if old flowcharts remain.</p>
+<p>Skipped once <a class="reference internal" href="#seamm_manager.flowcharts.migration_recorded" title="seamm_manager.flowcharts.migration_recorded"><code class="xref py py-func docutils literal notranslate"><span class="pre">migration_recorded()</span></code></a>; when a scan finds nothing old, that
+is recorded so the next update does not scan again.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -906,6 +920,13 @@ which backs up the datastore and writes a manifest to undo the file changes.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.flowcharts.record_migration">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">record_migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">done</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#record_migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.record_migration" title="Link to this definition">¶</a></dt>
+<dd><p>Record in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> that the job flowcharts are all in
+format 3.0 (<code class="docutils literal notranslate"><span class="pre">done</span></code>), or remove the record.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.flowcharts.setup">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.setup" title="Link to this definition">¶</a></dt>
 <dd><p>Define the command-line interface for the flowcharts.</p>
@@ -919,7 +940,8 @@ which backs up the datastore and writes a manifest to undo the file changes.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.flowcharts.status">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.flowcharts.</span></span><span class="sig-name descname"><span class="pre">status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/flowcharts.html#status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.flowcharts.status" title="Link to this definition">¶</a></dt>
-<dd><p>Report whether any job flowcharts are still in format 2.0.</p>
+<dd><p>Report whether any job flowcharts are still in format 2.0 (a full scan,
+which also refreshes the record <code class="docutils literal notranslate"><span class="pre">update</span></code> relies on).</p>
 </dd></dl>
 
 </section>
@@ -3029,8 +3051,10 @@ The installer/updater for SEAMM.</p>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.flowcharts">seamm_manager.flowcharts module</a><ul>
 <li><a class="reference internal" href="#seamm_manager.flowcharts.migrate"><code class="docutils literal notranslate"><span class="pre">migrate()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.migration_recorded"><code class="docutils literal notranslate"><span class="pre">migration_recorded()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.flowcharts.notice"><code class="docutils literal notranslate"><span class="pre">notice()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.flowcharts.old_job_flowcharts"><code class="docutils literal notranslate"><span class="pre">old_job_flowcharts()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.flowcharts.record_migration"><code class="docutils literal notranslate"><span class="pre">record_migration()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.flowcharts.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.flowcharts.status"><code class="docutils literal notranslate"><span class="pre">status()</span></code></a></li>
 </ul>
@@ -3352,7 +3376,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

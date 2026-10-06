@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=f9e9a9ea"></script>
+    <script src="_static/documentation_options.js?v=ae463d2f"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,15 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.6 – The format-2.0 flowchart scan runs once</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span></code> scanned every job’s flowchart for the old format 2.0 on every run,
+which on a cluster’s network file system with tens of thousands of jobs took
+about 15 minutes. Once a scan (or <code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">migrate</span></code>) finds nothing old,
+that is recorded in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code> (<code class="docutils literal notranslate"><span class="pre">[flowcharts]</span> <span class="pre">format</span> <span class="pre">=</span> <span class="pre">3.0</span></code>)
+and later updates skip the scan; <code class="docutils literal notranslate"><span class="pre">flowcharts</span> <span class="pre">status</span></code> always scans and
+refreshes the record.</p></li>
+</ul>
+</dd>
 <dt>2026.10.5.1 – PyTorch chosen for the machine; hand-built environments recognised</dt><dd><ul class="simple">
 <li><p>A plug-in whose code needs PyTorch (<code class="docutils literal notranslate"><span class="pre">torch_managed</span></code> in its installer:
 xnn-step first) no longer takes whatever torch PyPI serves. The installer
@@ -450,7 +459,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

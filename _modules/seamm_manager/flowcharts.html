@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.flowcharts &#8212; SEAMM Manager Step 2026.10.5.1 documentation</title>
+    <title>seamm_manager.flowcharts &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=f9e9a9ea"></script>
+    <script src="../../_static/documentation_options.js?v=ae463d2f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.flowcharts</a></li> 
       </ul>
@@ -162,11 +162,14 @@
 <div class="viewcode-block" id="status">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.status">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Report whether any job flowcharts are still in format 2.0."""</span>
+<span class="w">    </span><span class="sd">"""Report whether any job flowcharts are still in format 2.0 (a full scan,</span>
+<span class="sd">    which also refreshes the record ``update`` relies on)."""</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">old_job_flowcharts</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">record_migration</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"All the job flowcharts in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2"> are in format 3.0."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="n">record_migration</span><span class="p">(</span><span class="n">done</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> job flowcharts in </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2"> are in the old format 2.0. Convert them "</span>
             <span class="s2">"with 'seamm-manager flowcharts migrate'."</span>
@@ -174,12 +177,72 @@
 
 
 
+<span class="n">MIGRATED_SECTION</span> <span class="o">=</span> <span class="s2">"flowcharts"</span>
+<span class="n">MIGRATED_KEY</span> <span class="o">=</span> <span class="s2">"format"</span>
+
+
+<div class="viewcode-block" id="migration_recorded">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.migration_recorded">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">migration_recorded</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether ``&lt;root&gt;/installation.ini`` records that every job flowchart is</span>
+<span class="sd">    in format 3.0, so the scan of the job directories can be skipped. The scan</span>
+<span class="sd">    reads one line of every job's flowchart, which on a cluster's network file</span>
+<span class="sd">    system with tens of thousands of jobs takes many minutes; once no old</span>
+<span class="sd">    flowchart remains none can appear (seamm 3.0 writes only 3.0), so the</span>
+<span class="sd">    result is recorded and the scan not repeated. ``flowcharts status`` always</span>
+<span class="sd">    scans, and refreshes the record."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="n">POLICY_FILE</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">,</span> <span class="n">MIGRATED_KEY</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"3.0"</span></div>
+
+
+
+<div class="viewcode-block" id="record_migration">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.record_migration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">record_migration</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">done</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record in ``&lt;root&gt;/installation.ini`` that the job flowcharts are all in</span>
+<span class="sd">    format 3.0 (``done``), or remove the record."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="n">POLICY_FILE</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span> <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">):</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">,</span> <span class="n">MIGRATED_KEY</span><span class="p">,</span> <span class="s2">"3.0"</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">,</span> <span class="s2">"checked"</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">remove_section</span><span class="p">(</span><span class="n">MIGRATED_SECTION</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="notice">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.flowcharts.notice">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">notice</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""A one-line notice for 'seamm-manager update' if old flowcharts remain."""</span>
+<span class="w">    </span><span class="sd">"""A one-line notice for 'seamm-manager update' if old flowcharts remain.</span>
+
+<span class="sd">    Skipped once :func:`migration_recorded`; when a scan finds nothing old, that</span>
+<span class="sd">    is recorded so the next update does not scan again."""</span>
     <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">migration_recorded</span><span class="p">():</span>
+            <span class="k">return</span>
         <span class="k">if</span> <span class="n">old_job_flowcharts</span><span class="p">(</span><span class="n">stop_at</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">record_migration</span><span class="p">()</span>
             <span class="k">return</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
             <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">python</span><span class="p">),</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"import seamm.migrate3"</span><span class="p">],</span>
@@ -236,6 +299,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_WORK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Nothing to convert: the flowcharts are already in format 3.0."</span><span class="p">)</span>
+        <span class="n">record_migration</span><span class="p">()</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"dry_run"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Dry run: nothing was changed."</span><span class="p">)</span>
@@ -306,7 +370,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.5.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.flowcharts</a></li> 
       </ul>
