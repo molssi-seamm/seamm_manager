@@ -116,21 +116,78 @@ def old_job_flowcharts(root=None, stop_at=None):
 
 
 def status():
-    """Report whether any job flowcharts are still in format 2.0."""
+    """Report whether any job flowcharts are still in format 2.0 (a full scan,
+    which also refreshes the record ``update`` relies on)."""
     n = old_job_flowcharts()
     if n == 0:
+        record_migration()
         print(f"All the job flowcharts in {my.root} are in format 3.0.")
     else:
+        record_migration(done=False)
         print(
             f"{n} job flowcharts in {my.root} are in the old format 2.0. Convert them "
             "with 'seamm-manager flowcharts migrate'."
         )
 
 
+MIGRATED_SECTION = "flowcharts"
+MIGRATED_KEY = "format"
+
+
+def migration_recorded(root=None):
+    """Whether ``<root>/installation.ini`` records that every job flowchart is
+    in format 3.0, so the scan of the job directories can be skipped. The scan
+    reads one line of every job's flowchart, which on a cluster's network file
+    system with tens of thousands of jobs takes many minutes; once no old
+    flowchart remains none can appear (seamm 3.0 writes only 3.0), so the
+    result is recorded and the scan not repeated. ``flowcharts status`` always
+    scans, and refreshes the record."""
+    import configparser
+
+    from .policy import POLICY_FILE
+
+    path = Path(my.root if root is None else root) / POLICY_FILE
+    if not path.exists():
+        return False
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(path)
+    return config.get(MIGRATED_SECTION, MIGRATED_KEY, fallback="").strip() == "3.0"
+
+
+def record_migration(root=None, done=True):
+    """Record in ``<root>/installation.ini`` that the job flowcharts are all in
+    format 3.0 (``done``), or remove the record."""
+    import configparser
+    from datetime import date
+
+    from .policy import POLICY_FILE
+
+    path = Path(my.root if root is None else root) / POLICY_FILE
+    config = configparser.ConfigParser(interpolation=None)
+    if path.exists():
+        config.read(path)
+    if not config.has_section(MIGRATED_SECTION):
+        config.add_section(MIGRATED_SECTION)
+    if done:
+        config.set(MIGRATED_SECTION, MIGRATED_KEY, "3.0")
+        config.set(MIGRATED_SECTION, "checked", date.today().isoformat())
+    else:
+        config.remove_section(MIGRATED_SECTION)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as fd:
+        config.write(fd)
+
+
 def notice():
-    """A one-line notice for 'seamm-manager update' if old flowcharts remain."""
+    """A one-line notice for 'seamm-manager update' if old flowcharts remain.
+
+    Skipped once :func:`migration_recorded`; when a scan finds nothing old, that
+    is recorded so the next update does not scan again."""
     try:
+        if migration_recorded():
+            return
         if old_job_flowcharts(stop_at=1) == 0:
+            record_migration()
             return
         result = subprocess.run(
             [str(my.uv.python), "-c", "import seamm.migrate3"],
@@ -184,6 +241,7 @@ def migrate():
     print(report)
     if sum(summary.get(key, 0) for key in _WORK) == 0:
         print("Nothing to convert: the flowcharts are already in format 3.0.")
+        record_migration()
         return 0
     if getattr(my.options, "dry_run", False):
         print("Dry run: nothing was changed.")

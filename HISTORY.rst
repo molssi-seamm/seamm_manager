@@ -1,6 +1,13 @@
 =======
 History
 =======
+2026.10.6 -- The format-2.0 flowchart scan runs once
+    * ``update`` scanned every job's flowchart for the old format 2.0 on every run,
+      which on a cluster's network file system with tens of thousands of jobs took
+      about 15 minutes. Once a scan (or ``flowcharts migrate``) finds nothing old,
+      that is recorded in ``<root>/installation.ini`` (``[flowcharts] format = 3.0``)
+      and later updates skip the scan; ``flowcharts status`` always scans and
+      refreshes the record.
 2026.10.5.1 -- PyTorch chosen for the machine; hand-built environments recognised
     * A plug-in whose code needs PyTorch (``torch_managed`` in its installer:
       xnn-step first) no longer takes whatever torch PyPI serves. The installer
