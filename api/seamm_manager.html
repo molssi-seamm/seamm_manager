@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="../_static/documentation_options.js?v=6b967701"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -2718,9 +2718,10 @@ resolved, so that paths embedded in launchers survive a switch.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seamm_manager.uv.Uv.report_conflicts">
-<span class="sig-name descname"><span class="pre">report_conflicts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.report_conflicts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.report_conflicts" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">report_conflicts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quiet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#Uv.report_conflicts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.Uv.report_conflicts" title="Link to this definition">¶</a></dt>
 <dd><p>Print any installed package whose requirements are not met.</p>
-<p>Returns the conflicts as text (”” if there are none).</p>
+<p>Returns the conflicts as text (”” if there are none); <cite>quiet</cite> only
+returns them.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2804,6 +2805,42 @@ reinstall with <code class="docutils literal notranslate"><span class="pre">--re
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.uv.</span></span><span class="sig-name descname"><span class="pre">find_uv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#find_uv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.find_uv" title="Link to this definition">¶</a></dt>
 <dd><p>The path to the <code class="docutils literal notranslate"><span class="pre">uv</span></code> executable, or None.</p>
 <p>Looks on <code class="docutils literal notranslate"><span class="pre">PATH</span></code> first, then where uv’s own installer puts it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.uv.floored_constraints">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.uv.</span></span><span class="sig-name descname"><span class="pre">floored_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lock_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#floored_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.floored_constraints" title="Link to this definition">¶</a></dt>
+<dd><p>The published lock, with no pin below what is installed.</p>
+<p>The lock is a nightly snapshot, so it lags releases made since. Applied as
+uv constraints it governs every package uv resolves – including those
+already installed – so a pin older than the installed version would move
+that package backwards (seamm_manager#34). Such a pin becomes a floor,
+<code class="docutils literal notranslate"><span class="pre">name&gt;=installed</span></code>; every other line is kept as it is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lock_text</strong> (<em>str</em>) – The lock: <code class="docutils literal notranslate"><span class="pre">name==version</span></code> lines, optionally with <code class="docutils literal notranslate"><span class="pre">;</span> <span class="pre">markers</span></code>.</p></li>
+<li><p><strong>installed</strong> (<em>{str: str}</em>) – Installed versions by distribution name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constraints text, and the names whose pins became floors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(str, [str])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.uv.freeze_without">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.uv.</span></span><span class="sig-name descname"><span class="pre">freeze_without</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freeze_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/uv.html#freeze_without"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.uv.freeze_without" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">freeze</span></code> output without the lines for <cite>names</cite>.</p>
+<p>A new environment version starts as a copy of the current one; the packages
+being changed are left out of the copy so that their new versions replace
+the old pins. Otherwise an environment whose installed versions conflict
+(one package needing a newer version of another) cannot even be copied, and
+so cannot be repaired by an update (seamm_manager#34).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2893,6 +2930,24 @@ restarted, so that from here on nothing new is started through the link.</p>
 <p>Keeps the current version and the newest <cite>keep</cite> versions in all (for
 rollback), anything younger than <cite>min_age_days</cite>, and anything a running
 process uses. Returns the paths removed (or that would be, with <cite>dry_run</cite>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.regressions">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">regressions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">removing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#regressions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.regressions" title="Link to this definition">¶</a></dt>
+<dd><p>What the new environment version would break, compared to the current one.</p>
+<p>A package moved to an older version that was not asked for, a package removed
+that was not in <cite>removing</cite>, or an installed package’s requirements newly unmet
+(seamm_manager#34). An explicit pin in <cite>specs</cite> (<code class="docutils literal notranslate"><span class="pre">name==version</span></code>) to an older
+version is allowed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>One line per problem; empty if the new version is safe to switch to.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[str]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -3309,6 +3364,8 @@ The installer/updater for SEAMM.</p>
 </li>
 <li><a class="reference internal" href="#seamm_manager.uv.UvError"><code class="docutils literal notranslate"><span class="pre">UvError</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.find_uv"><code class="docutils literal notranslate"><span class="pre">find_uv()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.floored_constraints"><code class="docutils literal notranslate"><span class="pre">floored_constraints()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.uv.freeze_without"><code class="docutils literal notranslate"><span class="pre">freeze_without()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.uv.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
 </ul>
 </li>
@@ -3318,6 +3375,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.versions.ensure_versioned"><code class="docutils literal notranslate"><span class="pre">ensure_versioned()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.processes_using"><code class="docutils literal notranslate"><span class="pre">processes_using()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.prune"><code class="docutils literal notranslate"><span class="pre">prune()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.regressions"><code class="docutils literal notranslate"><span class="pre">regressions()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.relink_launchers"><code class="docutils literal notranslate"><span class="pre">relink_launchers()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.rollback"><code class="docutils literal notranslate"><span class="pre">rollback()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.switch"><code class="docutils literal notranslate"><span class="pre">switch()</span></code></a></li>
@@ -3376,7 +3434,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

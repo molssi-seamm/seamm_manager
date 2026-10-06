@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="../../_static/documentation_options.js?v=6b967701"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>
@@ -467,8 +467,29 @@
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--refresh"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">upgrade</span><span class="p">:</span>
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--upgrade"</span><span class="p">)</span>
+        <span class="n">floors</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">"--constraints"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">constraints</span><span class="p">)])</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+                <span class="c1"># Never below what is installed (seamm_manager#34)</span>
+                <span class="n">installed</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                <span class="n">text</span><span class="p">,</span> <span class="n">floored</span> <span class="o">=</span> <span class="n">floored_constraints</span><span class="p">(</span>
+                    <span class="n">Path</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span> <span class="n">installed</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">floored</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">"   keeping what is newer than the published lock: "</span>
+                        <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">floored</span><span class="p">))</span>
+                    <span class="p">)</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+                <span class="n">floors</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                    <span class="s2">"w"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"-constraints.txt"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+                <span class="n">floors</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="n">floors</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">"--constraints"</span><span class="p">,</span> <span class="n">floors</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">"--constraints"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">constraints</span><span class="p">)])</span>
         <span class="n">context</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">upgrade</span> <span class="ow">and</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
             <span class="c1"># Resolve with every other installed package's requirements, so that</span>
@@ -490,6 +511,8 @@
         <span class="k">finally</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">Path</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">floors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">Path</span><span class="p">(</span><span class="n">floors</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">report_conflicts</span><span class="p">()</span></div>
 
 
@@ -586,10 +609,11 @@
 
 <div class="viewcode-block" id="Uv.report_conflicts">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.Uv.report_conflicts">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">report_conflicts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report_conflicts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Print any installed package whose requirements are not met.</span>
 
-<span class="sd">        Returns the conflicts as text ("" if there are none).</span>
+<span class="sd">        Returns the conflicts as text ("" if there are none); `quiet` only</span>
+<span class="sd">        returns them.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">""</span>
@@ -598,7 +622,7 @@
             <span class="k">return</span> <span class="s2">""</span>
         <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">"Checked"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ln</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lines</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Warning: some installed packages' requirements are not met:"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -682,6 +706,88 @@
         <span class="k">except</span> <span class="n">InvalidRequirement</span><span class="p">:</span>
             <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">names</span>
+
+
+<div class="viewcode-block" id="floored_constraints">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.floored_constraints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">floored_constraints</span><span class="p">(</span><span class="n">lock_text</span><span class="p">,</span> <span class="n">installed</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The published lock, with no pin below what is installed.</span>
+
+<span class="sd">    The lock is a nightly snapshot, so it lags releases made since. Applied as</span>
+<span class="sd">    uv constraints it governs every package uv resolves -- including those</span>
+<span class="sd">    already installed -- so a pin older than the installed version would move</span>
+<span class="sd">    that package backwards (seamm_manager#34). Such a pin becomes a floor,</span>
+<span class="sd">    ``name&gt;=installed``; every other line is kept as it is.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lock_text : str</span>
+<span class="sd">        The lock: ``name==version`` lines, optionally with ``; markers``.</span>
+<span class="sd">    installed : {str: str}</span>
+<span class="sd">        Installed versions by distribution name.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (str, [str])</span>
+<span class="sd">        The constraints text, and the names whose pins became floors.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidVersion</span><span class="p">,</span> <span class="n">Version</span>
+
+    <span class="n">have</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">installed</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">floored</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lock_text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"#"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stripped</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">requirement</span> <span class="o">=</span> <span class="n">Requirement</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">InvalidRequirement</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">canonicalize_name</span><span class="p">(</span><span class="n">requirement</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">pins</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">requirement</span><span class="o">.</span><span class="n">specifier</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">operator</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"=="</span><span class="p">,</span> <span class="s2">"==="</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">have</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">newer</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">have</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">pins</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">InvalidVersion</span><span class="p">:</span>
+                <span class="n">newer</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">newer</span><span class="p">:</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" ; </span><span class="si">{</span><span class="n">requirement</span><span class="o">.</span><span class="n">marker</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">requirement</span><span class="o">.</span><span class="n">marker</span> <span class="k">else</span> <span class="s2">""</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">requirement</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&gt;=</span><span class="si">{</span><span class="n">have</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}{</span><span class="n">marker</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">floored</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">requirement</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">floored</span></div>
+
+
+
+<div class="viewcode-block" id="freeze_without">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.freeze_without">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">freeze_without</span><span class="p">(</span><span class="n">freeze_text</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``uv pip freeze`` output without the lines for `names`.</span>
+
+<span class="sd">    A new environment version starts as a copy of the current one; the packages</span>
+<span class="sd">    being changed are left out of the copy so that their new versions replace</span>
+<span class="sd">    the old pins. Otherwise an environment whose installed versions conflict</span>
+<span class="sd">    (one package needing a newer version of another) cannot even be copied, and</span>
+<span class="sd">    so cannot be repaired by an update (seamm_manager#34).</span>
+<span class="sd">    """</span>
+    <span class="n">drop</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">freeze_text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">stripped</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"#"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)):</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"([A-Za-z0-9][A-Za-z0-9._-]*)\s*(==|@)"</span><span class="p">,</span> <span class="n">stripped</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">canonicalize_name</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">if</span> <span class="n">kept</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span></div>
+
 </pre></div>
 
             <div class="clearer"></div>
@@ -713,7 +819,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>

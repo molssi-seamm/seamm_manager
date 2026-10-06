@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="../../_static/documentation_options.js?v=6b967701"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
@@ -72,6 +72,9 @@
 <span class="c1"># Set when a build put the manager's own release into the new environment, so the</span>
 <span class="c1"># callers' sync_manager() must not touch the current environment afterwards.</span>
 <span class="n">synced_manager</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># Set when a change was built but not switched to (a regression, or processes</span>
+<span class="c1"># started through the link), so install and update exit non-zero.</span>
+<span class="n">refused</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="c1"># ---- processes --------------------------------------------------------------</span>
@@ -180,6 +183,20 @@
 <span class="c1"># ---- building and switching --------------------------------------------------</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_free_version_name</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">moment</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The first version name from `moment` on that is not taken.</span>
+
+<span class="sd">    A fresh installation moves its environment into ``venvs/&lt;now&gt;`` and builds</span>
+<span class="sd">    the next version within the same second, which would otherwise collide.</span>
+<span class="sd">    Names stay times, which pruning reads.</span>
+<span class="sd">    """</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">new_version_name</span><span class="p">(</span><span class="n">moment</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">current</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">moment</span> <span class="o">+=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">new_version_name</span><span class="p">(</span><span class="n">moment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span>
+
+
 <div class="viewcode-block" id="build_version">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.build_version">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">from_freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -202,7 +219,8 @@
 <span class="sd">        The version's name; default from the time.</span>
 <span class="sd">    """</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">new_version_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">_free_version_name</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
     <span class="n">new</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">UvError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
@@ -210,7 +228,11 @@
     <span class="n">new</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">from_freeze</span> <span class="ow">and</span> <span class="n">current</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
-        <span class="n">freeze</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="c1"># The packages being changed are left out of the copy, so that their new</span>
+        <span class="c1"># versions replace the old pins (seamm_manager#34)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.uv</span><span class="w"> </span><span class="kn">import</span> <span class="n">_requirement_names</span><span class="p">,</span> <span class="n">freeze_without</span>
+
+        <span class="n">freeze</span> <span class="o">=</span> <span class="n">freeze_without</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">freeze</span><span class="p">(),</span> <span class="n">_requirement_names</span><span class="p">(</span><span class="n">specs</span> <span class="ow">or</span> <span class="p">[]))</span>
         <span class="k">if</span> <span class="n">freeze</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
                 <span class="s2">"w"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"-freeze.txt"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span>
@@ -293,7 +315,78 @@
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">saved</span>
     <span class="n">synced_manager</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">return</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span></div>
+    <span class="k">global</span> <span class="n">refused</span>
+
+    <span class="n">problems</span> <span class="o">=</span> <span class="n">regressions</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">problems</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"The new environment </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> was built but NOT switched to:</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Nothing has changed in the current environment. To take the newest "</span>
+            <span class="s2">"releases instead, use 'seamm-manager update --latest &lt;packages&gt;' (or "</span>
+            <span class="s2">"'--no-constraints'); to use the new environment anyway, 'seamm-manager "</span>
+            <span class="sa">f</span><span class="s2">"environment switch </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'."</span>
+        <span class="p">)</span>
+        <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))):</span>
+        <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="regressions">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.regressions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regressions</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="p">(),</span> <span class="n">removing</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""What the new environment version would break, compared to the current one.</span>
+
+<span class="sd">    A package moved to an older version that was not asked for, a package removed</span>
+<span class="sd">    that was not in `removing`, or an installed package's requirements newly unmet</span>
+<span class="sd">    (seamm_manager#34). An explicit pin in `specs` (``name==version``) to an older</span>
+<span class="sd">    version is allowed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    [str]</span>
+<span class="sd">        One line per problem; empty if the new version is safe to switch to.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonicalize_name</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidVersion</span><span class="p">,</span> <span class="n">Version</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.uv</span><span class="w"> </span><span class="kn">import</span> <span class="n">Requirement</span>
+
+    <span class="n">requested</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span> <span class="ow">or</span> <span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">requirement</span> <span class="o">=</span> <span class="n">Requirement</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">operator</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"=="</span><span class="p">,</span> <span class="s2">"==="</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">requirement</span><span class="o">.</span><span class="n">specifier</span><span class="p">):</span>
+            <span class="n">requested</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">requirement</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">current</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">new</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">problems</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">removing</span> <span class="o">=</span> <span class="p">{</span><span class="n">canonicalize_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">removing</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">before</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">-</span> <span class="n">after</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">-</span> <span class="n">removing</span><span class="p">):</span>
+        <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">before</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2"> would be removed"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">before</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">after</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">requested</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">older</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">before</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">InvalidVersion</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">older</span><span class="p">:</span>
+            <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> would go back from </span><span class="si">{</span><span class="n">before</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">after</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="n">old_conflicts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">report_conflicts</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">new</span><span class="o">.</span><span class="n">report_conflicts</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">old_conflicts</span><span class="p">:</span>
+            <span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"newly unmet: </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">problems</span></div>
 
 
 
@@ -419,7 +512,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>

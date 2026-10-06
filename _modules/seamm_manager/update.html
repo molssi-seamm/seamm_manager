@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="../../_static/documentation_options.js?v=6b967701"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -253,7 +253,11 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.flowcharts</span><span class="w"> </span><span class="kn">import</span> <span class="n">notice</span>
 
     <span class="n">notice</span><span class="p">()</span>
-    <span class="k">return</span> <span class="mi">0</span></div>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
+
+    <span class="c1"># Non-zero if a change was built but not switched to, so scripts notice</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">_versions</span><span class="o">.</span><span class="n">refused</span> <span class="k">else</span> <span class="mi">0</span></div>
 
 
 
@@ -372,6 +376,7 @@
     <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">progress</span><span class="p">()</span>
 
+    <span class="n">applied</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">retire_installer</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
         <span class="n">lock</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">latest</span> <span class="k">else</span> <span class="n">constraints</span><span class="p">()</span>
@@ -385,9 +390,12 @@
 
         <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Also updating the development packages </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">apply_change</span><span class="p">([</span><span class="o">*</span><span class="n">specs</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">[])],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"done; the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">applied</span> <span class="o">=</span> <span class="n">apply_change</span><span class="p">([</span><span class="o">*</span><span class="n">specs</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">[])],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">applied</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"update"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"done; the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"The change was not applied to the current environment (see above)."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Everything is up to date."</span><span class="p">)</span>
 
@@ -400,8 +408,9 @@
         <span class="n">path</span> <span class="o">=</span> <span class="n">write_environment_snapshot</span><span class="p">(</span><span class="s2">"update-manager"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the environment is recorded in </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="c1"># See if any packages have an installer</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
+    <span class="c1"># See if any packages have an installer (not if the change was not applied:</span>
+    <span class="c1"># they would run against the unchanged environment)</span>
+    <span class="k">if</span> <span class="n">applied</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"gui-only"</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gui_only</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">to_update</span><span class="p">:</span>
             <span class="c1"># Skip packages that aren't installed, and those refused above as</span>
             <span class="c1"># not SEAMM packages (seamm_manager#29).</span>
@@ -477,7 +486,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>

@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="_static/documentation_options.js?v=6b967701"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -90,9 +90,10 @@ versions.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">remove</span></code></p></td>
 <td><p>(<code class="docutils literal notranslate"><span class="pre">recreate</span></code> builds a fresh version with the SEAMM
-packages that were there and switches to it;
-<code class="docutils literal notranslate"><span class="pre">--latest</span></code> takes each one’s newest release on
-PyPI rather than the package list’s).</p></td>
+packages that were there and switches to it,
+at the lock’s versions, which may be older than
+what was installed; <code class="docutils literal notranslate"><span class="pre">--latest</span></code> takes each
+one’s newest release on PyPI instead).</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions|switch</span></code></p></td>
 <td><p>The versions of the environment; switch to one, go back</p></td>
@@ -161,9 +162,22 @@ version). Without the lock the manager resolves the whole installation together:
 packages being updated, their dependencies, and the requirements of every other
 installed package. Dependencies are upgraded as far as all of them allow, and if no set
 of versions satisfies everything the update stops, reports why, and changes nothing.
-After any install or update the manager checks the environment and warns about any
-package whose requirements are not met. If Zenodo cannot be reached, the manager says
-so and uses the package list and lock it saved last time.</p>
+The lock never moves an installed package backwards: where the installed version is
+newer than the lock’s pin (a release made since the nightly list, or a development
+build), that version is the floor instead, and the manager says which packages it kept.
+Before switching to a new version of the environment the manager compares it with the
+current one; if a package would go back to an older version you did not ask for, a
+package would be removed, or an installed package’s requirements would newly be unmet,
+the new version is left built but not switched to, and the manager says why and what to
+run instead (<code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code>, or <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code> to use it anyway). The
+command then exits with status 1, as it does when a switch is refused because processes
+started through the link are running, so scripts can tell that nothing changed.
+<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span></code> is the exception: it is a deliberate clean rebuild at the
+lock’s versions, so it is not checked this way and may move packages back; use
+<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span> <span class="pre">--latest</span></code> to keep today’s releases. After any install
+or update it also warns about any package whose requirements are not met. If Zenodo
+cannot be reached, the manager says so and uses the package list and lock it saved last
+time.</p>
 <p>When a plug-in’s installer updates its code’s conda environment, it applies the
 plug-in’s environment file only if the file changed since it was last applied, or if
 that was more than a week ago, since re-solving a conda environment is slow.
@@ -330,7 +344,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

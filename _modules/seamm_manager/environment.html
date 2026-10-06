@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.10.6 documentation</title>
+    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=ae463d2f"></script>
+    <script src="../../_static/documentation_options.js?v=6b967701"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
@@ -79,7 +79,9 @@
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">"Build a fresh environment from scratch with the SEAMM packages that are "</span>
             <span class="s2">"in the current one, then switch to it; the old one stays until pruned. "</span>
-            <span class="s2">"The cure for most environment problems."</span>
+            <span class="s2">"The cure for most environment problems. It takes the published lock's "</span>
+            <span class="s2">"versions, which may move packages back to older releases; use --latest "</span>
+            <span class="s2">"to keep up with today's releases."</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">tmp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">recreate</span><span class="p">)</span>
@@ -262,7 +264,8 @@
 
         <span class="c1"># The plug-ins' own installers, for the codes, run against the new environment</span>
         <span class="n">install_packages</span><span class="p">(</span><span class="n">installed</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="mi">0</span></div>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span></div>
 
 
 
@@ -390,7 +393,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
