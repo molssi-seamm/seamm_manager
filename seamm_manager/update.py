@@ -336,9 +336,12 @@ def update_packages(
 
         if extra:
             print(f"Also updating the development packages {' '.join(extra)}")
-        apply_change([*specs, *(extra or [])], constraints=lock, upgrade=True)
-        path = write_environment_snapshot("update")
-        print(f"done; the environment is recorded in {path.name}")
+        applied = apply_change([*specs, *(extra or [])], constraints=lock, upgrade=True)
+        if applied:
+            path = write_environment_snapshot("update")
+            print(f"done; the environment is recorded in {path.name}")
+        else:
+            print("The change was not applied to the current environment (see above).")
     else:
         print("Everything is up to date.")
 

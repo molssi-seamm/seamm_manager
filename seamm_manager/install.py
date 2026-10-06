@@ -326,9 +326,12 @@ def install_packages(
             print(f"Installing with uv, constrained to the published lock {lock.name}.")
         from .versions import apply_change
 
-        apply_change(specs, constraints=lock, upgrade=update)
-        path = write_environment_snapshot("install")
-        print(f"done; the environment is recorded in {path.name}")
+        applied = apply_change(specs, constraints=lock, upgrade=update)
+        if applied:
+            path = write_environment_snapshot("install")
+            print(f"done; the environment is recorded in {path.name}")
+        else:
+            print("The change was not applied to the current environment (see above).")
     else:
         print("Nothing to install.")
 

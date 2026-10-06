@@ -1,6 +1,24 @@
 =======
 History
 =======
+2026.10.6.1 -- Bugfix: install and update never move a package backwards
+    * Installing one package under the published lock could downgrade others already
+      installed -- the nightly lock lags the day's releases -- leaving packages with
+      unmet requirements (e.g. ``install mbe-step`` took seamm-exec 2026.10.6.1 back to
+      2026.10.5.2). Where an installed version is newer than the lock's pin, it is now
+      the floor, and the manager says which packages it kept (#34).
+    * An environment left with such a conflict could not be repaired by ``update``:
+      building the next version began by copying the current one exactly, which no
+      resolver can satisfy. The packages being changed are now left out of the copy.
+    * Before switching to a new version of the environment, the manager compares it
+      with the current one. If a package would go back to an older version that was
+      not asked for, or requirements would newly be unmet, the new version is left
+      built but not switched to, with what to run instead.
+    * Bugfix: creating a new installation could fail with "... already exists" when
+      its first two environment versions were made within the same second.
+    * Removed the support for codes installed in Docker containers, which was no longer
+      used or maintained.
+
 2026.10.6 -- The format-2.0 flowchart scan runs once
     * ``update`` scanned every job's flowchart for the old format 2.0 on every run,
       which on a cluster's network file system with tens of thousands of jobs took

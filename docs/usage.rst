@@ -85,9 +85,17 @@ version). Without the lock the manager resolves the whole installation together:
 packages being updated, their dependencies, and the requirements of every other
 installed package. Dependencies are upgraded as far as all of them allow, and if no set
 of versions satisfies everything the update stops, reports why, and changes nothing.
-After any install or update the manager checks the environment and warns about any
-package whose requirements are not met. If Zenodo cannot be reached, the manager says
-so and uses the package list and lock it saved last time.
+The lock never moves an installed package backwards: where the installed version is
+newer than the lock's pin (a release made since the nightly list, or a development
+build), that version is the floor instead, and the manager says which packages it kept.
+Before switching to a new version of the environment the manager compares it with the
+current one; if a package would go back to an older version you did not ask for, or an
+installed package's requirements would newly be unmet, the new version is left built
+but not switched to, and the manager says why and what to run instead
+(``update --latest``, or ``environment switch`` to use it anyway). After any install
+or update it also warns about any package whose requirements are not met. If Zenodo
+cannot be reached, the manager says so and uses the package list and lock it saved last
+time.
 
 When a plug-in's installer updates its code's conda environment, it applies the
 plug-in's environment file only if the file changed since it was last applied, or if

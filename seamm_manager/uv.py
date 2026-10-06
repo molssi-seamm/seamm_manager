@@ -383,8 +383,29 @@ class Uv(object):
             args.append("--refresh")
         if upgrade:
             args.append("--upgrade")
+        floors = None
         if constraints is not None:
-            args.extend(["--constraints", str(constraints)])
+            if self.exists:
+                # Never below what is installed (seamm_manager#34)
+                installed = {k: v["version"] for k, v in self.list().items()}
+                text, floored = floored_constraints(
+                    Path(constraints).read_text(), installed
+                )
+                if floored:
+                    print(
+                        "   keeping what is newer than the published lock: "
+                        + ", ".join(sorted(floored))
+                    )
+                import tempfile
+
+                floors = tempfile.NamedTemporaryFile(
+                    "w", suffix="-constraints.txt", delete=False
+                )
+                floors.write(text)
+                floors.close()
+                args.extend(["--constraints", floors.name])
+            else:
+                args.extend(["--constraints", str(constraints)])
         context = None
         if upgrade and constraints is None and self.exists:
             # Resolve with every other installed package's requirements, so that
@@ -406,6 +427,8 @@ class Uv(object):
         finally:
             if context is not None:
                 Path(context.name).unlink(missing_ok=True)
+            if floors is not None:
+                Path(floors.name).unlink(missing_ok=True)
         self.report_conflicts()
 
     # The requirements of the installed packages, markers evaluated, extras-only
@@ -496,10 +519,11 @@ print(json.dumps({"environment": environment, "packages": packages}))
                 requirements.add(str(requirement))
         return sorted(requirements)
 
-    def report_conflicts(self):
+    def report_conflicts(self, quiet=False):
         """Print any installed package whose requirements are not met.
 
-        Returns the conflicts as text ("" if there are none).
+        Returns the conflicts as text ("" if there are none); `quiet` only
+        returns them.
         """
         if not self.exists:
             return ""
@@ -508,7 +532,7 @@ print(json.dumps({"environment": environment, "packages": packages}))
             return ""
         text = (result.stdout or "") + (result.stderr or "")
         lines = [ln for ln in text.splitlines() if ln.strip() and "Checked" not in ln]
-        if lines:
+        if lines and not quiet:
             print("Warning: some installed packages' requirements are not met:")
             for line in lines:
                 print(f"    {line.strip()}")
@@ -578,3 +602,79 @@ def _requirement_names(specs):
         except InvalidRequirement:
             names.append(str(spec).split("=")[0].split("<")[0].split(">")[0].strip())
     return names
+
+
+def floored_constraints(lock_text, installed):
+    """The published lock, with no pin below what is installed.
+
+    The lock is a nightly snapshot, so it lags releases made since. Applied as
+    uv constraints it governs every package uv resolves -- including those
+    already installed -- so a pin older than the installed version would move
+    that package backwards (seamm_manager#34). Such a pin becomes a floor,
+    ``name>=installed``; every other line is kept as it is.
+
+    Parameters
+    ----------
+    lock_text : str
+        The lock: ``name==version`` lines, optionally with ``; markers``.
+    installed : {str: str}
+        Installed versions by distribution name.
+
+    Returns
+    -------
+    (str, [str])
+        The constraints text, and the names whose pins became floors.
+    """
+    from packaging.version import InvalidVersion, Version
+
+    have = {canonicalize_name(k): v for k, v in installed.items()}
+    lines = []
+    floored = []
+    for line in lock_text.splitlines():
+        stripped = line.split("#", 1)[0].strip()
+        if not stripped:
+            lines.append(line)
+            continue
+        try:
+            requirement = Requirement(stripped)
+        except InvalidRequirement:
+            lines.append(line)
+            continue
+        name = canonicalize_name(requirement.name)
+        pins = [s for s in requirement.specifier if s.operator in ("==", "===")]
+        if name in have and len(pins) == 1:
+            try:
+                newer = Version(have[name]) > Version(pins[0].version)
+            except InvalidVersion:
+                newer = False
+            if newer:
+                marker = f" ; {requirement.marker}" if requirement.marker else ""
+                lines.append(f"{requirement.name}>={have[name]}{marker}")
+                floored.append(requirement.name)
+                continue
+        lines.append(line)
+    return "\n".join(lines) + "\n", floored
+
+
+def freeze_without(freeze_text, names):
+    """``uv pip freeze`` output without the lines for `names`.
+
+    A new environment version starts as a copy of the current one; the packages
+    being changed are left out of the copy so that their new versions replace
+    the old pins. Otherwise an environment whose installed versions conflict
+    (one package needing a newer version of another) cannot even be copied, and
+    so cannot be repaired by an update (seamm_manager#34).
+    """
+    drop = {canonicalize_name(n) for n in names}
+    kept = []
+    for line in freeze_text.splitlines():
+        stripped = line.strip()
+        name = None
+        if stripped and not stripped.startswith(("#", "-")):
+            match = re.match(r"([A-Za-z0-9][A-Za-z0-9._-]*)\s*(==|@)", stripped)
+            if match:
+                name = canonicalize_name(match.group(1))
+        if name is not None and name in drop:
+            continue
+        kept.append(line)
+    return "\n".join(kept) + ("\n" if kept else "")
