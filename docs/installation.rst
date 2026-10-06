@@ -61,7 +61,9 @@ a release made today is picked up rather than waiting for the nightly list.
 
 If the installation still has job flowcharts in the old format 2.0 and the updated SEAMM
 can convert them, ``update`` ends with a short notice saying so. It never converts them
-itself.
+itself. Once a scan (or ``flowcharts migrate``) finds none left, that is recorded in
+``<root>/installation.ini`` and later updates skip the scan, which on a cluster with
+many jobs takes minutes; ``flowcharts status`` always scans and refreshes the record.
 
 Converting the flowcharts to format 3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
