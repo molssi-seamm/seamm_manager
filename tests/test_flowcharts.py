@@ -33,3 +33,22 @@ def test_work_keys_are_the_plan_summary_keys():
     source = inspect.getsource(migrate3)
     for key in flowcharts._WORK:
         assert f'"{key}"' in source, key
+
+
+def test_migration_record_skips_the_scan(tmp_path, monkeypatch):
+    from seamm_manager import flowcharts, my
+
+    monkeypatch.setattr(my, "root", tmp_path)
+    assert flowcharts.migration_recorded() is False
+    calls = []
+    monkeypatch.setattr(
+        flowcharts, "old_job_flowcharts", lambda **kw: calls.append(1) or 0
+    )
+    flowcharts.notice()
+    assert calls == [1]
+    assert flowcharts.migration_recorded() is True
+    assert "format = 3.0" in (tmp_path / "installation.ini").read_text()
+    flowcharts.notice()
+    assert calls == [1]  # not scanned again
+    flowcharts.record_migration(done=False)
+    assert flowcharts.migration_recorded() is False
