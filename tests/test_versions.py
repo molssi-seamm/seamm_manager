@@ -240,6 +240,8 @@ def test_apply_change_builds_beside_and_switches(root, monkeypatch):
         installs.append((self.path.name, list(map(str, args)), None))
 
     monkeypatch.setattr(Uv, "create", fake_create)
+    # The guard against regressions is tested on its own (test_regressions)
+    monkeypatch.setattr(versions, "regressions", lambda *a, **k: [])
     monkeypatch.setattr(Uv, "install", fake_install)
     monkeypatch.setattr(Uv, "run", fake_run)
     monkeypatch.setattr(Uv, "freeze", lambda self: "seamm==1\nmolsystem==1\n")
@@ -268,6 +270,8 @@ def test_apply_change_syncs_manager_into_new_environment_only(root, monkeypatch)
     monkeypatch.setattr(
         Uv, "create", lambda self, python_version=None, seed=True: make_venv(self.path)
     )
+    # The guard against regressions is tested on its own (test_regressions)
+    monkeypatch.setattr(versions, "regressions", lambda *a, **k: [])
     monkeypatch.setattr(Uv, "install", lambda self, *a, **k: None)
     monkeypatch.setattr(Uv, "run", lambda self, *a, **k: None)
     monkeypatch.setattr(Uv, "freeze", lambda self: "")

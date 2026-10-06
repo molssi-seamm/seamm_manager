@@ -34,6 +34,9 @@ switched = False
 # Set when a build put the manager's own release into the new environment, so the
 # callers' sync_manager() must not touch the current environment afterwards.
 synced_manager = False
+# Set when a change was built but not switched to (a regression, or processes
+# started through the link), so install and update exit non-zero.
+refused = False
 
 
 # ---- processes --------------------------------------------------------------
@@ -130,6 +133,20 @@ def relink_launchers():
 # ---- building and switching --------------------------------------------------
 
 
+def _free_version_name(current, moment):
+    """The first version name from `moment` on that is not taken.
+
+    A fresh installation moves its environment into ``venvs/<now>`` and builds
+    the next version within the same second, which would otherwise collide.
+    Names stay times, which pruning reads.
+    """
+    name = current.new_version_name(moment)
+    while current.version(name).path.exists():
+        moment += timedelta(seconds=1)
+        name = current.new_version_name(moment)
+    return name
+
+
 def build_version(specs, constraints=None, upgrade=False, from_freeze=True, name=None):
     """Build a new versioned environment and return its ``Uv``.
 
@@ -150,7 +167,8 @@ def build_version(specs, constraints=None, upgrade=False, from_freeze=True, name
         The version's name; default from the time.
     """
     current = my.uv
-    name = current.new_version_name() if name is None else name
+    if name is None:
+        name = _free_version_name(current, datetime.now())
     new = current.version(name)
     if new.path.exists():
         raise UvError(f"{new.path} already exists.")
@@ -158,7 +176,11 @@ def build_version(specs, constraints=None, upgrade=False, from_freeze=True, name
     new.create(python_version=current.python_version)
 
     if from_freeze and current.exists:
-        freeze = current.freeze()
+        # The packages being changed are left out of the copy, so that their new
+        # versions replace the old pins (seamm_manager#34)
+        from .uv import _requirement_names, freeze_without
+
+        freeze = freeze_without(current.freeze(), _requirement_names(specs or []))
         if freeze.strip():
             with tempfile.NamedTemporaryFile(
                 "w", suffix="-freeze.txt", delete=False
@@ -235,7 +257,75 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
     finally:
         my.uv = saved
     synced_manager = True
-    return switch(new, force=bool(getattr(my.options, "force", False)))
+    global refused
+
+    problems = regressions(my.uv, new, specs)
+    if problems:
+        print(
+            f"The new environment {new.path.name} was built but NOT switched to:\n"
+            + "\n".join(f"    {line}" for line in problems)
+            + "\nNothing has changed in the current environment. To take the newest "
+            "releases instead, use 'seamm-manager update --latest <packages>' (or "
+            "'--no-constraints'); to use the new environment anyway, 'seamm-manager "
+            f"environment switch {new.path.name}'."
+        )
+        refused = True
+        return False
+    if not switch(new, force=bool(getattr(my.options, "force", False))):
+        refused = True
+        return False
+    return True
+
+
+def regressions(current, new, specs=(), removing=()):
+    """What the new environment version would break, compared to the current one.
+
+    A package moved to an older version that was not asked for, a package removed
+    that was not in `removing`, or an installed package's requirements newly unmet
+    (seamm_manager#34). An explicit pin in `specs` (``name==version``) to an older
+    version is allowed.
+
+    Returns
+    -------
+    [str]
+        One line per problem; empty if the new version is safe to switch to.
+    """
+    from packaging.utils import canonicalize_name
+    from packaging.version import InvalidVersion, Version
+
+    from .uv import Requirement
+
+    requested = set()
+    for spec in specs or ():
+        try:
+            requirement = Requirement(str(spec))
+        except Exception:
+            continue
+        if any(s.operator in ("==", "===") for s in requirement.specifier):
+            requested.add(canonicalize_name(requirement.name))
+
+    before = {canonicalize_name(k): v["version"] for k, v in current.list().items()}
+    after = {canonicalize_name(k): v["version"] for k, v in new.list().items()}
+    problems = []
+    removing = {canonicalize_name(name) for name in removing}
+    for name in sorted(before.keys() - after.keys() - removing):
+        problems.append(f"{name} {before[name]} would be removed")
+    for name in sorted(before.keys() & after.keys()):
+        if name in requested:
+            continue
+        try:
+            older = Version(after[name]) < Version(before[name])
+        except InvalidVersion:
+            continue
+        if older:
+            problems.append(
+                f"{name} would go back from {before[name]} to {after[name]}"
+            )
+    old_conflicts = set(current.report_conflicts(quiet=True).splitlines())
+    for line in new.report_conflicts(quiet=True).splitlines():
+        if line not in old_conflicts:
+            problems.append(f"newly unmet: {line.strip()}")
+    return problems
 
 
 # ---- prune and rollback ------------------------------------------------------

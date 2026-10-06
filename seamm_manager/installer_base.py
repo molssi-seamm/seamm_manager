@@ -532,7 +532,7 @@ class InstallerBase(object):
         self.logger.debug(f"initial-exe-path = {initial_exe_path}.")
 
         # Is there an installation indicated?
-        if initial_installation in ("conda", "modules", "local", "docker"):
+        if initial_installation in ("conda", "modules", "local"):
             installation = initial_installation
         else:
             installation = None
@@ -633,33 +633,6 @@ class InstallerBase(object):
                     self.exe_config.save()
                     print(
                         "    Using modules, so removed the conda-environment from "
-                        "the configuration"
-                    )
-        elif installation == "docker":
-            if "container" in data and data["container"] != "":
-                container = data["container"]
-                print(f"    Setup to use the docker container {container}")
-            else:
-                print("    Setup to use docker, but the container is not set!")
-            if initial_conda_environment is not None:
-                if self.options.yes or self.ask_yes_no(
-                    "A Conda environment is given: "
-                    f"{initial_conda_environment}.\n"
-                    "A Conda environment should not be used when using "
-                    "docker. Remove it from the configuration?",
-                    default="yes",
-                ):
-
-                    # Clean up the environment file
-                    self.exe_config.set_value("local", "conda", None)
-                    self.exe_config.set_value("local", "conda-environment", None)
-                    self.exe_config.set_value("local", "modules", None)
-                    self.exe_config.set_value("local", "conda", None)
-
-                    self.exe_config.save()
-
-                    print(
-                        "    Using docker, so removed the conda-environment from "
                         "the configuration"
                     )
         else:
@@ -1050,13 +1023,6 @@ class InstallerBase(object):
                     print("!   run using unknown modules.")
             elif installation == "local":
                 pass
-            elif installation == "docker":
-                line = f"    run using the Docker container {data['container']}"
-                if "platform" in data:
-                    line += f" for {data['platform']}."
-                else:
-                    line += "."
-                print(line)
             else:
                 print(f"!    Unknown installation method '{installation}'")
         else:
