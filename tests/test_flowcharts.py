@@ -52,3 +52,15 @@ def test_migration_record_skips_the_scan(tmp_path, monkeypatch):
     assert calls == [1]  # not scanned again
     flowcharts.record_migration(done=False)
     assert flowcharts.migration_recorded() is False
+
+
+def test_install_points_at_the_flowchart_upgrade(monkeypatch):
+    """install, like update, ends with the format-2.0 notice: an installation
+    moved from the conda-based SEAMM Installer is installed, not updated."""
+    import inspect
+
+    from seamm_manager import install
+
+    source = inspect.getsource(install.install)
+    assert "from .flowcharts import notice" in source
+    assert source.index("notice()") < source.index("return 1 if _versions.refused")

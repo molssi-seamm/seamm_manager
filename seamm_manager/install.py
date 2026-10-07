@@ -198,6 +198,13 @@ def install():
     if my.development:
         install_development_environment()
 
+    # Point at the flowchart upgrade if old job flowcharts remain (report only).
+    # An installation moved from the conda-based SEAMM Installer arrives here
+    # with every job in format 2.0, and install, not update, is how it moves.
+    from .flowcharts import notice
+
+    notice()
+
     from . import versions as _versions
 
     # Non-zero if a change was built but not switched to, so scripts notice
