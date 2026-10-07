@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.10.6.1 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.10.7 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=6b967701"></script>
+    <script src="_static/documentation_options.js?v=0a3eb936"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -275,6 +275,15 @@ the rest (jobs, logs, configuration, the web interface’s environment).</p>
 and is also installed into <code class="docutils literal notranslate"><span class="pre">~/SEAMM/venv</span></code> so that the plug-ins’ own installers can
 import it there.</p>
 </section>
+<section id="the-queue-file">
+<h2>The queue file<a class="headerlink" href="#the-queue-file" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">install</span></code> also writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/queues-example.ini</span></code>, an annotated example of
+the JobServer’s queue file <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/&lt;name&gt;.ini</span></code> (the hostname by default),
+which says where jobs may be sent: this machine, its own SLURM, a cluster over
+ssh. Copy it to that name, edit it and restart the JobServer. The JobServer’s
+user guide and the SEAMM documentation’s how-to “Configure the JobServer’s
+Queues” describe the keys.</p>
+</section>
 </section>
 
 
@@ -293,6 +302,7 @@ import it there.</p>
 <li><a class="reference internal" href="#several-installations">Several installations</a></li>
 <li><a class="reference internal" href="#trying-a-new-release-beside-production">Trying a new release beside production</a></li>
 <li><a class="reference internal" href="#where-things-are">Where things are</a></li>
+<li><a class="reference internal" href="#the-queue-file">The queue file</a></li>
 </ul>
 </li>
 </ul>
@@ -344,7 +354,7 @@ import it there.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.6.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
