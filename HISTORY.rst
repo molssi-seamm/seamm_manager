@@ -6,6 +6,7 @@ History
       an annotated example of the JobServer's ``<root>/<name>.ini``: a local queue,
       a machine's own SLURM, a remote cluster over ssh and one that bundles a
       flowchart's calculations, every key explained, to copy and edit.
+    * Requires Python 3.12.
 
 2026.10.6.1 -- Bugfix: install and update never move a package backwards
     * Installing one package under the published lock could downgrade others already
