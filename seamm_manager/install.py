@@ -168,6 +168,7 @@ def install():
 
     environment.ensure(python_version=my.options.python)
     write_taskserver_ini(my.root)
+    write_queues_example(my.root)
 
     if my.options.all:
         install_packages(
@@ -400,3 +401,29 @@ def install_development_environment():
     from .versions import apply_change
 
     apply_change(missing)
+
+
+def write_queues_example(root):
+    """Write ``<root>/queues-example.ini``, an annotated example of the
+    JobServer's queue file, if missing.
+
+    The JobServer reads ``<root>/<name>.ini`` (the hostname by default) for
+    the queues a job may be sent to; nothing writes that file, since it
+    describes the site. The example beside it shows a local queue, a
+    machine's own SLURM, a remote cluster over ssh and one that bundles a
+    flowchart's calculations, with every key explained, to copy and edit.
+
+    Returns
+    -------
+    pathlib.Path or None
+        The file, if it was written.
+    """
+    from importlib.resources import files
+
+    path = Path(root).expanduser() / "queues-example.ini"
+    if path.exists():
+        return None
+    text = (files("seamm_manager") / "data" / "queues-example.ini").read_text()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+    return path

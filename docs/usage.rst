@@ -210,3 +210,13 @@ On macOS each service runs the environment's Python from a small background app 
 The manager itself, installed with ``uv tool install``, lives in uv's tool directory
 and is also installed into ``~/SEAMM/venv`` so that the plug-ins' own installers can
 import it there.
+
+The queue file
+--------------
+
+``install`` also writes ``<root>/queues-example.ini``, an annotated example of
+the JobServer's queue file ``<root>/<name>.ini`` (the hostname by default),
+which says where jobs may be sent: this machine, its own SLURM, a cluster over
+ssh. Copy it to that name, edit it and restart the JobServer. The JobServer's
+user guide and the SEAMM documentation's how-to "Configure the JobServer's
+Queues" describe the keys.
