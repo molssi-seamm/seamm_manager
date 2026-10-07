@@ -176,3 +176,22 @@ def test_taskserver_ini_written_once(tmp_path):
     path.write_text("[taskserver]\ncores = 2\n")
     assert write_taskserver_ini(tmp_path) is None  # never overwritten
     assert path.read_text() == "[taskserver]\ncores = 2\n"
+
+
+def test_queues_example_written_once(tmp_path):
+    """install writes an annotated example of the queue file beside the
+    TaskServer's, and leaves an existing one alone."""
+    import configparser
+
+    from seamm_manager.install import write_queues_example
+
+    path = write_queues_example(tmp_path)
+    assert path == tmp_path / "queues-example.ini"
+    config = configparser.ConfigParser()
+    config.read(path)
+    assert config["DEFAULT"]["default"] == "local"
+    assert config["local"]["type"] == "local"
+    assert "[cluster]" in path.read_text()  # the commented sections survive
+    path.write_text("mine")
+    assert write_queues_example(tmp_path) is None
+    assert path.read_text() == "mine"
