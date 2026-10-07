@@ -179,7 +179,8 @@ def record_migration(root=None, done=True):
 
 
 def notice():
-    """A one-line notice for 'seamm-manager update' if old flowcharts remain.
+    """A one-line notice for 'seamm-manager update' and 'install' if old
+    flowcharts remain.
 
     Skipped once :func:`migration_recorded`; when a scan finds nothing old, that
     is recorded so the next update does not scan again."""

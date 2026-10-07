@@ -1,6 +1,13 @@
 =======
 History
 =======
+2026.10.7.1 -- install points at the flowchart upgrade too
+    * ``seamm-manager install``, like ``update``, ends by saying so when the
+      installation's jobs still have flowcharts in format 2.0, with the command
+      that converts them. An installation moved from the conda-based SEAMM
+      Installer is installed rather than updated, so until now nothing told it
+      that its jobs needed converting.
+
 2026.10.7 -- An example of the JobServer's queue file
     * ``seamm-manager install`` writes ``<root>/queues-example.ini`` (if missing),
       an annotated example of the JobServer's ``<root>/<name>.ini``: a local queue,
