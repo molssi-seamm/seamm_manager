@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.10.7 documentation</title>
+    <title>seamm_manager.install &#8212; SEAMM Manager Step 2026.10.7.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=0a3eb936"></script>
+    <script src="../../_static/documentation_options.js?v=1a433d58"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>
@@ -240,6 +240,13 @@
 
     <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">development</span><span class="p">:</span>
         <span class="n">install_development_environment</span><span class="p">()</span>
+
+    <span class="c1"># Point at the flowchart upgrade if old job flowcharts remain (report only).</span>
+    <span class="c1"># An installation moved from the conda-based SEAMM Installer arrives here</span>
+    <span class="c1"># with every job in format 2.0, and install, not update, is how it moves.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.flowcharts</span><span class="w"> </span><span class="kn">import</span> <span class="n">notice</span>
+
+    <span class="n">notice</span><span class="p">()</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
 
@@ -517,7 +524,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.install</a></li> 
       </ul>

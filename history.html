@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.7 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.7.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=0a3eb936"></script>
+    <script src="_static/documentation_options.js?v=1a433d58"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,14 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.7.1 – install points at the flowchart upgrade too</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">install</span></code>, like <code class="docutils literal notranslate"><span class="pre">update</span></code>, ends by saying so when the
+installation’s jobs still have flowcharts in format 2.0, with the command
+that converts them. An installation moved from the conda-based SEAMM
+Installer is installed rather than updated, so until now nothing told it
+that its jobs needed converting.</p></li>
+</ul>
+</dd>
 <dt>2026.10.7 – An example of the JobServer’s queue file</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">install</span></code> writes <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/queues-example.ini</span></code> (if missing),
 an annotated example of the JobServer’s <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/&lt;name&gt;.ini</span></code>: a local queue,
@@ -494,7 +502,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
