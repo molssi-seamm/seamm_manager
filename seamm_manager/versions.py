@@ -18,6 +18,8 @@ that were already running then.
 """
 
 from datetime import datetime, timedelta
+import getpass
+import json
 import logging
 from pathlib import Path
 import shutil
@@ -331,6 +333,49 @@ def regressions(current, new, specs=(), removing=()):
 # ---- prune and rollback ------------------------------------------------------
 
 
+#: The file that pins a version: prune never removes it while the file exists
+PIN_FILE = ".seamm-pin"
+
+
+def pin(path, reason=""):
+    """Pin a version so that prune keeps it, e.g. for jobs that name it directly.
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        The version's directory.
+    reason : str
+        Why it is pinned, shown by ``environment versions`` and prune.
+    """
+    data = {
+        "reason": reason,
+        "since": datetime.now().isoformat(timespec="seconds"),
+        "by": getpass.getuser(),
+    }
+    (Path(path) / PIN_FILE).write_text(json.dumps(data, indent=1) + "\n")
+    return data
+
+
+def unpin(path):
+    """Remove a version's pin; returns whether it was pinned."""
+    pin_path = Path(path) / PIN_FILE
+    if pin_path.exists():
+        pin_path.unlink()
+        return True
+    return False
+
+
+def pin_info(path):
+    """The pin of a version ({"reason", "since", "by"}), or None if it is not pinned."""
+    pin_path = Path(path) / PIN_FILE
+    if not pin_path.exists():
+        return None
+    try:
+        return json.loads(pin_path.read_text())
+    except Exception:
+        return {"reason": "(unreadable pin file)", "since": "", "by": ""}
+
+
 def _created(path):
     try:
         return datetime.strptime(path.name, "%Y-%m-%dT%H-%M-%S")
@@ -342,8 +387,11 @@ def prune(keep=2, min_age_days=1.0, dry_run=False):
     """Remove old versions that nothing uses.
 
     Keeps the current version and the newest `keep` versions in all (for
-    rollback), anything younger than `min_age_days`, and anything a running
-    process uses. Returns the paths removed (or that would be, with `dry_run`).
+    rollback), anything younger than `min_age_days`, anything pinned (see
+    :func:`pin`), and anything a running process on this machine uses. A job on
+    another node of a cluster is not seen here, so a version that such jobs
+    name directly must be pinned. Returns the paths removed (or that would be,
+    with `dry_run`).
     """
     if not my.uv.is_versioned:
         print("The environment is not versioned; nothing to prune.")
@@ -358,6 +406,11 @@ def prune(keep=2, min_age_days=1.0, dry_run=False):
             continue
         if _created(path) > cutoff:
             print(f"Keeping {path.name}: younger than {min_age_days} day(s).")
+            continue
+        pinned = pin_info(path)
+        if pinned is not None:
+            why = f": {pinned['reason']}" if pinned.get("reason") else ""
+            print(f"Keeping {path.name}: pinned{why}.")
             continue
         users = processes_using(path)
         if users:

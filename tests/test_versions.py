@@ -352,3 +352,53 @@ def test_rollback(root, capsys):
     assert versions.rollback() is False  # nothing older
     assert versions.rollback("missing") is False
     assert "no version" in capsys.readouterr().out
+
+
+def test_prune_keeps_pinned_versions(root, capsys):
+    """Jobs on a cluster's compute nodes are invisible to the process check; a
+    version they name directly is pinned, and prune keeps it (ARC 2026-10-10)."""
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="2026-09-01T00-00-00")
+    for name in ("2026-09-02T00-00-00", "2026-09-03T00-00-00", "2026-09-04T00-00-00"):
+        make_venv(root / "venvs" / name)
+    my.uv.switch_to(root / "venvs" / "2026-09-04T00-00-00")
+    pinned = root / "venvs" / "2026-09-02T00-00-00"
+    data = versions.pin(pinned, "mbe ion-shell validation")
+    assert data["reason"] == "mbe ion-shell validation" and data["since"]
+    assert versions.pin_info(pinned)["reason"] == "mbe ion-shell validation"
+
+    removed = versions.prune(keep=1, min_age_days=0)
+    assert sorted(p.name for p in removed) == [
+        "2026-09-01T00-00-00",
+        "2026-09-03T00-00-00",
+    ]
+    assert pinned.exists()
+    assert "Keeping 2026-09-02T00-00-00: pinned: mbe ion-shell validation" in (
+        capsys.readouterr().out
+    )
+
+    assert versions.unpin(pinned) and versions.pin_info(pinned) is None
+    assert not versions.unpin(pinned)
+    removed = versions.prune(keep=1, min_age_days=0)
+    assert [p.name for p in removed] == ["2026-09-02T00-00-00"]
+
+
+def test_pin_cli(root, capsys):
+    from seamm_manager import environment
+
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="2026-09-01T00-00-00")
+    make_venv(root / "venvs" / "2026-09-02T00-00-00")
+    my.options = SimpleNamespace(version="2026-09-01T00-00-00", reason="jobs on Owl")
+    assert environment.pin() == 0
+    assert versions.pin_info(root / "venvs" / "2026-09-01T00-00-00")["reason"] == (
+        "jobs on Owl"
+    )
+    environment.versions()
+    assert "pinned (jobs on Owl)" in capsys.readouterr().out
+    my.options = SimpleNamespace(version="2026-01-01T00-00-00", reason="")
+    assert environment.pin() == 1
+    assert "There is no version" in capsys.readouterr().out
+    my.options = SimpleNamespace(version="2026-09-01T00-00-00")
+    assert environment.unpin() == 0
+    assert versions.pin_info(root / "venvs" / "2026-09-01T00-00-00") is None

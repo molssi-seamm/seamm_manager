@@ -1,6 +1,13 @@
 =======
 History
 =======
+2026.10.11 -- Pin a version of the environment so that prune keeps it
+    * ``seamm-manager environment pin <version> [--reason ...]`` and ``unpin``. Prune
+      keeps a pinned version, and ``environment versions`` shows the pins. Prune sees
+      only the processes on its own machine, so on a cluster it could remove a
+      version that jobs on the compute nodes still use (ARC, 2026-10-10): pin such
+      versions.
+
 2026.10.7.1 -- install points at the flowchart upgrade too
     * ``seamm-manager install``, like ``update``, ends by saying so when the
       installation's jobs still have flowcharts in format 2.0, with the command
