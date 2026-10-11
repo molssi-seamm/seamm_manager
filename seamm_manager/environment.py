@@ -111,6 +111,21 @@ def setup(parser):
     )
 
     tmp = subsubparser.add_parser(
+        "pin",
+        help=(
+            "Pin a version so that prune keeps it, e.g. for jobs on a cluster's "
+            "compute nodes that name it directly."
+        ),
+    )
+    tmp.set_defaults(func=pin)
+    tmp.add_argument("version", help="The version, e.g. 2026-10-10T07-03-14.")
+    tmp.add_argument("--reason", default="", help="Why it is pinned.")
+
+    tmp = subsubparser.add_parser("unpin", help="Remove a version's pin.")
+    tmp.set_defaults(func=unpin)
+    tmp.add_argument("version", help="The version.")
+
+    tmp = subsubparser.add_parser(
         "prune",
         help=(
             "Remove old versions that no process uses, keeping the newest ones "
@@ -228,6 +243,9 @@ def versions():
         marker = "*" if path == current else " "
         users = _versions.processes_using(path)
         use = f"{len(users)} process(es)" if users else "idle"
+        pinned = _versions.pin_info(path)
+        if pinned is not None:
+            use += f", pinned ({pinned.get('reason') or 'no reason given'})"
         print(f" {marker} {name}  {_versions._size(path):>9}  {use}")
     print(" * = current")
     unsafe = _versions.unsafe_processes()
@@ -271,6 +289,42 @@ def rollback():
     from . import versions as _versions
 
     return 0 if _versions.rollback(my.options.version, force=my.options.force) else 1
+
+
+def _known_version(name):
+    """The path of version `name`, or None after saying it does not exist."""
+    if not my.uv.is_versioned:
+        print("The environment is not versioned; run 'environment migrate' first.")
+        return None
+    known = dict(my.uv.versions())
+    if name not in known:
+        print(f"There is no version '{name}'. Versions: {', '.join(known)}")
+        return None
+    return known[name]
+
+
+def pin():
+    from . import versions as _versions
+
+    path = _known_version(my.options.version)
+    if path is None:
+        return 1
+    _versions.pin(path, my.options.reason)
+    print(f"Pinned {path.name}; prune will keep it until it is unpinned.")
+    return 0
+
+
+def unpin():
+    from . import versions as _versions
+
+    path = _known_version(my.options.version)
+    if path is None:
+        return 1
+    if _versions.unpin(path):
+        print(f"Unpinned {path.name}.")
+    else:
+        print(f"{path.name} was not pinned.")
+    return 0
 
 
 def prune():

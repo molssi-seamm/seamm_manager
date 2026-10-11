@@ -39,6 +39,8 @@ Command                               What it does
                                       one's newest release on PyPI instead).
 ``environment versions|switch``       The versions of the environment; switch to one, go back
 ``environment rollback|prune``        to the previous one, or remove old unused ones.
+``environment pin|unpin <version>``   Keep a version from prune, e.g. for jobs on a
+                                      cluster's compute nodes that name it directly.
 ``compare <flowchart> -a X -b Y``     Run a flowchart in two environments (versions,
                                       installations) and compare every result file.
 ``services create|start|stop|...``    Manage the JobServer and web-interface background
@@ -67,8 +69,8 @@ services and apps always name the real path, never the link, since Python does n
 follow the link when it starts (``--in-place`` changes the current environment
 directly instead, which is only safe with no jobs running). ``environment versions``
 lists the versions and the processes using each; ``rollback`` and ``switch`` move
-the link; ``prune`` removes versions that are old, unused and not among the newest
-two. A switch is refused while a process started through the link is running (a job
+the link; ``prune`` removes versions that are old, unused, unpinned and not among
+the newest two. A switch is refused while a process started through the link is running (a job
 begun before the first versioned update), and ``--force`` overrides that.
 
 Versions and the lock file
