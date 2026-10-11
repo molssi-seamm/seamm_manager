@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.10.7.1 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=1a433d58"></script>
+    <script src="_static/documentation_options.js?v=912780bd"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -134,10 +134,14 @@ while jobs run.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>versions<span class="w">     </span><span class="c1"># the versions, and what uses them</span>
 <span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>rollback<span class="w">     </span><span class="c1"># back to the previous version</span>
 <span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>prune<span class="w">        </span><span class="c1"># remove old, unused versions</span>
+<span class="gp">$ </span>seamm-manager<span class="w"> </span>environment<span class="w"> </span>pin<span class="w"> </span><span class="m">2026</span>-10-10T07-03-14<span class="w"> </span>--reason<span class="w"> </span><span class="s2">"validation jobs"</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">prune</span></code> keeps the current version, the newest two for <code class="docutils literal notranslate"><span class="pre">rollback</span></code>, anything
-younger than a day and anything a running process uses. A switch is refused, and the
+younger than a day, anything pinned, and anything a running process on this machine
+uses. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
+version that such jobs name directly (<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">pin</span> <span class="pre">&lt;version&gt;</span> <span class="pre">--reason</span> <span class="pre">...</span></code>,
+undone by <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">unpin</span></code>), and <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code> shows the pins. A switch is refused, and the
 new version left ready for <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code>, if a process started <em>through</em> the
 link, for example a job begun before the environment was versioned, is still running;
 <code class="docutils literal notranslate"><span class="pre">--force</span></code> switches anyway. <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--in-place</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">--in-place</span></code> change
@@ -289,7 +293,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.7.1 documentation</title>
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=1a433d58"></script>
+    <script src="../../_static/documentation_options.js?v=912780bd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
@@ -56,6 +56,8 @@
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">getpass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
@@ -393,6 +395,58 @@
 <span class="c1"># ---- prune and rollback ------------------------------------------------------</span>
 
 
+<span class="c1">#: The file that pins a version: prune never removes it while the file exists</span>
+<span class="n">PIN_FILE</span> <span class="o">=</span> <span class="s2">".seamm-pin"</span>
+
+
+<div class="viewcode-block" id="pin">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.pin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pin a version so that prune keeps it, e.g. for jobs that name it directly.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : pathlib.Path</span>
+<span class="sd">        The version's directory.</span>
+<span class="sd">    reason : str</span>
+<span class="sd">        Why it is pinned, shown by ``environment versions`` and prune.</span>
+<span class="sd">    """</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">,</span>
+        <span class="s2">"since"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">"seconds"</span><span class="p">),</span>
+        <span class="s2">"by"</span><span class="p">:</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getuser</span><span class="p">(),</span>
+    <span class="p">}</span>
+    <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">/</span> <span class="n">PIN_FILE</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="unpin">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.unpin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unpin</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remove a version's pin; returns whether it was pinned."""</span>
+    <span class="n">pin_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">/</span> <span class="n">PIN_FILE</span>
+    <span class="k">if</span> <span class="n">pin_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">pin_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="pin_info">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.pin_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pin_info</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The pin of a version ({"reason", "since", "by"}), or None if it is not pinned."""</span>
+    <span class="n">pin_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">/</span> <span class="n">PIN_FILE</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pin_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pin_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"(unreadable pin file)"</span><span class="p">,</span> <span class="s2">"since"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"by"</span><span class="p">:</span> <span class="s2">""</span><span class="p">}</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_created</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">T%H-%M-%S"</span><span class="p">)</span>
@@ -406,8 +460,11 @@
 <span class="w">    </span><span class="sd">"""Remove old versions that nothing uses.</span>
 
 <span class="sd">    Keeps the current version and the newest `keep` versions in all (for</span>
-<span class="sd">    rollback), anything younger than `min_age_days`, and anything a running</span>
-<span class="sd">    process uses. Returns the paths removed (or that would be, with `dry_run`).</span>
+<span class="sd">    rollback), anything younger than `min_age_days`, anything pinned (see</span>
+<span class="sd">    :func:`pin`), and anything a running process on this machine uses. A job on</span>
+<span class="sd">    another node of a cluster is not seen here, so a version that such jobs</span>
+<span class="sd">    name directly must be pinned. Returns the paths removed (or that would be,</span>
+<span class="sd">    with `dry_run`).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">is_versioned</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"The environment is not versioned; nothing to prune."</span><span class="p">)</span>
@@ -422,6 +479,11 @@
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">_created</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Keeping </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: younger than </span><span class="si">{</span><span class="n">min_age_days</span><span class="si">}</span><span class="s2"> day(s)."</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">pinned</span> <span class="o">=</span> <span class="n">pin_info</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pinned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">why</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">": </span><span class="si">{</span><span class="n">pinned</span><span class="p">[</span><span class="s1">'reason'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">pinned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reason"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Keeping </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: pinned</span><span class="si">{</span><span class="n">why</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
             <span class="k">continue</span>
         <span class="n">users</span> <span class="o">=</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">users</span><span class="p">:</span>
@@ -512,7 +574,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>

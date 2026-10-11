@@ -112,9 +112,13 @@ while jobs run.
     $ seamm-manager environment versions     # the versions, and what uses them
     $ seamm-manager environment rollback     # back to the previous version
     $ seamm-manager environment prune        # remove old, unused versions
+    $ seamm-manager environment pin 2026-10-10T07-03-14 --reason "validation jobs"
 
 ``prune`` keeps the current version, the newest two for ``rollback``, anything
-younger than a day and anything a running process uses. A switch is refused, and the
+younger than a day, anything pinned, and anything a running process on this machine
+uses. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
+version that such jobs name directly (``environment pin <version> --reason ...``,
+undone by ``environment unpin``), and ``environment versions`` shows the pins. A switch is refused, and the
 new version left ready for ``environment switch``, if a process started *through* the
 link, for example a job begun before the environment was versioned, is still running;
 ``--force`` switches anyway. ``update --in-place`` and ``install --in-place`` change

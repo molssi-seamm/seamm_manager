@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.10.7.1 documentation</title>
+    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=1a433d58"></script>
+    <script src="../../_static/documentation_options.js?v=912780bd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
@@ -149,6 +149,21 @@
         <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">"Switch even if processes started through &lt;root&gt;/venv exist."</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">subsubparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"pin"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Pin a version so that prune keeps it, e.g. for jobs on a cluster's "</span>
+            <span class="s2">"compute nodes that name it directly."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">pin</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"version"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"The version, e.g. 2026-10-10T07-03-14."</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--reason"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Why it is pinned."</span><span class="p">)</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">subsubparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"unpin"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Remove a version's pin."</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">unpin</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"version"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"The version."</span><span class="p">)</span>
 
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">subsubparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s2">"prune"</span><span class="p">,</span>
@@ -283,6 +298,9 @@
         <span class="n">marker</span> <span class="o">=</span> <span class="s2">"*"</span> <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="n">current</span> <span class="k">else</span> <span class="s2">" "</span>
         <span class="n">users</span> <span class="o">=</span> <span class="n">_versions</span><span class="o">.</span><span class="n">processes_using</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">use</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">users</span><span class="p">)</span><span class="si">}</span><span class="s2"> process(es)"</span> <span class="k">if</span> <span class="n">users</span> <span class="k">else</span> <span class="s2">"idle"</span>
+        <span class="n">pinned</span> <span class="o">=</span> <span class="n">_versions</span><span class="o">.</span><span class="n">pin_info</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pinned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">use</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", pinned (</span><span class="si">{</span><span class="n">pinned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'reason'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'no reason given'</span><span class="si">}</span><span class="s2">)"</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">marker</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">_versions</span><span class="o">.</span><span class="n">_size</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">use</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">" * = current"</span><span class="p">)</span>
     <span class="n">unsafe</span> <span class="o">=</span> <span class="n">_versions</span><span class="o">.</span><span class="n">unsafe_processes</span><span class="p">()</span>
@@ -335,6 +353,48 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
 
     <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">_versions</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">force</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_known_version</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The path of version `name`, or None after saying it does not exist."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">is_versioned</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"The environment is not versioned; run 'environment migrate' first."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There is no version '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'. Versions: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">known</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="pin">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.environment.pin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pin</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">_known_version</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="n">_versions</span><span class="o">.</span><span class="n">pin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pinned </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">; prune will keep it until it is unpinned."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="unpin">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.environment.unpin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unpin</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">_known_version</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">_versions</span><span class="o">.</span><span class="n">unpin</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unpinned </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> was not pinned."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
 
 
 
@@ -393,7 +453,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
