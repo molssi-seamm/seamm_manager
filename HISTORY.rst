@@ -1,6 +1,18 @@
 =======
 History
 =======
+2026.10.19 -- Bugfix: the wrong PyTorch for NVIDIA drivers of CUDA 12
+    * On a machine whose NVIDIA driver supports CUDA 12 but not 13, such as one with the
+      535 driver, codes that use PyTorch (xnn) got torch built for CUDA 13, which cannot
+      use the GPU: the installer took torch from the cu128 index, which PyTorch stopped
+      updating at torch 2.11, with PyPI as a second index, so PyPI's newer torch -- built
+      for CUDA 13 -- won. CUDA 12 drivers now get the cu126 build, which has the newest
+      torch, and torch itself comes from that index alone. The environment file's other
+      packages are installed with torch held at that build.
+    * '--torch-tag' now replaces a torch that cannot use the GPU, as it says: it did
+      nothing when the environment file was unchanged, and pip took the replacement for
+      the same version and kept the old build.
+
 2026.10.11 -- Pin a version of the environment so that prune keeps it
     * ``seamm-manager environment pin <version> [--reason ...]`` and ``unpin``. Prune
       keeps a pinned version, and ``environment versions`` shows the pins. Prune sees
