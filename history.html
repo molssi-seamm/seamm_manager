@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=912780bd"></script>
+    <script src="_static/documentation_options.js?v=b2b4b3b2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,19 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.10.19 – Bugfix: the wrong PyTorch for NVIDIA drivers of CUDA 12</dt><dd><ul class="simple">
+<li><p>On a machine whose NVIDIA driver supports CUDA 12 but not 13, such as one with the
+535 driver, codes that use PyTorch (xnn) got torch built for CUDA 13, which cannot
+use the GPU: the installer took torch from the cu128 index, which PyTorch stopped
+updating at torch 2.11, with PyPI as a second index, so PyPI’s newer torch – built
+for CUDA 13 – won. CUDA 12 drivers now get the cu126 build, which has the newest
+torch, and torch itself comes from that index alone. The environment file’s other
+packages are installed with torch held at that build.</p></li>
+<li><p>‘–torch-tag’ now replaces a torch that cannot use the GPU, as it says: it did
+nothing when the environment file was unchanged, and pip took the replacement for
+the same version and kept the old build.</p></li>
+</ul>
+</dd>
 <dt>2026.10.11 – Pin a version of the environment so that prune keeps it</dt><dd><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">seamm-manager</span> <span class="pre">environment</span> <span class="pre">pin</span> <span class="pre">&lt;version&gt;</span> <span class="pre">[--reason</span> <span class="pre">...]</span></code> and <code class="docutils literal notranslate"><span class="pre">unpin</span></code>. Prune
 keeps a pinned version, and <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code> shows the pins. Prune sees
@@ -510,13 +523,13 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2021, Paul Saxe.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
     </div>
   </body>
 </html>

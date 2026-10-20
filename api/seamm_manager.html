@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=912780bd"></script>
+    <script src="../_static/documentation_options.js?v=b2b4b3b2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -2184,12 +2184,15 @@ copy of it (lammps-mdi runs inside the code environment, where seamm-manager is
 not installed).</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="seamm_manager.torch_support.DRIVER_TO_TAG">
-<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">DRIVER_TO_TAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(((13,</span> <span class="pre">0),</span> <span class="pre">'cu130'),</span> <span class="pre">((12,</span> <span class="pre">1),</span> <span class="pre">'cu128'),</span> <span class="pre">((11,</span> <span class="pre">8),</span> <span class="pre">'cu118'))</span></span><a class="headerlink" href="#seamm_manager.torch_support.DRIVER_TO_TAG" title="Link to this definition">¶</a></dt>
-<dd><p>Minimum driver CUDA ceiling (major, minor) -&gt; the newest PyTorch wheel tag that
-driver can run, newest first. A wheel’s bundled runtime may be newer than the
-driver’s ceiling within the same major version (CUDA’s minor-version
-compatibility), so cu128 runs on any 12.x driver from 12.1; a cu130 wheel needs
-a 13.x driver. Update when PyTorch adds a build.</p>
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">DRIVER_TO_TAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(((13,</span> <span class="pre">0),</span> <span class="pre">'cu130'),</span> <span class="pre">((12,</span> <span class="pre">1),</span> <span class="pre">'cu126'),</span> <span class="pre">((11,</span> <span class="pre">8),</span> <span class="pre">'cu118'))</span></span><a class="headerlink" href="#seamm_manager.torch_support.DRIVER_TO_TAG" title="Link to this definition">¶</a></dt>
+<dd><p>Minimum driver CUDA ceiling (major, minor) -&gt; the PyTorch wheel tag for that
+driver, newest first. A wheel’s bundled runtime may be newer than the driver’s
+ceiling within the same major version (CUDA’s minor-version compatibility), so
+any CUDA 12 build runs on a 12.x driver from 12.1; a cu130 wheel needs a 13.x
+driver. For CUDA 12 the tag is the index with the newest torch, not the newest
+runtime: PyTorch stopped building cu128 at torch 2.11 and cu129 at 2.13, while
+cu126 has 2.14. Check when PyTorch releases (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">index</span> <span class="pre">versions</span> <span class="pre">torch</span>
+<span class="pre">--index-url</span> <span class="pre">https://download.pytorch.org/whl/&lt;tag&gt;</span></code>).</p>
 </dd></dl>
 
 <dl class="py data">
@@ -2220,6 +2223,15 @@ failed).</p>
 <dd class="field-even"><p>(str, str)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.constraint_args">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">constraint_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#constraint_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.constraint_args" title="Link to this definition">¶</a></dt>
+<dd><p>The pip options that hold torch at <code class="docutils literal notranslate"><span class="pre">version</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">2.14.1+cu126</span></code>) while
+an environment file’s pip part is applied, so that nothing it pulls in can
+replace the driver’s build. The constraints file is written in
+<code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2262,6 +2274,18 @@ whether the named modules import. Run it with the environment’s python.</p>
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">recommend_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">driver</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#recommend_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.recommend_tag" title="Link to this definition">¶</a></dt>
 <dd><p>The wheel tag for a driver <code class="docutils literal notranslate"><span class="pre">(major,</span> <span class="pre">minor)</span></code>: the newest it can run, or
 <code class="docutils literal notranslate"><span class="pre">None</span></code> if it is older than any build in <a class="reference internal" href="#seamm_manager.torch_support.DRIVER_TO_TAG" title="seamm_manager.torch_support.DRIVER_TO_TAG"><code class="xref py py-data docutils literal notranslate"><span class="pre">DRIVER_TO_TAG</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.torch_support.torch_install_args">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.torch_support.</span></span><span class="sig-name descname"><span class="pre">torch_install_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/torch_support.html#torch_install_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.torch_support.torch_install_args" title="Link to this definition">¶</a></dt>
+<dd><p>The pip options for installing torch itself: the target’s index alone.</p>
+<p>With PyPI as an extra index, pip takes the newest version from either, and
+PyPI’s own wheel – built for the newest CUDA, which an older driver cannot
+run – wins whenever PyPI has a newer torch than the target’s index (a 12.x
+driver got torch 2.14.1+cu130 that way). <code class="docutils literal notranslate"><span class="pre">replace</span></code> reinstalls even though a
+torch of the same version is installed: pip treats 2.14.1+cu126 and
+2.14.1+cu130 as one version, so an upgrade alone changes nothing.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -3358,12 +3382,14 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.torch_support.PROBE_KEYS"><code class="docutils literal notranslate"><span class="pre">PROBE_KEYS</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.TORCH_INDEX_BASE"><code class="docutils literal notranslate"><span class="pre">TORCH_INDEX_BASE</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.assess"><code class="docutils literal notranslate"><span class="pre">assess()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.constraint_args"><code class="docutils literal notranslate"><span class="pre">constraint_args()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.detect_cuda_driver"><code class="docutils literal notranslate"><span class="pre">detect_cuda_driver()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.install_command"><code class="docutils literal notranslate"><span class="pre">install_command()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.parse_probe"><code class="docutils literal notranslate"><span class="pre">parse_probe()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.pip_index_args"><code class="docutils literal notranslate"><span class="pre">pip_index_args()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.probe_script"><code class="docutils literal notranslate"><span class="pre">probe_script()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.recommend_tag"><code class="docutils literal notranslate"><span class="pre">recommend_tag()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.torch_support.torch_install_args"><code class="docutils literal notranslate"><span class="pre">torch_install_args()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.torch_support.torch_target"><code class="docutils literal notranslate"><span class="pre">torch_target()</span></code></a></li>
 </ul>
 </li>
@@ -3512,14 +3538,14 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2021, Paul Saxe.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
     </div>
   </body>
 </html>

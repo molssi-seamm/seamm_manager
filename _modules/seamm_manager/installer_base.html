@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
+    <title>seamm_manager.installer_base &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=912780bd"></script>
+    <script src="../../_static/documentation_options.js?v=b2b4b3b2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
@@ -414,7 +414,9 @@
                 <span class="n">environment</span><span class="p">,</span>
                 <span class="p">[</span><span class="s2">"torch"</span><span class="p">],</span>
                 <span class="n">upgrade</span><span class="o">=</span><span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"missing"</span><span class="p">),</span>
-                <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span><span class="p">,</span>
+                <span class="n">index_args</span><span class="o">=</span><span class="n">torch_support</span><span class="o">.</span><span class="n">torch_install_args</span><span class="p">(</span>
+                    <span class="n">target</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="s2">"missing"</span><span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gpu-unusable"</span><span class="p">,</span> <span class="s2">"cpu-on-gpu"</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span>
@@ -431,9 +433,21 @@
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="n">apply_file</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span> <span class="n">index_args</span><span class="o">=</span><span class="n">index_args</span>
-            <span class="p">)</span>
+            <span class="c1"># Hold torch at the build just checked or installed: the file's pip</span>
+            <span class="c1"># part is applied with PyPI as an extra index, whose torch must not</span>
+            <span class="c1"># replace it</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+            <span class="n">installed</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_probe_torch</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"torch_version"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conda</span><span class="o">.</span><span class="n">update_environment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">environment_file</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+                    <span class="n">index_args</span><span class="o">=</span><span class="p">[</span>
+                        <span class="o">*</span><span class="n">index_args</span><span class="p">,</span>
+                        <span class="o">*</span><span class="n">torch_support</span><span class="o">.</span><span class="n">constraint_args</span><span class="p">(</span><span class="n">installed</span><span class="p">,</span> <span class="n">tmp</span><span class="p">),</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_record_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
 
         <span class="n">probe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe_torch</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
@@ -1166,7 +1180,12 @@
                     <span class="s2">"environment SEAMM manages."</span>
                 <span class="p">)</span>
                 <span class="k">return</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unchanged_since_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
+            <span class="c1"># A torch build asked for (--torch-tag) is applied even when the file is</span>
+            <span class="c1"># unchanged: it is how a torch that cannot use the GPU is replaced</span>
+            <span class="n">forced_torch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">torch_managed</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"torch_tag"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">forced_torch</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unchanged_since_applied</span><span class="p">(</span><span class="n">environment</span><span class="p">):</span>
                 <span class="nb">print</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"    The Conda environment '</span><span class="si">{</span><span class="n">environment</span><span class="si">}</span><span class="s2">' is up to date (the "</span>
                     <span class="s2">"environment file is unchanged since it was applied)."</span>
@@ -1234,14 +1253,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.installer_base</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2021, Paul Saxe.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
     </div>
   </body>
 </html>

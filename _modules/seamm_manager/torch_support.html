@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.torch_support &#8212; SEAMM Manager Step 2026.10.11 documentation</title>
+    <title>seamm_manager.torch_support &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=912780bd"></script>
+    <script src="../../_static/documentation_options.js?v=b2b4b3b2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.torch_support</a></li> 
       </ul>
@@ -61,6 +61,7 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -73,14 +74,17 @@
 <span class="n">TORCH_INDEX_BASE</span> <span class="o">=</span> <span class="s2">"https://download.pytorch.org/whl"</span>
 <span class="n">PYPI_INDEX</span> <span class="o">=</span> <span class="s2">"https://pypi.org/simple"</span>
 
-<span class="c1">#: Minimum driver CUDA ceiling (major, minor) -&gt; the newest PyTorch wheel tag that</span>
-<span class="c1">#: driver can run, newest first. A wheel's bundled runtime may be newer than the</span>
-<span class="c1">#: driver's ceiling within the same major version (CUDA's minor-version</span>
-<span class="c1">#: compatibility), so cu128 runs on any 12.x driver from 12.1; a cu130 wheel needs</span>
-<span class="c1">#: a 13.x driver. Update when PyTorch adds a build.</span>
+<span class="c1">#: Minimum driver CUDA ceiling (major, minor) -&gt; the PyTorch wheel tag for that</span>
+<span class="c1">#: driver, newest first. A wheel's bundled runtime may be newer than the driver's</span>
+<span class="c1">#: ceiling within the same major version (CUDA's minor-version compatibility), so</span>
+<span class="c1">#: any CUDA 12 build runs on a 12.x driver from 12.1; a cu130 wheel needs a 13.x</span>
+<span class="c1">#: driver. For CUDA 12 the tag is the index with the newest torch, not the newest</span>
+<span class="c1">#: runtime: PyTorch stopped building cu128 at torch 2.11 and cu129 at 2.13, while</span>
+<span class="c1">#: cu126 has 2.14. Check when PyTorch releases (``pip index versions torch</span>
+<span class="c1">#: --index-url https://download.pytorch.org/whl/&lt;tag&gt;``).</span>
 <span class="n">DRIVER_TO_TAG</span> <span class="o">=</span> <span class="p">(</span>
     <span class="p">((</span><span class="mi">13</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">"cu130"</span><span class="p">),</span>
-    <span class="p">((</span><span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"cu128"</span><span class="p">),</span>
+    <span class="p">((</span><span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"cu126"</span><span class="p">),</span>
     <span class="p">((</span><span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="s2">"cu118"</span><span class="p">),</span>
 <span class="p">)</span>
 
@@ -191,6 +195,42 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"index_url"</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span><span class="s2">"--index-url"</span><span class="p">,</span> <span class="n">target</span><span class="p">[</span><span class="s2">"index_url"</span><span class="p">],</span> <span class="s2">"--extra-index-url"</span><span class="p">,</span> <span class="n">PYPI_INDEX</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="torch_install_args">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.torch_install_args">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">torch_install_args</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The pip options for installing torch itself: the target's index alone.</span>
+
+<span class="sd">    With PyPI as an extra index, pip takes the newest version from either, and</span>
+<span class="sd">    PyPI's own wheel -- built for the newest CUDA, which an older driver cannot</span>
+<span class="sd">    run -- wins whenever PyPI has a newer torch than the target's index (a 12.x</span>
+<span class="sd">    driver got torch 2.14.1+cu130 that way). ``replace`` reinstalls even though a</span>
+<span class="sd">    torch of the same version is installed: pip treats 2.14.1+cu126 and</span>
+<span class="sd">    2.14.1+cu130 as one version, so an upgrade alone changes nothing.</span>
+<span class="sd">    """</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">target</span> <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"index_url"</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--index-url"</span><span class="p">,</span> <span class="n">target</span><span class="p">[</span><span class="s2">"index_url"</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">replace</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--force-reinstall"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">args</span></div>
+
+
+
+<div class="viewcode-block" id="constraint_args">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.torch_support.constraint_args">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">constraint_args</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">directory</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The pip options that hold torch at ``version`` (e.g. ``2.14.1+cu126``) while</span>
+<span class="sd">    an environment file's pip part is applied, so that nothing it pulls in can</span>
+<span class="sd">    replace the driver's build. The constraints file is written in</span>
+<span class="sd">    ``directory``."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"torch-constraint.txt"</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">"torch==</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">"--constraint"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span></div>
 
 
 
@@ -321,14 +361,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.torch_support</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2021, Paul Saxe.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
     </div>
   </body>
 </html>
