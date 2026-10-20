@@ -23,6 +23,7 @@ not installed).
 """
 
 import json
+from pathlib import Path
 import logging
 import platform
 import re
@@ -35,14 +36,17 @@ logger = logging.getLogger(__name__)
 TORCH_INDEX_BASE = "https://download.pytorch.org/whl"
 PYPI_INDEX = "https://pypi.org/simple"
 
-#: Minimum driver CUDA ceiling (major, minor) -> the newest PyTorch wheel tag that
-#: driver can run, newest first. A wheel's bundled runtime may be newer than the
-#: driver's ceiling within the same major version (CUDA's minor-version
-#: compatibility), so cu128 runs on any 12.x driver from 12.1; a cu130 wheel needs
-#: a 13.x driver. Update when PyTorch adds a build.
+#: Minimum driver CUDA ceiling (major, minor) -> the PyTorch wheel tag for that
+#: driver, newest first. A wheel's bundled runtime may be newer than the driver's
+#: ceiling within the same major version (CUDA's minor-version compatibility), so
+#: any CUDA 12 build runs on a 12.x driver from 12.1; a cu130 wheel needs a 13.x
+#: driver. For CUDA 12 the tag is the index with the newest torch, not the newest
+#: runtime: PyTorch stopped building cu128 at torch 2.11 and cu129 at 2.13, while
+#: cu126 has 2.14. Check when PyTorch releases (``pip index versions torch
+#: --index-url https://download.pytorch.org/whl/<tag>``).
 DRIVER_TO_TAG = (
     ((13, 0), "cu130"),
-    ((12, 1), "cu128"),
+    ((12, 1), "cu126"),
     ((11, 8), "cu118"),
 )
 
@@ -142,6 +146,36 @@ def pip_index_args(target):
     if not target or not target.get("index_url"):
         return []
     return ["--index-url", target["index_url"], "--extra-index-url", PYPI_INDEX]
+
+
+def torch_install_args(target, replace=False):
+    """The pip options for installing torch itself: the target's index alone.
+
+    With PyPI as an extra index, pip takes the newest version from either, and
+    PyPI's own wheel -- built for the newest CUDA, which an older driver cannot
+    run -- wins whenever PyPI has a newer torch than the target's index (a 12.x
+    driver got torch 2.14.1+cu130 that way). ``replace`` reinstalls even though a
+    torch of the same version is installed: pip treats 2.14.1+cu126 and
+    2.14.1+cu130 as one version, so an upgrade alone changes nothing.
+    """
+    args = []
+    if target and target.get("index_url"):
+        args = ["--index-url", target["index_url"]]
+    if replace:
+        args.append("--force-reinstall")
+    return args
+
+
+def constraint_args(version, directory):
+    """The pip options that hold torch at ``version`` (e.g. ``2.14.1+cu126``) while
+    an environment file's pip part is applied, so that nothing it pulls in can
+    replace the driver's build. The constraints file is written in
+    ``directory``."""
+    if not version:
+        return []
+    path = Path(directory) / "torch-constraint.txt"
+    path.write_text(f"torch=={version}\n")
+    return ["--constraint", str(path)]
 
 
 def probe_script(imports=()):

@@ -15,9 +15,10 @@ from seamm_manager.installer_base import InstallerBase, environment_created_by_s
 # ---------------------------------------------------------------- the target
 def test_recommend_tag():
     assert ts.recommend_tag((13, 0)) == "cu130"
-    assert ts.recommend_tag((12, 8)) == "cu128"
-    assert ts.recommend_tag((12, 2)) == "cu128"  # ChemAI's 535 driver
-    assert ts.recommend_tag((12, 1)) == "cu128"
+    # cu126 has the newest torch for CUDA 12 (cu128 stopped at 2.11, cu129 at 2.13)
+    assert ts.recommend_tag((12, 8)) == "cu126"
+    assert ts.recommend_tag((12, 2)) == "cu126"  # ChemAI's 535 driver
+    assert ts.recommend_tag((12, 1)) == "cu126"
     assert ts.recommend_tag((12, 0)) == "cu118"
     assert ts.recommend_tag((11, 8)) == "cu118"
     assert ts.recommend_tag((11, 4)) is None
@@ -25,11 +26,11 @@ def test_recommend_tag():
 
 def test_target_linux_gpu():
     t = ts.torch_target(system="Linux", driver=(12, 2))
-    assert t["tag"] == "cu128"
-    assert t["index_url"] == "https://download.pytorch.org/whl/cu128"
+    assert t["tag"] == "cu126"
+    assert t["index_url"] == "https://download.pytorch.org/whl/cu126"
     assert ts.pip_index_args(t) == [
         "--index-url",
-        "https://download.pytorch.org/whl/cu128",
+        "https://download.pytorch.org/whl/cu126",
         "--extra-index-url",
         "https://pypi.org/simple",
     ]
@@ -57,7 +58,27 @@ def test_forced_tag_wins():
     assert t["tag"] == "cu118"
     assert "forced" in t["reason"]
     t = ts.torch_target(forced="auto", system="Linux", driver=(12, 8))
-    assert t["tag"] == "cu128"
+    assert t["tag"] == "cu126"
+
+
+def test_torch_itself_comes_from_the_target_index_alone():
+    """With PyPI as an extra index, PyPI's newer torch (for CUDA 13) won on a CUDA
+    12 driver; and a replacement of the same version must force the reinstall."""
+    t = ts.torch_target(system="Linux", driver=(12, 2))
+    assert ts.torch_install_args(t) == [
+        "--index-url",
+        "https://download.pytorch.org/whl/cu126",
+    ]
+    assert ts.torch_install_args(t, replace=True)[-1] == "--force-reinstall"
+    mac = ts.torch_target(system="Darwin", driver=None)
+    assert ts.torch_install_args(mac) == []
+
+
+def test_constraint_holds_torch(tmp_path):
+    args = ts.constraint_args("2.14.1+cu126", tmp_path)
+    assert args[0] == "--constraint"
+    assert Path(args[1]).read_text() == "torch==2.14.1+cu126\n"
+    assert ts.constraint_args(None, tmp_path) == []
 
 
 def test_detect_parses_nvidia_smi(monkeypatch):
@@ -204,7 +225,11 @@ class FakeConda:
         self.calls.append(("pip", list(requirements), upgrade, list(index_args)))
 
     def update_environment(self, environment_file, name=None, index_args=(), **kw):
-        self.calls.append(("apply", name, list(index_args)))
+        args = list(index_args)
+        if "--constraint" in args:
+            i = args.index("--constraint")
+            args[i + 1] = Path(args[i + 1]).read_text().strip()
+        self.calls.append(("apply", name, args))
 
 
 def _flow(monkeypatch, probes, driver=(12, 2), torch_tag=None, system="Linux"):
@@ -227,18 +252,21 @@ def _flow(monkeypatch, probes, driver=(12, 2), torch_tag=None, system="Linux"):
 
 def test_missing_torch_is_installed_from_the_right_index(monkeypatch, capsys):
     ok = _probe(imports={"torch": True, "xnn": True})
-    inst = _flow(monkeypatch, [_probe(torch=False), ok])
+    inst = _flow(monkeypatch, [_probe(torch=False), ok, ok])
     assert inst._ensure_torch("seamm-xnn") is True
     pip, apply = inst.conda.calls
     assert pip[1] == ["torch"] and pip[2] is False
-    assert pip[3][1] == "https://download.pytorch.org/whl/cu128"
-    assert apply[2] == pip[3]  # the file's pip part on the same index
+    # torch from the driver's index alone, not with PyPI, whose torch is newer
+    assert pip[3] == ["--index-url", "https://download.pytorch.org/whl/cu126"]
+    # the file's pip part on the same index, with torch held at what is installed
+    assert apply[2][:2] == pip[3]
+    assert apply[2][-2:] == ["--constraint", "torch==2.13.0+cu126"]
     assert "Installing torch" in capsys.readouterr().out
 
 
 def test_working_torch_is_left_alone(monkeypatch):
     ok = _probe(imports={"torch": True, "xnn": True})
-    inst = _flow(monkeypatch, [ok, ok])
+    inst = _flow(monkeypatch, [ok, ok, ok])
     assert inst._ensure_torch("seamm-xnn") is True
     assert [c[0] for c in inst.conda.calls] == ["apply"]
 
@@ -249,16 +277,18 @@ def test_unusable_torch_is_not_replaced_silently(monkeypatch, capsys):
     assert inst._ensure_torch("seamm-xnn") is False
     assert inst.conda.calls == []  # nothing applied either
     out = capsys.readouterr().out
-    assert "left as it is" in out and "--torch-tag cu128" in out
+    assert "left as it is" in out and "--torch-tag cu126" in out
 
 
 def test_unusable_torch_is_replaced_when_asked(monkeypatch):
     bad = _probe(cuda_available=False, device_count=0)
     ok = _probe(imports={"torch": True, "xnn": True})
-    inst = _flow(monkeypatch, [bad, ok], torch_tag="cu128")
+    inst = _flow(monkeypatch, [bad, ok, ok], torch_tag="cu126")
     assert inst._ensure_torch("seamm-xnn") is True
     pip = inst.conda.calls[0]
     assert pip[0] == "pip" and pip[2] is True  # --upgrade: a replacement
+    # pip takes 2.14.1+cu126 and +cu130 for one version, so it must be forced
+    assert pip[3][-1] == "--force-reinstall"
 
 
 def test_no_driver_and_no_torch_asks_for_a_decision(monkeypatch, capsys):
@@ -272,14 +302,16 @@ def test_no_driver_with_forced_cpu_installs(monkeypatch):
     ok = _probe(
         cuda_build=None, cuda_available=False, imports={"torch": True, "xnn": True}
     )
-    inst = _flow(monkeypatch, [_probe(torch=False), ok], driver=None, torch_tag="cpu")
+    inst = _flow(
+        monkeypatch, [_probe(torch=False), ok, ok], driver=None, torch_tag="cpu"
+    )
     assert inst._ensure_torch("seamm-xnn") is True
     assert inst.conda.calls[0][3][1].endswith("/cpu")
 
 
 def test_failed_import_after_apply_is_reported(monkeypatch, capsys):
     ok = _probe(imports={"torch": True, "xnn": "No module named 'xnn'"})
-    inst = _flow(monkeypatch, [ok, ok])
+    inst = _flow(monkeypatch, [ok, ok, ok])
     assert inst._ensure_torch("seamm-xnn") is False
     assert "xnn: No module" in capsys.readouterr().out
 
@@ -291,7 +323,9 @@ def test_mac_uses_pypi(monkeypatch):
         mps_available=True,
         imports={"torch": True, "xnn": True},
     )
-    inst = _flow(monkeypatch, [_probe(torch=False), ok], driver=None, system="Darwin")
+    inst = _flow(
+        monkeypatch, [_probe(torch=False), ok, ok], driver=None, system="Darwin"
+    )
     assert inst._ensure_torch("seamm-xnn") is True
     assert inst.conda.calls[0][3] == []  # plain PyPI
 
@@ -325,3 +359,28 @@ def test_conda_only_create_keeps_the_file_name(tmp_path):
     used = Path(command.split("--file '")[1].split("'")[0])
     assert used.name == "seamm-xnn.yml" and used != f
     assert "torch" not in used.read_text()
+
+
+@pytest.mark.parametrize("torch_tag, ensured", [(None, False), ("cu126", True)])
+def test_update_with_a_torch_tag_is_not_skipped(monkeypatch, torch_tag, ensured):
+    """An unchanged environment file is skipped, but not when a torch build is
+    asked for: that is how a torch that cannot use the GPU is replaced."""
+    inst = _flow(monkeypatch, [], torch_tag=torch_tag)
+    monkeypatch.setattr(InstallerBase, "shared_codes", property(lambda self: False))
+    monkeypatch.setattr(InstallerBase, "manual_code", property(lambda self: False))
+    calls = []
+    saved = []
+    inst._exe_config = SimpleNamespace(
+        get_values=lambda s: {"installation": "conda", "conda-environment": "e"},
+        set_value=lambda *a: None,
+        save=lambda: saved.append(True),
+        path="xnn.ini",
+    )
+    monkeypatch.setattr(inst, "_not_ours", lambda env: False)
+    monkeypatch.setattr(inst, "_unchanged_since_applied", lambda env: True)
+    monkeypatch.setattr(
+        inst, "_ensure_torch", lambda env, apply_file=True: calls.append(env) or True
+    )
+    monkeypatch.setattr("seamm_manager.find_conda", lambda: None)
+    inst.update()
+    assert (calls == ["e"]) is ensured

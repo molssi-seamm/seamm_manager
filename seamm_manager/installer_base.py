@@ -368,7 +368,9 @@ class InstallerBase(object):
                 environment,
                 ["torch"],
                 upgrade=(status != "missing"),
-                index_args=index_args,
+                index_args=torch_support.torch_install_args(
+                    target, replace=(status != "missing")
+                ),
             )
         elif status in ("gpu-unusable", "cpu-on-gpu"):
             print(
@@ -385,9 +387,21 @@ class InstallerBase(object):
             return False
 
         if apply_file:
-            self.conda.update_environment(
-                self.environment_file, name=environment, index_args=index_args
-            )
+            # Hold torch at the build just checked or installed: the file's pip
+            # part is applied with PyPI as an extra index, whose torch must not
+            # replace it
+            import tempfile
+
+            installed = (self._probe_torch(environment) or {}).get("torch_version")
+            with tempfile.TemporaryDirectory() as tmp:
+                self.conda.update_environment(
+                    self.environment_file,
+                    name=environment,
+                    index_args=[
+                        *index_args,
+                        *torch_support.constraint_args(installed, tmp),
+                    ],
+                )
             self._record_applied(environment)
 
         probe = self._probe_torch(environment)
@@ -1085,7 +1099,12 @@ class InstallerBase(object):
                     "environment SEAMM manages."
                 )
                 return
-            if self._unchanged_since_applied(environment):
+            # A torch build asked for (--torch-tag) is applied even when the file is
+            # unchanged: it is how a torch that cannot use the GPU is replaced
+            forced_torch = self.torch_managed and bool(
+                getattr(self.options, "torch_tag", None)
+            )
+            if not forced_torch and self._unchanged_since_applied(environment):
                 print(
                     f"    The Conda environment '{environment}' is up to date (the "
                     "environment file is unchanged since it was applied)."
