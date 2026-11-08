@@ -12,6 +12,14 @@ seamm\_manager.apps module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.archives module
+------------------------------
+
+.. automodule:: seamm_manager.archives
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.cache module
 ---------------------------
 

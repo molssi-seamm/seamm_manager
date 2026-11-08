@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.11.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=b2b4b3b2"></script>
+    <script src="_static/documentation_options.js?v=93f150ad"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,33 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.11.8 – The codes’ conda environments can be kept as archives, for slow shared file systems</dt><dd><ul class="simple">
+<li><p>New per-installation choice, code-environment-storage, of how the codes’ conda
+environments are stored (‘install –code-environment-storage archive’, recorded
+in &lt;root&gt;/installation.ini). The default, ‘directory’, keeps conda environments
+as before, and is right for a workstation or a cluster such as ChemAI.</p></li>
+<li><p>With ‘archive’, installing or updating a plug-in’s code builds its environment
+on the compute node’s local disk, packs it with conda-pack into one file,
+&lt;root&gt;/env-archives/&lt;name&gt;-&lt;date&gt;T&lt;time&gt;.tar, and points &lt;name&gt;.tar at it. Jobs
+unpack it on their own node through &lt;root&gt;/bin/seamm-conda, a wrapper for conda
+that the cluster queues’ setup exports as CONDA_EXE. On ARC this takes an
+update of Psi4’s environment from hours on /projects to about five minutes, and
+a job unpacks it in about ten seconds.</p></li>
+<li><p>An archive is rebuilt only when the plug-in’s environment file changes, when it
+is over a week old, or with –refresh-codes. Archives are never rewritten in
+place; the newest three, and any less than a day old, are kept.</p></li>
+<li><p>If an archive exists but cannot be unpacked, the command fails with a message
+starting ‘seamm-conda: FAILED’ instead of quietly using another environment.
+Environments without an archive, and every other conda command, pass through
+unchanged.</p></li>
+<li><p>Archive builds run only inside a Slurm job (or with SEAMM_ARCHIVE_BUILD_DIR
+set), since they need fast local disk. Environments that need PyTorch are still
+kept as directories.</p></li>
+<li><p>seamm-manager skips the plug-ins’ installers when the copy of seamm-manager in
+the installation’s environment is too old to know about archives, rather than
+let it update the environments in place.</p></li>
+</ul>
+</dd>
 <dt>2026.10.19 – Bugfix: the wrong PyTorch for NVIDIA drivers of CUDA 12</dt><dd><ul class="simple">
 <li><p>On a machine whose NVIDIA driver supports CUDA 12 but not 13, such as one with the
 535 driver, codes that use PyTorch (xnn) got torch built for CUDA 13, which cannot
@@ -523,7 +550,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

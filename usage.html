@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.10.19 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.11.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=b2b4b3b2"></script>
+    <script src="_static/documentation_options.js?v=93f150ad"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -234,6 +234,59 @@ The plug-ins’ installers honour it through the seamm-manager in the installati
 own environment; if that copy is too old to know about policies, the manager skips
 their install, update and uninstall steps rather than risk the shared environments.</p>
 </section>
+<section id="codes-environments-as-archives-clusters-with-a-slow-shared-file-system">
+<h2>Codes’ environments as archives (clusters with a slow shared file system)<a class="headerlink" href="#codes-environments-as-archives-clusters-with-a-slow-shared-file-system" title="Link to this heading">¶</a></h2>
+<p>On some clusters the shared file system creates files very slowly – on ARC’s
+<code class="docutils literal notranslate"><span class="pre">/projects</span></code>, from 1 to 30 files a second – so a conda environment of ~30,000 files
+takes hours to create or update in place, and as long to unpack there, while the
+same environment builds in a few minutes on a compute node’s local disk. An
+installation that manages its codes (<code class="docutils literal notranslate"><span class="pre">own</span></code> or <code class="docutils literal notranslate"><span class="pre">prefixed</span></code>) can therefore keep
+them as <em>archives</em> instead of directories:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ seamm-manager --root &lt;root&gt; install --code-environment-storage archive &lt;plug-in&gt;
+</pre></div>
+</div>
+<p>(recorded as <code class="docutils literal notranslate"><span class="pre">code-environment-storage</span></code> in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code>; the
+default, <code class="docutils literal notranslate"><span class="pre">directory</span></code>, keeps conda environments as usual, and is right for a
+workstation or a cluster such as ChemAI). With archive storage, installing or
+updating a plug-in’s code:</p>
+<ol class="arabic simple">
+<li><p>builds its conda environment from the plug-in’s environment file in <code class="docutils literal notranslate"><span class="pre">$TMPDIR</span></code>
+on the compute node, with the packages cached there too,</p></li>
+<li><p>packs it with conda-pack into one file,
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/env-archives/&lt;name&gt;-&lt;date&gt;T&lt;time&gt;.tar</span></code>, with the exact package list
+(<code class="docutils literal notranslate"><span class="pre">.explicit.txt</span></code>) and the hash of the environment file (<code class="docutils literal notranslate"><span class="pre">.yml.sha256</span></code>) beside
+it, and</p></li>
+<li><p>points <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/env-archives/&lt;name&gt;.tar</span></code> at it. Archives are never rewritten: a
+new version is a new file, and the link is switched at once, so a job unpacking
+an older one is not disturbed. The three newest versions, and any less than a day
+old, are kept.</p></li>
+</ol>
+<p>An update rebuilds an archive only if the plug-in’s environment file has changed, or
+the archive is over a week old (<code class="docutils literal notranslate"><span class="pre">--refresh-codes</span></code> forces it). These builds are
+real work on local disk, so seamm-manager refuses them outside a Slurm job:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sbatch -N1 -n1 -c4 --mem=16G -t 2:00:00 \
+    --wrap 'seamm-manager --root &lt;root&gt; update --all'
+</pre></div>
+</div>
+<p>(or set <code class="docutils literal notranslate"><span class="pre">SEAMM_ARCHIVE_BUILD_DIR</span></code> to a fast local directory). The code’s
+<code class="docutils literal notranslate"><span class="pre">&lt;code&gt;.ini</span></code> is unchanged – <code class="docutils literal notranslate"><span class="pre">installation</span> <span class="pre">=</span> <span class="pre">conda</span></code>, <code class="docutils literal notranslate"><span class="pre">conda-environment</span> <span class="pre">=</span>
+<span class="pre">&lt;name&gt;</span></code> – and the codes not yet built this way (those needing PyTorch) stay
+directories.</p>
+<p>Jobs use the archives through <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/bin/seamm-conda</span></code>, a wrapper for conda that
+seamm-manager installs. The cluster queues’ <code class="docutils literal notranslate"><span class="pre">setup</span></code> (in the JobServer’s queue
+configuration) exports it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setup</span> <span class="o">=</span> <span class="n">export</span> <span class="n">CONDA_EXE</span><span class="o">=&lt;</span><span class="n">root</span><span class="o">&gt;/</span><span class="nb">bin</span><span class="o">/</span><span class="n">seamm</span><span class="o">-</span><span class="n">conda</span>
+</pre></div>
+</div>
+<p>SEAMM runs a conda code as <code class="docutils literal notranslate"><span class="pre">$CONDA_EXE</span> <span class="pre">run</span> <span class="pre">-n</span> <span class="pre">&lt;name&gt;</span> <span class="pre">&lt;code&gt;</span></code>. The wrapper unpacks
+<code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.tar</span></code> on the job’s node, under <code class="docutils literal notranslate"><span class="pre">$TMPDIR/seamm-envs</span></code>, the first time a job
+needs it there (about 10 s for Psi4’s 2.4 GB), and runs the code in that copy; later
+calls in the job reuse it. An environment without an archive, and any other conda
+command, go to the real conda unchanged. If an archive exists but cannot be unpacked,
+the command fails with a message beginning <code class="docutils literal notranslate"><span class="pre">seamm-conda:</span> <span class="pre">FAILED</span></code> rather than quietly
+running in a different environment; <code class="docutils literal notranslate"><span class="pre">$TMPDIR/seamm-envs/stage.log</span></code> on the node
+records each staging.</p>
+</section>
 <section id="trying-a-new-release-beside-production">
 <h2>Trying a new release beside production<a class="headerlink" href="#trying-a-new-release-beside-production" title="Link to this heading">¶</a></h2>
 <p>To try new versions of SEAMM and the plug-ins without touching the installation you
@@ -304,6 +357,7 @@ Queues” describe the keys.</p>
 <li><a class="reference internal" href="#versions-of-the-environment">Versions of the environment</a></li>
 <li><a class="reference internal" href="#versions-and-the-lock-file">Versions and the lock file</a></li>
 <li><a class="reference internal" href="#several-installations">Several installations</a></li>
+<li><a class="reference internal" href="#codes-environments-as-archives-clusters-with-a-slow-shared-file-system">Codes’ environments as archives (clusters with a slow shared file system)</a></li>
 <li><a class="reference internal" href="#trying-a-new-release-beside-production">Trying a new release beside production</a></li>
 <li><a class="reference internal" href="#where-things-are">Where things are</a></li>
 <li><a class="reference internal" href="#the-queue-file">The queue file</a></li>
@@ -358,7 +412,7 @@ Queues” describe the keys.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.10.19 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
