@@ -163,6 +163,61 @@ The plug-ins' installers honour it through the seamm-manager in the installation
 own environment; if that copy is too old to know about policies, the manager skips
 their install, update and uninstall steps rather than risk the shared environments.
 
+Codes' environments as archives (clusters with a slow shared file system)
+--------------------------------------------------------------------------
+
+On some clusters the shared file system creates files very slowly -- on ARC's
+``/projects``, from 1 to 30 files a second -- so a conda environment of ~30,000 files
+takes hours to create or update in place, and as long to unpack there, while the
+same environment builds in a few minutes on a compute node's local disk. An
+installation that manages its codes (``own`` or ``prefixed``) can therefore keep
+them as *archives* instead of directories::
+
+    $ seamm-manager --root <root> install --code-environment-storage archive <plug-in>
+
+(recorded as ``code-environment-storage`` in ``<root>/installation.ini``; the
+default, ``directory``, keeps conda environments as usual, and is right for a
+workstation or a cluster such as ChemAI). With archive storage, installing or
+updating a plug-in's code:
+
+#. builds its conda environment from the plug-in's environment file in ``$TMPDIR``
+   on the compute node, with the packages cached there too,
+#. packs it with conda-pack into one file,
+   ``<root>/env-archives/<name>-<date>T<time>.tar``, with the exact package list
+   (``.explicit.txt``) and the hash of the environment file (``.yml.sha256``) beside
+   it, and
+#. points ``<root>/env-archives/<name>.tar`` at it. Archives are never rewritten: a
+   new version is a new file, and the link is switched at once, so a job unpacking
+   an older one is not disturbed. The three newest versions, and any less than a day
+   old, are kept.
+
+An update rebuilds an archive only if the plug-in's environment file has changed, or
+the archive is over a week old (``--refresh-codes`` forces it). These builds are
+real work on local disk, so seamm-manager refuses them outside a Slurm job::
+
+    $ sbatch -N1 -n1 -c4 --mem=16G -t 2:00:00 \
+        --wrap 'seamm-manager --root <root> update --all'
+
+(or set ``SEAMM_ARCHIVE_BUILD_DIR`` to a fast local directory). The code's
+``<code>.ini`` is unchanged -- ``installation = conda``, ``conda-environment =
+<name>`` -- and the codes not yet built this way (those needing PyTorch) stay
+directories.
+
+Jobs use the archives through ``<root>/bin/seamm-conda``, a wrapper for conda that
+seamm-manager installs. The cluster queues' ``setup`` (in the JobServer's queue
+configuration) exports it::
+
+    setup = export CONDA_EXE=<root>/bin/seamm-conda
+
+SEAMM runs a conda code as ``$CONDA_EXE run -n <name> <code>``. The wrapper unpacks
+``<name>.tar`` on the job's node, under ``$TMPDIR/seamm-envs``, the first time a job
+needs it there (about 10 s for Psi4's 2.4 GB), and runs the code in that copy; later
+calls in the job reuse it. An environment without an archive, and any other conda
+command, go to the real conda unchanged. If an archive exists but cannot be unpacked,
+the command fails with a message beginning ``seamm-conda: FAILED`` rather than quietly
+running in a different environment; ``$TMPDIR/seamm-envs/stage.log`` on the node
+records each staging.
+
 Trying a new release beside production
 --------------------------------------
 
