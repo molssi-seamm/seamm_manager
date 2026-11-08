@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>  
@@ -71,6 +71,7 @@
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.file_hash"><code class="docutils literal notranslate"><span class="pre">file_hash()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.install_wrapper"><code class="docutils literal notranslate"><span class="pre">install_wrapper()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.pack"><code class="docutils literal notranslate"><span class="pre">pack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.point_link"><code class="docutils literal notranslate"><span class="pre">point_link()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.prune"><code class="docutils literal notranslate"><span class="pre">prune()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.publish"><code class="docutils literal notranslate"><span class="pre">publish()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.archives.queue_setup_line"><code class="docutils literal notranslate"><span class="pre">queue_setup_line()</span></code></a></li>
@@ -161,6 +162,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.environment">seamm_manager.environment module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.archive"><code class="docutils literal notranslate"><span class="pre">archive()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.ensure"><code class="docutils literal notranslate"><span class="pre">ensure()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.migrate"><code class="docutils literal notranslate"><span class="pre">migrate()</span></code></a></li>
@@ -172,6 +174,7 @@
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.show"><code class="docutils literal notranslate"><span class="pre">show()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.switch"><code class="docutils literal notranslate"><span class="pre">switch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.unpack"><code class="docutils literal notranslate"><span class="pre">unpack()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.unpin"><code class="docutils literal notranslate"><span class="pre">unpin()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.environment.versions"><code class="docutils literal notranslate"><span class="pre">versions()</span></code></a></li>
 </ul>
@@ -328,8 +331,10 @@
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.code_environment_storage"><code class="docutils literal notranslate"><span class="pre">code_environment_storage()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.is_default_root"><code class="docutils literal notranslate"><span class="pre">is_default_root()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.prefixed_environment"><code class="docutils literal notranslate"><span class="pre">prefixed_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.seamm_environment_storage"><code class="docutils literal notranslate"><span class="pre">seamm_environment_storage()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.set_code_environment_policy"><code class="docutils literal notranslate"><span class="pre">set_code_environment_policy()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.set_code_environment_storage"><code class="docutils literal notranslate"><span class="pre">set_code_environment_storage()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.policy.set_seamm_environment_storage"><code class="docutils literal notranslate"><span class="pre">set_seamm_environment_storage()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.services">seamm_manager.services module</a><ul>
@@ -447,6 +452,28 @@
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.uv.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.venv_archives">seamm_manager.venv_archives module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.NAME"><code class="docutils literal notranslate"><span class="pre">NAME</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.STAGE_SCRIPT"><code class="docutils literal notranslate"><span class="pre">STAGE_SCRIPT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.STREAMS"><code class="docutils literal notranslate"><span class="pre">STREAMS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.TOP"><code class="docutils literal notranslate"><span class="pre">TOP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.apply_change"><code class="docutils literal notranslate"><span class="pre">apply_change()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.archive_current"><code class="docutils literal notranslate"><span class="pre">archive_current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.archive_for"><code class="docutils literal notranslate"><span class="pre">archive_for()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.current_archive"><code class="docutils literal notranslate"><span class="pre">current_archive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.enabled"><code class="docutils literal notranslate"><span class="pre">enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.follow"><code class="docutils literal notranslate"><span class="pre">follow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.install_job_scripts"><code class="docutils literal notranslate"><span class="pre">install_job_scripts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.new_version_name"><code class="docutils literal notranslate"><span class="pre">new_version_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.pack"><code class="docutils literal notranslate"><span class="pre">pack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.publish"><code class="docutils literal notranslate"><span class="pre">publish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.queue_settings"><code class="docutils literal notranslate"><span class="pre">queue_settings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.stage_current"><code class="docutils literal notranslate"><span class="pre">stage_current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.unpack"><code class="docutils literal notranslate"><span class="pre">unpack()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.unpack_current"><code class="docutils literal notranslate"><span class="pre">unpack_current()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.venv_archives.version_of"><code class="docutils literal notranslate"><span class="pre">version_of()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="seamm_manager.html#module-seamm_manager.versions">seamm_manager.versions module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.versions.PIN_FILE"><code class="docutils literal notranslate"><span class="pre">PIN_FILE</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="seamm_manager.html#seamm_manager.versions.apply_change"><code class="docutils literal notranslate"><span class="pre">apply_change()</span></code></a></li>
@@ -524,7 +551,7 @@
         <li class="right" >
           <a href="../usage.html" title="Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager</a></li> 
       </ul>
     </div>

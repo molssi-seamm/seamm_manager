@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager.uv &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>
@@ -375,11 +375,14 @@
 
 <div class="viewcode-block" id="Uv.create">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.uv.Uv.create">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">relocatable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Create the environment, installing the interpreter if needed.</span>
 
 <span class="sd">        ``seed`` adds pip to the environment, which some tools (and the docs</span>
-<span class="sd">        builds) expect to find as ``python -m pip``.</span>
+<span class="sd">        builds) expect to find as ``python -m pip``. ``relocatable`` makes the</span>
+<span class="sd">        scripts find the environment from their own location, so that the</span>
+<span class="sd">        environment can be built in one place and used in another (archive</span>
+<span class="sd">        storage builds on a compute node's local disk).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">python_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">python_version</span> <span class="o">=</span> <span class="n">python_version</span>
@@ -399,6 +402,8 @@
         <span class="p">]</span>
         <span class="k">if</span> <span class="n">seed</span><span class="p">:</span>
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--seed"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">relocatable</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--relocatable"</span><span class="p">)</span>
         <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
 
@@ -819,7 +824,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.uv</a></li> 
       </ul>

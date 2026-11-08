@@ -220,6 +220,14 @@ seamm\_manager.uv module
    :show-inheritance:
    :undoc-members:
 
+seamm\_manager.venv\_archives module
+------------------------------------
+
+.. automodule:: seamm_manager.venv_archives
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 seamm\_manager.versions module
 ------------------------------
 

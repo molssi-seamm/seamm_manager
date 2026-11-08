@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.policy &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager.policy &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.policy</a></li> 
       </ul>
@@ -72,6 +72,19 @@
 <span class="sd">    ``&lt;root&gt;/bin/seamm-conda`` wrapper (see seamm_manager.archives). For clusters</span>
 <span class="sd">    whose shared file system creates files slowly: an environment of ~30,000 files</span>
 <span class="sd">    takes hours to create or update there, but minutes on local disk.</span>
+
+<span class="sd">The SEAMM environment itself (``&lt;root&gt;/venv``) has the same choice, with</span>
+<span class="sd">``seamm-environment-storage``:</span>
+
+<span class="sd">directory</span>
+<span class="sd">    The versioned environment is built beside the current one, in</span>
+<span class="sd">    ``&lt;root&gt;/venvs/&lt;stamp&gt;``, and the ``venv`` link switched. The default.</span>
+<span class="sd">archive</span>
+<span class="sd">    The new version is built on a compute node's local disk and published as</span>
+<span class="sd">    ``&lt;root&gt;/env-archives/seamm-venv-&lt;stamp&gt;.tar`` (``seamm-venv.tar`` links to it),</span>
+<span class="sd">    which jobs unpack on their own nodes through ``&lt;root&gt;/bin/stage_seamm_venv.sh``.</span>
+<span class="sd">    Then the archive is unpacked into ``&lt;root&gt;/venvs/&lt;stamp&gt;`` for everything else</span>
+<span class="sd">    (see seamm_manager.venv_archives).</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
@@ -85,6 +98,7 @@
 
 
 <span class="n">STORAGE_KEY</span> <span class="o">=</span> <span class="s2">"code-environment-storage"</span>
+<span class="n">SEAMM_STORAGE_KEY</span> <span class="o">=</span> <span class="s2">"seamm-environment-storage"</span>
 <span class="n">STORAGES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"directory"</span><span class="p">,</span> <span class="s2">"archive"</span><span class="p">)</span>
 
 
@@ -153,25 +167,18 @@
 
 
 
-<div class="viewcode-block" id="code_environment_storage">
-<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.code_environment_storage">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">code_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""How the installation stores the codes' environments: directory or archive."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">STORAGE_KEY</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">STORAGES</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="s2">"directory"</span></div>
+    <span class="k">return</span> <span class="s2">"directory"</span>
 
 
-
-<div class="viewcode-block" id="set_code_environment_storage">
-<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.set_code_environment_storage">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">set_code_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">storage</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Record how the installation stores the codes' environments."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">storage</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">storage</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">STORAGES</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The storage must be one of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">STORAGES</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span> <span class="o">/</span> <span class="n">POLICY_FILE</span>
@@ -180,11 +187,42 @@
         <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="n">SECTION</span><span class="p">):</span>
         <span class="n">config</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="n">SECTION</span><span class="p">)</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">STORAGE_KEY</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">SECTION</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
         <span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">path</span></div>
+    <span class="k">return</span> <span class="n">path</span>
+
+
+<div class="viewcode-block" id="code_environment_storage">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.code_environment_storage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">code_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How the installation stores the codes' environments: directory or archive."""</span>
+    <span class="k">return</span> <span class="n">_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">STORAGE_KEY</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_code_environment_storage">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.set_code_environment_storage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_code_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">storage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record how the installation stores the codes' environments."""</span>
+    <span class="k">return</span> <span class="n">_set_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">STORAGE_KEY</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="seamm_environment_storage">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.seamm_environment_storage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">seamm_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How the installation stores the SEAMM environment: directory or archive."""</span>
+    <span class="k">return</span> <span class="n">_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">SEAMM_STORAGE_KEY</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_seamm_environment_storage">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.policy.set_seamm_environment_storage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_seamm_environment_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">storage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Record how the installation stores the SEAMM environment."""</span>
+    <span class="k">return</span> <span class="n">_set_storage</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">SEAMM_STORAGE_KEY</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span></div>
 
 </pre></div>
 
@@ -217,7 +255,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.policy</a></li> 
       </ul>

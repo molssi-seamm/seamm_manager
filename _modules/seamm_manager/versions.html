@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
@@ -201,7 +201,15 @@
 
 <div class="viewcode-block" id="build_version">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.build_version">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">from_freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_version</span><span class="p">(</span>
+    <span class="n">specs</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">upgrade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">from_freeze</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">current</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">new</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Build a new versioned environment and return its ``Uv``.</span>
 
 <span class="sd">    Parameters</span>
@@ -219,15 +227,28 @@
 <span class="sd">        scratch with only `specs` -- the clean rebuild ``recreate`` wants.</span>
 <span class="sd">    name : str = None</span>
 <span class="sd">        The version's name; default from the time.</span>
+<span class="sd">    current : Uv = None</span>
+<span class="sd">        The environment to start from; default the installation's.</span>
+<span class="sd">    new : Uv = None</span>
+<span class="sd">        Where to build, created relocatable (archive storage builds on local disk);</span>
+<span class="sd">        default ``&lt;root&gt;/venvs/&lt;name&gt;``.</span>
 <span class="sd">    """</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">_free_version_name</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
-    <span class="n">new</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span>
+    <span class="k">if</span> <span class="n">new</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">_free_version_name</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">version</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">relocatable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">relocatable</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">UvError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Building the new environment </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="n">new</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">relocatable</span><span class="p">:</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">python_version</span><span class="p">,</span> <span class="n">relocatable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">python_version</span><span class="o">=</span><span class="n">current</span><span class="o">.</span><span class="n">python_version</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">from_freeze</span> <span class="ow">and</span> <span class="n">current</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
         <span class="c1"># The packages being changed are left out of the copy, so that their new</span>
@@ -279,6 +300,11 @@
     <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">switch_to</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">real_path</span><span class="p">)</span>
     <span class="n">switched</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> now links to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># With archive storage the jobs' archive follows (rollback, switch by hand)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">venv_archives</span>
+
+    <span class="k">if</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">enabled</span><span class="p">():</span>
+        <span class="n">venv_archives</span><span class="o">.</span><span class="n">follow</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">real_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="n">relink_launchers</span><span class="p">()</span>
     <span class="k">return</span> <span class="kc">True</span></div>
 
@@ -299,6 +325,17 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">in_place</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">in_place</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"in_place"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">venv_archives</span>
+
+    <span class="k">if</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">and</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">enabled</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">in_place</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"The SEAMM environment is stored as an archive here, so changes are "</span>
+                <span class="s2">"never made in place; building a new version instead."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">apply_change</span><span class="p">(</span>
+            <span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">exists</span> <span class="ow">or</span> <span class="n">in_place</span><span class="p">:</span>
         <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -574,7 +611,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>

@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.archives &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager.archives &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.archives</a></li> 
       </ul>
@@ -223,14 +223,22 @@
     <span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.yml.sha256"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">env_hash</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.*"</span><span class="p">):</span>
         <span class="n">path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="mo">0o640</span><span class="p">)</span>
-    <span class="c1"># Switch the link atomically: a new link, renamed over the old one</span>
-    <span class="n">link</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tar"</span>
-    <span class="n">tmp</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tar.</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">point_link</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">archive</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">archive</span></div>
+
+
+
+<div class="viewcode-block" id="point_link">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.archives.point_link">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">point_link</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Point ``&lt;directory&gt;/&lt;name&gt;.tar`` at `target` (a file name in `directory`)</span>
+<span class="sd">    atomically: a new link, renamed over the old one."""</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tar"</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tar.</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="n">tmp</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">()</span> <span class="ow">or</span> <span class="n">tmp</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
-    <span class="n">tmp</span><span class="o">.</span><span class="n">symlink_to</span><span class="p">(</span><span class="n">archive</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">link</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">archive</span></div>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">symlink_to</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">link</span><span class="p">)</span></div>
 
 
 
@@ -416,7 +424,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.archives</a></li> 
       </ul>

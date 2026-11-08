@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="_static/documentation_options.js?v=66d827f0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -287,6 +287,52 @@ the command fails with a message beginning <code class="docutils literal notrans
 running in a different environment; <code class="docutils literal notranslate"><span class="pre">$TMPDIR/seamm-envs/stage.log</span></code> on the node
 records each staging.</p>
 </section>
+<section id="the-seamm-environment-as-an-archive">
+<h2>The SEAMM environment as an archive<a class="headerlink" href="#the-seamm-environment-as-an-archive" title="Link to this heading">¶</a></h2>
+<p>The SEAMM environment itself, <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> (about 46,000 files), has the same
+problem: building a new version beside the current one on such a file system can
+take hours, although the build takes about a minute on a compute node’s local disk.
+To store it as an archive too, run, inside a Slurm job:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sbatch -N1 -n1 -c4 --mem=16G -t 0:30:00 \
+    --wrap 'seamm-manager --root &lt;root&gt; environment archive'
+</pre></div>
+</div>
+<p>This records <code class="docutils literal notranslate"><span class="pre">seamm-environment-storage</span> <span class="pre">=</span> <span class="pre">archive</span></code> in <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/installation.ini</span></code>,
+publishes the current version as <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/env-archives/seamm-venv-&lt;version&gt;.tar</span></code>
+(<code class="docutils literal notranslate"><span class="pre">seamm-venv.tar</span></code> links to it), and installs <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/bin/stage_seamm_venv.sh</span></code>
+and the launchers <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/bin/run_from_jobserver</span></code> and <code class="docutils literal notranslate"><span class="pre">run_flowchart</span></code>. Each
+cluster queue whose jobs should run from the archive needs, in the JobServer’s queue
+configuration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setup</span> <span class="o">=</span> <span class="n">source</span> <span class="o">&lt;</span><span class="n">root</span><span class="o">&gt;/</span><span class="nb">bin</span><span class="o">/</span><span class="n">stage_seamm_venv</span><span class="o">.</span><span class="n">sh</span>
+<span class="n">remote_run_from_jobserver</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">root</span><span class="o">&gt;/</span><span class="nb">bin</span><span class="o">/</span><span class="n">run_from_jobserver</span>
+</pre></div>
+</div>
+<p>A job then unpacks the archive on each of its nodes into <code class="docutils literal notranslate"><span class="pre">$TMPDIR/seamm-venv</span></code>
+(about 30 s) and runs SEAMM from there. As with the codes, if the archive exists
+but cannot be unpacked, the job fails with a message beginning
+<code class="docutils literal notranslate"><span class="pre">stage_seamm_venv:</span> <span class="pre">FAILED</span></code> rather than running from a different environment. Not
+for queues with <code class="docutils literal notranslate"><span class="pre">tasks</span> <span class="pre">=</span> <span class="pre">queue</span></code>: their task bundles are separate jobs that start
+SEAMM’s Python by its path in the main job.</p>
+<p>From then on every install, update and <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span></code> (all inside a Slurm
+job, like the codes’ builds):</p>
+<ol class="arabic simple">
+<li><p>unpacks the current version from its archive onto the node’s local disk, and
+builds the new version there from it, as an update does beside the current one,</p></li>
+<li><p>checks it as usual (nothing moved back, no newly unmet requirements), then packs
+and publishes it as <code class="docutils literal notranslate"><span class="pre">seamm-venv-&lt;version&gt;.tar</span></code>. From this moment new jobs use it.</p></li>
+<li><p>unpacks the archive into <code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venvs/&lt;version&gt;</span></code> with 32 tar streams at once
+(<code class="docutils literal notranslate"><span class="pre">SEAMM_UNPACK_STREAMS</span></code>), which on ARC writes the whole environment in about a
+minute and a half where one stream takes 20 minutes or more, and switches
+<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv</span></code> to it for everything that does not stage it: the login nodes,
+the <code class="docutils literal notranslate"><span class="pre">tasks</span> <span class="pre">=</span> <span class="pre">queue</span></code> queues and the plug-ins’ installers.</p></li>
+</ol>
+<p>The archive and the directory hold the same files, and share the version’s name, so
+<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code> and <code class="docutils literal notranslate"><span class="pre">rollback</span></code> move the archive’s link with the
+directory’s. <code class="docutils literal notranslate"><span class="pre">--in-place</span></code> has no effect with archive storage. If the job ends
+after publishing but before switching, <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">unpack</span></code> (in a Slurm job)
+finishes the unpacking and the switch. Old archives are pruned like the codes’;
+old directories with <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">prune</span></code>.</p>
+</section>
 <section id="trying-a-new-release-beside-production">
 <h2>Trying a new release beside production<a class="headerlink" href="#trying-a-new-release-beside-production" title="Link to this heading">¶</a></h2>
 <p>To try new versions of SEAMM and the plug-ins without touching the installation you
@@ -358,6 +404,7 @@ Queues” describe the keys.</p>
 <li><a class="reference internal" href="#versions-and-the-lock-file">Versions and the lock file</a></li>
 <li><a class="reference internal" href="#several-installations">Several installations</a></li>
 <li><a class="reference internal" href="#codes-environments-as-archives-clusters-with-a-slow-shared-file-system">Codes’ environments as archives (clusters with a slow shared file system)</a></li>
+<li><a class="reference internal" href="#the-seamm-environment-as-an-archive">The SEAMM environment as an archive</a></li>
 <li><a class="reference internal" href="#trying-a-new-release-beside-production">Trying a new release beside production</a></li>
 <li><a class="reference internal" href="#where-things-are">Where things are</a></li>
 <li><a class="reference internal" href="#the-queue-file">The queue file</a></li>
@@ -412,7 +459,7 @@ Queues” describe the keys.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>Index &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="_static/documentation_options.js?v=66d827f0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>  
@@ -78,13 +78,23 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.naming.app_name">app_name() (in module seamm_manager.naming)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.versions.apply_change">apply_change() (in module seamm_manager.versions)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.apply_change">apply_change() (in module seamm_manager.venv_archives)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.versions.apply_change">(in module seamm_manager.versions)</a>
+</li>
+      </ul></li>
+      <li><a href="api/seamm_manager.html#seamm_manager.environment.archive">archive() (in module seamm_manager.environment)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.archive_age_days">archive_age_days() (in module seamm_manager.archives)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.archive_current">archive_current() (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.archive_dir">archive_dir() (in module seamm_manager.archives)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.archive_for">archive_for() (in module seamm_manager.venv_archives)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.archive_hash">archive_hash() (in module seamm_manager.archives)</a>
 </li>
@@ -154,10 +164,10 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.conda">conda (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration">Configuration (class in seamm_manager.configuration)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.configuration">configuration (seamm_manager.installer_base.InstallerBase property)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.torch_support.constraint_args">constraint_args() (in module seamm_manager.torch_support)</a>
@@ -191,7 +201,11 @@
       <li><a href="api/seamm_manager.html#seamm_manager.mac.create_service_bundle">create_service_bundle() (in module seamm_manager.mac)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.current_archive">current_archive() (in module seamm_manager.archives)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.current_archive">(in module seamm_manager.venv_archives)</a>
 </li>
+      </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.current_version">current_version (seamm_manager.uv.Uv property)</a>
 </li>
   </ul></td>
@@ -242,6 +256,8 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.enabled">enabled() (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.datastore.ensure">ensure() (in module seamm_manager.datastore)</a>
 
       <ul>
@@ -293,6 +309,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.uv.find_uv">find_uv() (in module seamm_manager.uv)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.floored_constraints">floored_constraints() (in module seamm_manager.uv)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.follow">follow() (in module seamm_manager.venv_archives)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.services.free_port">free_port() (in module seamm_manager.services)</a>
 </li>
@@ -364,14 +382,16 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.install.install_development_environment">install_development_environment() (in module seamm_manager.install)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.install_job_scripts">install_job_scripts() (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.mac.install_launcher">install_launcher() (in module seamm_manager.mac)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.install.install_packages">install_packages() (in module seamm_manager.install)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.install.install_seamm_webui">install_seamm_webui() (in module seamm_manager.install)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.install.install_seamm_webui">install_seamm_webui() (in module seamm_manager.install)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.install_wrapper">install_wrapper() (in module seamm_manager.archives)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.installed_requirements">installed_requirements() (seamm_manager.uv.Uv method)</a>
@@ -526,6 +546,8 @@
 </li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.uv">seamm_manager.uv</a>
 </li>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.venv_archives">seamm_manager.venv_archives</a>
+</li>
         <li><a href="api/seamm_manager.html#module-seamm_manager.versions">seamm_manager.versions</a>
 </li>
       </ul></li>
@@ -535,12 +557,18 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.new_version_name">new_version_name() (seamm_manager.uv.Uv static method)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.NAME">NAME (in module seamm_manager.venv_archives)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.uv.normalize">normalize() (in module seamm_manager.uv)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.new_version_name">new_version_name() (in module seamm_manager.venv_archives)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.new_version_name">(seamm_manager.uv.Uv static method)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.uv.normalize">normalize() (in module seamm_manager.uv)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.compare.normalize_text">normalize_text() (in module seamm_manager.compare)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.flowcharts.notice">notice() (in module seamm_manager.flowcharts)</a>
@@ -560,7 +588,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.pack">pack() (in module seamm_manager.archives)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.pack">(in module seamm_manager.venv_archives)</a>
 </li>
+      </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.package_info">package_info() (in module seamm_manager.util)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.PackageListUnavailable">PackageListUnavailable</a>
@@ -601,6 +633,8 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.pip_install">pip_install() (seamm_manager.conda.Conda method)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.archives.point_link">point_link() (in module seamm_manager.archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.gui.GUI.preferences">preferences() (seamm_manager.gui.GUI method)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.Conda.prefix">prefix (seamm_manager.conda.Conda property)</a>
@@ -622,7 +656,11 @@
 </li>
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.publish">publish() (in module seamm_manager.archives)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.publish">(in module seamm_manager.venv_archives)</a>
 </li>
+      </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.pypi_latest">pypi_latest() (in module seamm_manager.util)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.python">python (seamm_manager.uv.Uv property)</a>
@@ -634,6 +672,10 @@
 
 <h2 id="Q">Q</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.queue_settings">queue_settings() (in module seamm_manager.venv_archives)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.archives.queue_setup_line">queue_setup_line() (in module seamm_manager.archives)</a>
 </li>
@@ -746,6 +788,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.services.same_root_services">same_root_services() (in module seamm_manager.services)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration.save">save() (seamm_manager.configuration.Configuration method)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.seamm_environment_storage">seamm_environment_storage() (in module seamm_manager.policy)</a>
 </li>
       <li>
     seamm_manager
@@ -936,13 +980,20 @@
         <li><a href="api/seamm_manager.html#module-seamm_manager.util">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     seamm_manager.uv
 
       <ul>
         <li><a href="api/seamm_manager.html#module-seamm_manager.uv">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    seamm_manager.venv_archives
+
+      <ul>
+        <li><a href="api/seamm_manager.html#module-seamm_manager.venv_archives">module</a>
 </li>
       </ul></li>
       <li>
@@ -979,6 +1030,8 @@
       <li><a href="api/seamm_manager.html#seamm_manager.policy.set_code_environment_storage">set_code_environment_storage() (in module seamm_manager.policy)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.util.set_metadata">set_metadata() (in module seamm_manager.util)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.policy.set_seamm_environment_storage">set_seamm_environment_storage() (in module seamm_manager.policy)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.configuration.Configuration.set_value">set_value() (seamm_manager.configuration.Configuration method)</a>
 </li>
@@ -1034,6 +1087,10 @@
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.conda.split_environment_file">split_environment_file() (in module seamm_manager.conda)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.stage_current">stage_current() (in module seamm_manager.venv_archives)</a>
+</li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.STAGE_SCRIPT">STAGE_SCRIPT (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.datastore.stamp">stamp() (in module seamm_manager.datastore)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.services.start">start() (in module seamm_manager.services)</a>
@@ -1062,6 +1119,8 @@
         <li><a href="api/seamm_manager.html#seamm_manager.mac.ServiceManager.stop">(seamm_manager.mac.ServiceManager method)</a>
 </li>
       </ul></li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.STREAMS">STREAMS (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.environment.switch">switch() (in module seamm_manager.environment)</a>
 
       <ul>
@@ -1084,10 +1143,12 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.tool_upgrade">tool_upgrade() (seamm_manager.uv.Uv method)</a>
 </li>
-      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.TORCH_INDEX_BASE">TORCH_INDEX_BASE (in module seamm_manager.torch_support)</a>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.TOP">TOP (in module seamm_manager.venv_archives)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/seamm_manager.html#seamm_manager.torch_support.TORCH_INDEX_BASE">TORCH_INDEX_BASE (in module seamm_manager.torch_support)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.torch_support.torch_install_args">torch_install_args() (in module seamm_manager.torch_support)</a>
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.installer_base.InstallerBase.torch_managed">torch_managed (seamm_manager.installer_base.InstallerBase attribute)</a>
@@ -1124,6 +1185,14 @@
       </ul></li>
       <li><a href="api/seamm_manager.html#seamm_manager.uninstall.uninstall_packages">uninstall_packages() (in module seamm_manager.uninstall)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.environment.unpack">unpack() (in module seamm_manager.environment)</a>
+
+      <ul>
+        <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.unpack">(in module seamm_manager.venv_archives)</a>
+</li>
+      </ul></li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.unpack_current">unpack_current() (in module seamm_manager.venv_archives)</a>
+</li>
       <li><a href="api/seamm_manager.html#seamm_manager.environment.unpin">unpin() (in module seamm_manager.environment)</a>
 
       <ul>
@@ -1134,6 +1203,8 @@
 </li>
       <li><a href="api/seamm_manager.html#seamm_manager.datastore.unversioned_revision">unversioned_revision() (in module seamm_manager.datastore)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.apps.update">update() (in module seamm_manager.apps)</a>
 
       <ul>
@@ -1148,8 +1219,6 @@
         <li><a href="api/seamm_manager.html#seamm_manager.pip.Pip.update">(seamm_manager.pip.Pip method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.linux.update_app">update_app() (in module seamm_manager.linux)</a>
 
       <ul>
@@ -1180,14 +1249,16 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.version">version() (seamm_manager.uv.Uv method)</a>
 </li>
+      <li><a href="api/seamm_manager.html#seamm_manager.venv_archives.version_of">version_of() (in module seamm_manager.venv_archives)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.environment.versions">versions() (in module seamm_manager.environment)</a>
 
       <ul>
         <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.versions">(seamm_manager.uv.Uv method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/seamm_manager.html#seamm_manager.uv.Uv.versions_dir">versions_dir (seamm_manager.uv.Uv property)</a>
 </li>
   </ul></td>
@@ -1240,7 +1311,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Index</a></li> 
       </ul>
     </div>

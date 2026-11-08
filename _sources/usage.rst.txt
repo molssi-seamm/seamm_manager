@@ -218,6 +218,54 @@ the command fails with a message beginning ``seamm-conda: FAILED`` rather than q
 running in a different environment; ``$TMPDIR/seamm-envs/stage.log`` on the node
 records each staging.
 
+The SEAMM environment as an archive
+-----------------------------------
+
+The SEAMM environment itself, ``<root>/venv`` (about 46,000 files), has the same
+problem: building a new version beside the current one on such a file system can
+take hours, although the build takes about a minute on a compute node's local disk.
+To store it as an archive too, run, inside a Slurm job::
+
+    $ sbatch -N1 -n1 -c4 --mem=16G -t 0:30:00 \
+        --wrap 'seamm-manager --root <root> environment archive'
+
+This records ``seamm-environment-storage = archive`` in ``<root>/installation.ini``,
+publishes the current version as ``<root>/env-archives/seamm-venv-<version>.tar``
+(``seamm-venv.tar`` links to it), and installs ``<root>/bin/stage_seamm_venv.sh``
+and the launchers ``<root>/bin/run_from_jobserver`` and ``run_flowchart``. Each
+cluster queue whose jobs should run from the archive needs, in the JobServer's queue
+configuration::
+
+    setup = source <root>/bin/stage_seamm_venv.sh
+    remote_run_from_jobserver = <root>/bin/run_from_jobserver
+
+A job then unpacks the archive on each of its nodes into ``$TMPDIR/seamm-venv``
+(about 30 s) and runs SEAMM from there. As with the codes, if the archive exists
+but cannot be unpacked, the job fails with a message beginning
+``stage_seamm_venv: FAILED`` rather than running from a different environment. Not
+for queues with ``tasks = queue``: their task bundles are separate jobs that start
+SEAMM's Python by its path in the main job.
+
+From then on every install, update and ``environment recreate`` (all inside a Slurm
+job, like the codes' builds):
+
+#. unpacks the current version from its archive onto the node's local disk, and
+   builds the new version there from it, as an update does beside the current one,
+#. checks it as usual (nothing moved back, no newly unmet requirements), then packs
+   and publishes it as ``seamm-venv-<version>.tar``. From this moment new jobs use it.
+#. unpacks the archive into ``<root>/venvs/<version>`` with 32 tar streams at once
+   (``SEAMM_UNPACK_STREAMS``), which on ARC writes the whole environment in about a
+   minute and a half where one stream takes 20 minutes or more, and switches
+   ``<root>/venv`` to it for everything that does not stage it: the login nodes,
+   the ``tasks = queue`` queues and the plug-ins' installers.
+
+The archive and the directory hold the same files, and share the version's name, so
+``environment switch`` and ``rollback`` move the archive's link with the
+directory's. ``--in-place`` has no effect with archive storage. If the job ends
+after publishing but before switching, ``environment unpack`` (in a Slurm job)
+finishes the unpacking and the switch. Old archives are pruned like the codes';
+old directories with ``environment prune``.
+
 Trying a new release beside production
 --------------------------------------
 

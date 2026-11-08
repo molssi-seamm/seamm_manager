@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
+    <title>seamm_manager.environment &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=5120ad9a"></script>
+    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
@@ -184,7 +184,71 @@
     <span class="p">)</span>
     <span class="n">tmp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--dry-run"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Only report what would be removed."</span>
+    <span class="p">)</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">subsubparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"archive"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Store the SEAMM environment as archives from now on "</span>
+            <span class="s2">"(seamm-environment-storage = archive), publishing the current version "</span>
+            <span class="s2">"as &lt;root&gt;/env-archives/seamm-venv-&lt;version&gt;.tar. Jobs whose queue's setup "</span>
+            <span class="s2">"sources &lt;root&gt;/bin/stage_seamm_venv.sh then unpack it on their own "</span>
+            <span class="s2">"nodes, and updates build on a compute node's local disk. For clusters "</span>
+            <span class="s2">"whose shared file system creates files slowly. Run it inside a Slurm job."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">archive</span><span class="p">)</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">subsubparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"unpack"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Archive storage: unpack the archive jobs use into &lt;root&gt;/venvs/&lt;version&gt; "</span>
+            <span class="s2">"and switch to it, if the update that published it ended before doing so."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">unpack</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--force"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Switch even if processes started through &lt;root&gt;/venv exist."</span><span class="p">,</span>
     <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="archive">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.environment.archive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">archive</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">archives</span><span class="p">,</span> <span class="n">venv_archives</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.policy</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seamm_environment_storage</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">venv_archives</span><span class="o">.</span><span class="n">archive_current</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">archives</span><span class="o">.</span><span class="n">ArchiveError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">enabled</span><span class="p">():</span>
+        <span class="n">set_seamm_environment_storage</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">"archive"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"The SEAMM environment is now stored as archives here."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">"For jobs to use the archive, each queue section that runs on this cluster "</span>
+        <span class="s2">"(except those with tasks = queue) needs</span><span class="se">\n</span><span class="s2">    "</span>
+        <span class="o">+</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">queue_settings</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">    "</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="unpack">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.environment.unpack">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unpack</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">archives</span><span class="p">,</span> <span class="n">venv_archives</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">unpack_current</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">force</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">archives</span><span class="o">.</span><span class="n">ArchiveError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="mi">1</span></div>
 
 
 
@@ -239,6 +303,12 @@
         <span class="sa">f</span><span class="s2">"Codes:       </span><span class="si">{</span><span class="n">code_environment_policy</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2"> conda environments, stored "</span>
         <span class="sa">f</span><span class="s2">"as </span><span class="si">{</span><span class="n">storage</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">venv_archives</span>
+
+    <span class="k">if</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">enabled</span><span class="p">():</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">current_archive</span><span class="p">()</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">archive</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"none yet"</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Archive:     jobs stage </span><span class="si">{</span><span class="n">jobs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
@@ -273,6 +343,18 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2">==</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Using each package's newest release on PyPI (--latest)."</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">venv_archives</span>
+
+    <span class="k">if</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">enabled</span><span class="p">():</span>
+        <span class="c1"># Built on local disk, published, unpacked and switched to in one go</span>
+        <span class="k">if</span> <span class="n">venv_archives</span><span class="o">.</span><span class="n">apply_change</span><span class="p">(</span>
+            <span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">from_freeze</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.install</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_packages</span>
+
+            <span class="n">install_packages</span><span class="p">(</span><span class="n">installed</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="mi">1</span>
     <span class="n">new</span> <span class="o">=</span> <span class="n">_versions</span><span class="o">.</span><span class="n">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">lock</span><span class="p">,</span> <span class="n">from_freeze</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">saved</span><span class="p">,</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="p">,</span> <span class="n">new</span>
     <span class="k">try</span><span class="p">:</span>
@@ -459,7 +541,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.environment</a></li> 
       </ul>
