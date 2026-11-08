@@ -1213,6 +1213,17 @@ class InstallerBase(object):
             environment = self.environment
             if "conda-environment" in data and data["conda-environment"] != "":
                 environment = data["conda-environment"]
+            # Before anything else, in either storage: an environment SEAMM did not
+            # make (e.g. a hand-built one the .ini names) is left alone -- an
+            # archive built from the plug-in's file would replace it for every job.
+            if self._not_ours(environment):
+                print(
+                    f"    The Conda environment '{environment}' named in "
+                    f"{self.section}.ini was not created by SEAMM, so it is left as "
+                    "it is. Update it yourself, or point the .ini file at an "
+                    "environment SEAMM manages."
+                )
+                return
             if not self.torch_managed and self.archive_storage:
                 if self._archive_up_to_date(environment):
                     print(
@@ -1223,14 +1234,6 @@ class InstallerBase(object):
                 self._archive(environment, "Updating")
                 self._register_conda(environment)
                 print("    Done!\n")
-                return
-            if self._not_ours(environment):
-                print(
-                    f"    The Conda environment '{environment}' named in "
-                    f"{self.section}.ini was not created by SEAMM, so it is left as "
-                    "it is. Update it yourself, or point the .ini file at an "
-                    "environment SEAMM manages."
-                )
                 return
             # A torch build asked for (--torch-tag) is applied even when the file is
             # unchanged: it is how a torch that cannot use the GPU is replaced

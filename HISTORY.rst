@@ -1,6 +1,14 @@
 =======
 History
 =======
+2026.11.8.1 -- Bugfix: archive storage could replace a hand-built code environment
+    * With code-environment-storage = archive, updating a plug-in's code built an
+      archive from the plug-in's environment file for whatever environment the code's
+      .ini file names -- even one SEAMM did not make, such as a hand-built environment
+      for a particular PyTorch or code build. Every job would then have run in the
+      plug-in's standard environment instead. Such environments are now left alone,
+      as they already were with directory storage.
+
 2026.11.8 -- The codes' conda environments can be kept as archives, for slow shared file systems
     * New per-installation choice, code-environment-storage, of how the codes' conda
       environments are stored ('install --code-environment-storage archive', recorded

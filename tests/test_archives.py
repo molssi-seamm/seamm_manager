@@ -297,3 +297,23 @@ def test_wrapper_stages_fails_and_passes_through(root, tmp_path):
     assert p.returncode == 0 and p.stdout.strip() == "run -n other x"
     p = run("info", "--envs")
     assert p.stdout.strip() == "info --envs"
+
+
+def test_update_leaves_a_hand_built_environment_alone(
+    root, tmp_path, monkeypatch, fake_conda, capsys
+):
+    """An .ini naming an environment SEAMM did not make (seamm-lammps-xnn0240 on
+    ARC) must not get an archive built from the plug-in's file."""
+    calls, _ = fake_conda
+    policy.set_code_environment_storage(root, "archive")
+    inst = _installer(tmp_path, monkeypatch, root)
+    (root / "mopac.ini").write_text(
+        "[local]\ninstallation = conda\nconda-environment = my-own-mopac\n"
+    )
+    inst.exe_config.path = None  # read it again
+    inst.exe_config.path = root / "mopac.ini"
+    monkeypatch.setattr(inst, "_not_ours", lambda environment: True)
+    inst.update()
+    assert calls == []
+    assert archives.current_archive(root, "my-own-mopac") is None
+    assert "was not created by SEAMM" in capsys.readouterr().out
