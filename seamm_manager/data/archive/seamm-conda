@@ -1,0 +1,92 @@
+#!/bin/bash
+# seamm-conda: conda, except that `conda run -n NAME ...` runs in a node-local copy
+# of NAME, unpacked (once per job and node) from $SEAMM_ENV_ARCHIVES/NAME.tar when
+# that archive exists (a symlink to NAME-<version>.tar), for clusters whose shared
+# file system creates files too slowly to keep conda environments on it (2026-11-07).
+#
+# No fallback (Paul 2026-11-07): if NAME has an archive and it cannot be staged, the
+# command fails with a message on stderr (the step's output), rather than running in
+# a possibly different shared environment. Environments without an archive, and every
+# other conda command, run the real conda unchanged. Staging is logged only on
+# node-local disk ($TMPDIR/seamm-envs/stage.log): no shared file on /projects, whose
+# appends from many jobs contend; failures are counted from the jobs' outputs.
+#
+# Installed by seamm-manager (seamm_manager/data/archive/seamm-conda) into
+# <root>/bin for an installation with code-environment-storage = archive; a job
+# uses it when its queue's setup exports CONDA_EXE=<root>/bin/seamm-conda.
+REAL=${SEAMM_REAL_CONDA:-@REAL_CONDA@}
+ARCHIVES=${SEAMM_ENV_ARCHIVES:-@ARCHIVES@}
+
+log() {
+    local line
+    line="$(date '+%F %T') $(hostname -s) job=${SLURM_JOB_ID:-none} conda $*"
+    line=${line//$'\n'/ | }
+    if [ -n "${TMPDIR:-}" ] && mkdir -p "$TMPDIR/seamm-envs" 2>/dev/null; then
+        echo "$line" >>"$TMPDIR/seamm-envs/stage.log"
+    fi
+}
+
+# fail NAME REASON: log it and say so on stderr
+fail() {
+    local name=$1
+    shift
+    local why="$*"
+    log "$name FAILED: $why"
+    echo "seamm-conda: FAILED to stage the conda environment '$name' from $ARCHIVES" \
+        "on $(hostname -s): ${why//$'\n'/ | }" >&2
+}
+
+# stage NAME: print the prefix of the node-local copy, unpacking it if needed.
+# Returns 1 (printing nothing) if NAME has no archive, 2 if staging failed.
+stage() {
+    local name=$1 link=$ARCHIVES/$1.tar archive
+    [ -e "$link" ] || [ -L "$link" ] || return 1   # a dangling link is a failure
+    # NAME.tar links to the current NAME-<version>.tar. Archives are never rewritten
+    # in place (a reader of a replaced file gets "Stale file handle" on GPFS): a new
+    # version is a new file, and the link is switched atomically.
+    archive=$(readlink -f "$link") && [ -f "$archive" ] \
+        || { fail "$name" "$link points to no file"; return 2; }
+    [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] \
+        || { fail "$name" "no \$TMPDIR on this node"; return 2; }
+    local key
+    key=$(stat -c %Y-%s "$archive") || { fail "$name" "cannot stat $archive"; return 2; }
+    local root=$TMPDIR/seamm-envs
+    local dest=$root/$name-$key
+    if [ ! -f "$dest/.staged" ]; then
+        mkdir -p "$root" || { fail "$name" "cannot make $root"; return 2; }
+        (
+            flock -w 3600 9 || { fail "$name" "timed out waiting for another staging"; exit 1; }
+            [ -f "$dest/.staged" ] && exit 0
+            t0=$SECONDS
+            rm -rf "$dest" && mkdir -p "$dest" || { fail "$name" "cannot make $dest"; exit 1; }
+            err=$(tar -xf "$archive" -C "$dest" 2>&1) \
+                || { fail "$name" "untar $archive: ${err:0:300}"; rm -rf "$dest"; exit 1; }
+            # conda-pack's fix-up of the prefixes, run from the final location
+            err=$("$dest/bin/python" "$dest/bin/conda-unpack" 2>&1) \
+                || { fail "$name" "conda-unpack: ${err:0:300}"; rm -rf "$dest"; exit 1; }
+            touch "$dest/.staged"
+            log "$name OK $(basename "$archive") -> $dest in $((SECONDS - t0)) s"
+        ) 9>"$root/$name.lock" || return 2
+    fi
+    echo "$dest"
+}
+
+if [ "${1:-}" = run ]; then
+    args=("$@")
+    for ((i = 1; i < ${#args[@]}; i++)); do
+        case "${args[i]}" in
+            -n | --name)
+                prefix=$(stage "${args[i + 1]}")
+                case $? in
+                    0) args[i]=-p; args[i + 1]=$prefix ;;
+                    1) ;;          # no archive: the shared environment, as before
+                    *) exit 1 ;;   # fail() has said why on stderr
+                esac
+                break
+                ;;
+            -p | --prefix | --) break ;;
+        esac
+    done
+    exec "$REAL" "${args[@]}"
+fi
+exec "$REAL" "$@"

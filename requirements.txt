@@ -1,4 +1,5 @@
 
+conda-pack
 packaging
 platformdirs
 psutil

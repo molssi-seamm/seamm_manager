@@ -307,17 +307,23 @@ def _installers_honour_policy():
     this one. In an installation that does not own its codes (policy ``shared`` or
     ``prefixed``), an older copy there would create or update the shared conda
     environments. True for the default installation, or when that copy has the
-    policy code (checked by importing it, not by comparing versions).
+    policy code (checked by importing it, not by comparing versions). With
+    ``code-environment-storage = archive`` that copy must also have the archive code,
+    or it would build the environments in place.
     """
-    from .policy import code_environment_policy
+    from .policy import code_environment_policy, code_environment_storage
 
-    if code_environment_policy(my.root) == "own":
+    # Archive storage needs the archive code there too: an older copy would create
+    # or update the environments in place on the slow shared file system.
+    archive = code_environment_storage(my.root) == "archive"
+    if code_environment_policy(my.root) == "own" and not archive:
         return True
     python = my.uv.which("python")
     if python is None:
         return False
+    module = "seamm_manager.archives" if archive else "seamm_manager.policy"
     result = subprocess.run(
-        [str(python), "-c", "import seamm_manager.policy"],
+        [str(python), "-c", f"import {module}"],
         capture_output=True,
         text=True,
     )
@@ -354,9 +360,9 @@ def run_plugin_installer(package, *args, verbose=True):
         and not (_installers_honour_policy())
     ):
         print(
-            f"   Skipped the installer for {package}: this installation does not "
-            "manage its own codes, but its environment has a seamm-manager too old "
-            "to know that. Run 'seamm-manager update seamm-manager' for it first."
+            f"   Skipped the installer for {package}: its environment has a "
+            "seamm-manager too old for this installation's code-environment policy "
+            "or storage. Run 'seamm-manager update seamm-manager' for it first."
         )
         return None
     else:
