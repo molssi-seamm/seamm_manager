@@ -146,6 +146,64 @@ def setup(parser):
         "--dry-run", action="store_true", help="Only report what would be removed."
     )
 
+    tmp = subsubparser.add_parser(
+        "archive",
+        help=(
+            "Store the SEAMM environment as archives from now on "
+            "(seamm-environment-storage = archive), publishing the current version "
+            "as <root>/env-archives/seamm-venv-<version>.tar. Jobs whose queue's setup "
+            "sources <root>/bin/stage_seamm_venv.sh then unpack it on their own "
+            "nodes, and updates build on a compute node's local disk. For clusters "
+            "whose shared file system creates files slowly. Run it inside a Slurm job."
+        ),
+    )
+    tmp.set_defaults(func=archive)
+
+    tmp = subsubparser.add_parser(
+        "unpack",
+        help=(
+            "Archive storage: unpack the archive jobs use into <root>/venvs/<version> "
+            "and switch to it, if the update that published it ended before doing so."
+        ),
+    )
+    tmp.set_defaults(func=unpack)
+    tmp.add_argument(
+        "--force",
+        action="store_true",
+        help="Switch even if processes started through <root>/venv exist.",
+    )
+
+
+def archive():
+    from . import archives, venv_archives
+    from .policy import set_seamm_environment_storage
+
+    try:
+        venv_archives.archive_current()
+    except archives.ArchiveError as e:
+        print(f"\n{e}")
+        return 1
+    if not venv_archives.enabled():
+        set_seamm_environment_storage(my.root, "archive")
+        print("The SEAMM environment is now stored as archives here.")
+    print(
+        "For jobs to use the archive, each queue section that runs on this cluster "
+        "(except those with tasks = queue) needs\n    "
+        + venv_archives.queue_settings().replace("\n", "\n    ")
+    )
+    return 0
+
+
+def unpack():
+    from . import archives, venv_archives
+
+    try:
+        ok = venv_archives.unpack_current(force=my.options.force)
+    except archives.ArchiveError as e:
+        print(f"\n{e}")
+        return 1
+    return 0 if ok else 1
+
 
 def ensure(python_version=None):
     """Create the environment if it does not exist. Returns True if created."""
@@ -190,6 +248,12 @@ def show():
         f"Codes:       {code_environment_policy(my.root)} conda environments, stored "
         f"as {storage}"
     )
+    from . import venv_archives
+
+    if venv_archives.enabled():
+        archive = venv_archives.current_archive()
+        jobs = archive.name if archive is not None else "none yet"
+        print(f"Archive:     jobs stage {jobs}")
     return 0
 
 
@@ -221,6 +285,18 @@ def recreate():
             else:
                 specs.append(f"{package}=={version}")
         print("Using each package's newest release on PyPI (--latest).")
+    from . import venv_archives
+
+    if venv_archives.enabled():
+        # Built on local disk, published, unpacked and switched to in one go
+        if venv_archives.apply_change(
+            specs, constraints=lock, from_freeze=False, check=False
+        ):
+            from .install import install_packages
+
+            install_packages(installed, update=True)
+            return 0
+        return 1
     new = _versions.build_version(specs, constraints=lock, from_freeze=False)
     saved, my.uv = my.uv, new
     try:

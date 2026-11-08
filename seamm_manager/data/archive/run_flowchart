@@ -1,0 +1,5 @@
+#!/bin/bash
+# SEAMM's run_flowchart from the staged environment if this job has one
+# (stage_seamm_venv.sh), otherwise from the installation's shared environment.
+# Installed by seamm-manager (seamm_manager/data/archive/run_flowchart).
+exec "${SEAMM_VENV:-@ROOT@/venv}/bin/run_flowchart" "$@"

@@ -34,6 +34,19 @@ archive
     ``<root>/bin/seamm-conda`` wrapper (see seamm_manager.archives). For clusters
     whose shared file system creates files slowly: an environment of ~30,000 files
     takes hours to create or update there, but minutes on local disk.
+
+The SEAMM environment itself (``<root>/venv``) has the same choice, with
+``seamm-environment-storage``:
+
+directory
+    The versioned environment is built beside the current one, in
+    ``<root>/venvs/<stamp>``, and the ``venv`` link switched. The default.
+archive
+    The new version is built on a compute node's local disk and published as
+    ``<root>/env-archives/seamm-venv-<stamp>.tar`` (``seamm-venv.tar`` links to it),
+    which jobs unpack on their own nodes through ``<root>/bin/stage_seamm_venv.sh``.
+    Then the archive is unpacked into ``<root>/venvs/<stamp>`` for everything else
+    (see seamm_manager.venv_archives).
 """
 
 import configparser
@@ -47,6 +60,7 @@ POLICIES = ("own", "shared", "prefixed")
 
 
 STORAGE_KEY = "code-environment-storage"
+SEAMM_STORAGE_KEY = "seamm-environment-storage"
 STORAGES = ("directory", "archive")
 
 
@@ -103,20 +117,18 @@ def prefixed_environment(name, tag):
     return f"{tag}-{name}"
 
 
-def code_environment_storage(root):
-    """How the installation stores the codes' environments: directory or archive."""
+def _storage(root, key):
     path = Path(root).expanduser() / POLICY_FILE
     if path.exists():
         config = configparser.ConfigParser(interpolation=None)
         config.read(path)
-        value = config.get(SECTION, STORAGE_KEY, fallback="").strip().lower()
+        value = config.get(SECTION, key, fallback="").strip().lower()
         if value in STORAGES:
             return value
     return "directory"
 
 
-def set_code_environment_storage(root, storage):
-    """Record how the installation stores the codes' environments."""
+def _set_storage(root, key, storage):
     if storage not in STORAGES:
         raise ValueError(f"The storage must be one of {', '.join(STORAGES)}.")
     path = Path(root).expanduser() / POLICY_FILE
@@ -125,8 +137,28 @@ def set_code_environment_storage(root, storage):
         config.read(path)
     if not config.has_section(SECTION):
         config.add_section(SECTION)
-    config.set(SECTION, STORAGE_KEY, storage)
+    config.set(SECTION, key, storage)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as fd:
         config.write(fd)
     return path
+
+
+def code_environment_storage(root):
+    """How the installation stores the codes' environments: directory or archive."""
+    return _storage(root, STORAGE_KEY)
+
+
+def set_code_environment_storage(root, storage):
+    """Record how the installation stores the codes' environments."""
+    return _set_storage(root, STORAGE_KEY, storage)
+
+
+def seamm_environment_storage(root):
+    """How the installation stores the SEAMM environment: directory or archive."""
+    return _storage(root, SEAMM_STORAGE_KEY)
+
+
+def set_seamm_environment_storage(root, storage):
+    """Record how the installation stores the SEAMM environment."""
+    return _set_storage(root, SEAMM_STORAGE_KEY, storage)

@@ -300,11 +300,14 @@ class Uv(object):
 
     # ---- the environment itself --------------------------------------------
 
-    def create(self, python_version=None, seed=True):
+    def create(self, python_version=None, seed=True, relocatable=False):
         """Create the environment, installing the interpreter if needed.
 
         ``seed`` adds pip to the environment, which some tools (and the docs
-        builds) expect to find as ``python -m pip``.
+        builds) expect to find as ``python -m pip``. ``relocatable`` makes the
+        scripts find the environment from their own location, so that the
+        environment can be built in one place and used in another (archive
+        storage builds on a compute node's local disk).
         """
         if python_version is not None:
             self.python_version = python_version
@@ -324,6 +327,8 @@ class Uv(object):
         ]
         if seed:
             args.append("--seed")
+        if relocatable:
+            args.append("--relocatable")
         args.append(self.path)
         self.run(*args)
 
