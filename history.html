@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.11.8 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.11.8.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=93f150ad"></script>
+    <script src="_static/documentation_options.js?v=5120ad9a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,15 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.11.8.1 – Bugfix: archive storage could replace a hand-built code environment</dt><dd><ul class="simple">
+<li><p>With code-environment-storage = archive, updating a plug-in’s code built an
+archive from the plug-in’s environment file for whatever environment the code’s
+.ini file names – even one SEAMM did not make, such as a hand-built environment
+for a particular PyTorch or code build. Every job would then have run in the
+plug-in’s standard environment instead. Such environments are now left alone,
+as they already were with directory storage.</p></li>
+</ul>
+</dd>
 <dt>2026.11.8 – The codes’ conda environments can be kept as archives, for slow shared file systems</dt><dd><ul class="simple">
 <li><p>New per-installation choice, code-environment-storage, of how the codes’ conda
 environments are stored (‘install –code-environment-storage archive’, recorded
@@ -550,7 +559,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>
