@@ -1,6 +1,32 @@
 =======
 History
 =======
+2026.11.8 -- The codes' conda environments can be kept as archives, for slow shared file systems
+    * New per-installation choice, code-environment-storage, of how the codes' conda
+      environments are stored ('install --code-environment-storage archive', recorded
+      in <root>/installation.ini). The default, 'directory', keeps conda environments
+      as before, and is right for a workstation or a cluster such as ChemAI.
+    * With 'archive', installing or updating a plug-in's code builds its environment
+      on the compute node's local disk, packs it with conda-pack into one file,
+      <root>/env-archives/<name>-<date>T<time>.tar, and points <name>.tar at it. Jobs
+      unpack it on their own node through <root>/bin/seamm-conda, a wrapper for conda
+      that the cluster queues' setup exports as CONDA_EXE. On ARC this takes an
+      update of Psi4's environment from hours on /projects to about five minutes, and
+      a job unpacks it in about ten seconds.
+    * An archive is rebuilt only when the plug-in's environment file changes, when it
+      is over a week old, or with --refresh-codes. Archives are never rewritten in
+      place; the newest three, and any less than a day old, are kept.
+    * If an archive exists but cannot be unpacked, the command fails with a message
+      starting 'seamm-conda: FAILED' instead of quietly using another environment.
+      Environments without an archive, and every other conda command, pass through
+      unchanged.
+    * Archive builds run only inside a Slurm job (or with SEAMM_ARCHIVE_BUILD_DIR
+      set), since they need fast local disk. Environments that need PyTorch are still
+      kept as directories.
+    * seamm-manager skips the plug-ins' installers when the copy of seamm-manager in
+      the installation's environment is too old to know about archives, rather than
+      let it update the environments in place.
+
 2026.10.19 -- Bugfix: the wrong PyTorch for NVIDIA drivers of CUDA 12
     * On a machine whose NVIDIA driver supports CUDA 12 but not 13, such as one with the
       535 driver, codes that use PyTorch (xnn) got torch built for CUDA 13, which cannot
