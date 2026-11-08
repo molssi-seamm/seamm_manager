@@ -149,7 +149,15 @@ def _free_version_name(current, moment):
     return name
 
 
-def build_version(specs, constraints=None, upgrade=False, from_freeze=True, name=None):
+def build_version(
+    specs,
+    constraints=None,
+    upgrade=False,
+    from_freeze=True,
+    name=None,
+    current=None,
+    new=None,
+):
     """Build a new versioned environment and return its ``Uv``.
 
     Parameters
@@ -167,15 +175,28 @@ def build_version(specs, constraints=None, upgrade=False, from_freeze=True, name
         scratch with only `specs` -- the clean rebuild ``recreate`` wants.
     name : str = None
         The version's name; default from the time.
+    current : Uv = None
+        The environment to start from; default the installation's.
+    new : Uv = None
+        Where to build, created relocatable (archive storage builds on local disk);
+        default ``<root>/venvs/<name>``.
     """
-    current = my.uv
-    if name is None:
-        name = _free_version_name(current, datetime.now())
-    new = current.version(name)
+    if current is None:
+        current = my.uv
+    if new is None:
+        if name is None:
+            name = _free_version_name(current, datetime.now())
+        new = current.version(name)
+        relocatable = False
+    else:
+        relocatable = True
     if new.path.exists():
         raise UvError(f"{new.path} already exists.")
     print(f"Building the new environment {new.path}")
-    new.create(python_version=current.python_version)
+    if relocatable:
+        new.create(python_version=current.python_version, relocatable=True)
+    else:
+        new.create(python_version=current.python_version)
 
     if from_freeze and current.exists:
         # The packages being changed are left out of the copy, so that their new
@@ -224,6 +245,11 @@ def switch(new, force=False):
     my.uv.switch_to(new.real_path)
     switched = True
     print(f"{my.uv.path} now links to {new.path.name}")
+    # With archive storage the jobs' archive follows (rollback, switch by hand)
+    from . import venv_archives
+
+    if venv_archives.enabled():
+        venv_archives.follow(new.real_path.name)
     relink_launchers()
     return True
 
@@ -241,6 +267,17 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
     """
     if in_place is None:
         in_place = bool(getattr(my.options, "in_place", False))
+    from . import venv_archives
+
+    if my.uv.exists and venv_archives.enabled():
+        if in_place:
+            print(
+                "The SEAMM environment is stored as an archive here, so changes are "
+                "never made in place; building a new version instead."
+            )
+        return venv_archives.apply_change(
+            specs, constraints=constraints, upgrade=upgrade
+        )
     if not my.uv.exists or in_place:
         my.uv.install(specs, constraints=constraints, upgrade=upgrade)
         return True

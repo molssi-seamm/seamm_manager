@@ -159,14 +159,19 @@ def publish(root, name, tarfile, explicit, env_hash, stamp=None):
     (directory / f"{stem}.yml.sha256").write_text(env_hash + "\n")
     for path in directory.glob(f"{stem}.*"):
         path.chmod(0o640)
-    # Switch the link atomically: a new link, renamed over the old one
-    link = directory / f"{name}.tar"
-    tmp = directory / f".{name}.tar.{os.getpid()}"
+    point_link(directory, name, archive.name)
+    return archive
+
+
+def point_link(directory, name, target):
+    """Point ``<directory>/<name>.tar`` at `target` (a file name in `directory`)
+    atomically: a new link, renamed over the old one."""
+    link = Path(directory) / f"{name}.tar"
+    tmp = Path(directory) / f".{name}.tar.{os.getpid()}"
     if tmp.is_symlink() or tmp.exists():
         tmp.unlink()
-    tmp.symlink_to(archive.name)
+    tmp.symlink_to(target)
     os.replace(tmp, link)
-    return archive
 
 
 def build_conda_archive(conda_exe, environment_file, name, root, check=None):

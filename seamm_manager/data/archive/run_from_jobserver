@@ -1,0 +1,5 @@
+#!/bin/bash
+# SEAMM's run_from_jobserver from the staged environment if this job has one
+# (stage_seamm_venv.sh), otherwise from the installation's shared environment.
+# Installed by seamm-manager (seamm_manager/data/archive/run_from_jobserver).
+exec "${SEAMM_VENV:-@ROOT@/venv}/bin/run_from_jobserver" "$@"

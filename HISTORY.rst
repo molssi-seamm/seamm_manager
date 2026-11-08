@@ -1,6 +1,27 @@
 =======
 History
 =======
+2026.11.8.2 -- The SEAMM environment can be kept as an archive, for slow shared file systems
+    * New per-installation choice, seamm-environment-storage. 'seamm-manager
+      environment archive' (inside a Slurm job) switches an installation to archive
+      storage: it publishes the current environment as
+      <root>/env-archives/seamm-venv-<version>.tar and installs
+      <root>/bin/stage_seamm_venv.sh, which cluster queues source in their setup so
+      that each job unpacks the environment on its own nodes and runs from there.
+      The default, 'directory', is unchanged and is right for a workstation or a
+      cluster such as ChemAI.
+    * With archive storage, installs, updates and 'environment recreate' build the
+      new version on the compute node's local disk (about a minute, instead of hours
+      on ARC's /projects), check it as before, publish it as a new archive that jobs
+      use at once, then unpack it into <root>/venvs/<version> with 32 tar streams in
+      parallel (about a minute and a half on ARC) and switch <root>/venv to it.
+    * If an archive exists but a job cannot unpack it, the job fails with a message
+      starting 'stage_seamm_venv: FAILED' instead of running from another
+      environment.
+    * 'environment switch' and 'rollback' move the jobs' archive with the
+      environment; 'environment unpack' finishes an update whose job ended after
+      publishing the archive; 'environment show' says which archive jobs use.
+
 2026.11.8.1 -- Bugfix: archive storage could replace a hand-built code environment
     * With code-environment-storage = archive, updating a plug-in's code built an
       archive from the plug-in's environment file for whatever environment the code's
