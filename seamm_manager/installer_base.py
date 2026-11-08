@@ -191,6 +191,72 @@ class InstallerBase(object):
         return code_environment_policy(self.root)
 
     @property
+    def archive_storage(self):
+        """Whether this installation keeps the codes' environments as archives.
+
+        See seamm_manager.policy (code-environment-storage) and
+        seamm_manager.archives. Only for an installation that manages its codes'
+        environments, and not yet for those that need PyTorch.
+        """
+        from .policy import code_environment_storage
+
+        return (
+            not self.shared_codes and code_environment_storage(self.root) == "archive"
+        )
+
+    def _archive(self, environment, reason):
+        """Build, pack and publish the environment as an archive (archive storage)."""
+        from . import archives
+
+        print(
+            f"    {reason} the Conda environment '{environment}' as an archive, built "
+            "on this node's local disk. This takes a few minutes."
+        )
+        conda_exe = archives.real_conda(seamm_manager.find_conda())
+        if archives.install_wrapper(self.root, conda_exe):
+            print(
+                f"    Installed {self.root / 'bin' / archives.WRAPPER}. Jobs use the "
+                "archives when their queue's setup has\n"
+                f"        {archives.queue_setup_line(self.root)}"
+            )
+        archives.build_conda_archive(
+            conda_exe, self.environment_file, environment, self.root
+        )
+        for path in archives.prune(self.root, environment):
+            self.logger.info(f"Removed the old archive file {path}")
+
+    def _archive_up_to_date(self, environment):
+        """Whether the environment's archive was built from this environment file,
+        recently enough (as _unchanged_since_applied for a directory)."""
+        from . import archives
+
+        if os.environ.get("SEAMM_REFRESH_CODES"):
+            return False
+        built_from = archives.archive_hash(self.root, environment)
+        age = archives.archive_age_days(self.root, environment)
+        return (
+            built_from is not None
+            and built_from == self._environment_file_hash()
+            and age is not None
+            and age < self.REFRESH_DAYS
+        )
+
+    def _register_conda(self, environment):
+        """Record in the code's .ini file that it runs from the Conda environment."""
+        from . import archives
+
+        self.check_exe_configuration_file()
+        self.exe_config.set_value("local", "installation", "conda")
+        conda_exe = archives.real_conda(seamm_manager.find_conda())
+        if conda_exe is not None:
+            self.exe_config.set_value("local", "conda", conda_exe)
+        self.exe_config.set_value("local", "conda-environment", environment)
+        self.exe_config.set_value("local", "modules", None)
+        self.exe_config.set_value("local", "container", None)
+        self.exe_config.set_value("local", "platform", None)
+        self.exe_config.save()
+
+    @property
     def shared_codes(self):
         """Whether this installation uses the default installation's codes."""
         return self.code_environments == "shared"
@@ -495,6 +561,8 @@ class InstallerBase(object):
             option, the return value is after fixing the configuration.
         """
         self.logger.debug("Entering check method.")
+        if not self.torch_managed and not self.manual_code and self.archive_storage:
+            return self._check_archive()
         if not self.configuration.section_exists(self.section):
             if self.options.yes or self.ask_yes_no(
                 f"There is no section for {self.section} in the configuration "
@@ -747,6 +815,41 @@ class InstallerBase(object):
             else:
                 print("    The check completed successfully.")
 
+    def _check_archive(self):
+        """check() for archive storage: the archive exists, is current, and the
+        .ini file names it and the wrapper is installed."""
+        from . import archives
+
+        self.check_exe_configuration_file()
+        data = self.exe_config.get_values("local")
+        environment = data.get("conda-environment") or self.environment
+        ok = True
+        archive = archives.current_archive(self.root, environment)
+        if archive is None:
+            print(
+                f"!   There is no archive of the Conda environment '{environment}' in "
+                f"{archives.archive_dir(self.root)}: run 'seamm-manager install "
+                f"{self.section}' in a Slurm job."
+            )
+            ok = False
+        else:
+            print(
+                f"    The Conda environment '{environment}' is the archive {archive}."
+            )
+            if not self._archive_up_to_date(environment):
+                print(
+                    "    It was built from another version of the environment file, or "
+                    "over a week ago: 'seamm-manager update' rebuilds it."
+                )
+        if data.get("installation") != "conda":
+            print(f"!   {self.init_file_name} does not say installation = conda.")
+            ok = False
+        wrapper = self.root / "bin" / archives.WRAPPER
+        if not wrapper.exists():
+            print(f"!   {wrapper} is missing; installing or updating a code adds it.")
+            ok = False
+        return ok
+
     def check_configuration_file(self):
         """Checks that the necessary section for the plug-in is in the
         configuration file.
@@ -879,6 +982,25 @@ class InstallerBase(object):
         if self.manual_code:
             self._check_manual_code()
             return
+        if not self.torch_managed and self.archive_storage:
+            from . import archives
+
+            if archives.current_archive(self.root, self.environment) is not None:
+                # e.g. a reinstall: 'update' brings the archive up to date.
+                print(
+                    f"    Using the existing archive of the Conda environment "
+                    f"'{self.environment}'."
+                )
+            else:
+                self._archive(self.environment, "Installing")
+            self._register_conda(self.environment)
+            print("    Done!\n")
+            return
+        if self.archive_storage:
+            print(
+                "    Environments with PyTorch are not stored as archives yet: "
+                f"installing '{self.environment}' as a Conda environment."
+            )
         environment_file = self.environment_file
         if self.conda.exists(self.environment):
             # e.g. a reinstall: 'update' brings the environment up to date.
@@ -1091,6 +1213,17 @@ class InstallerBase(object):
             environment = self.environment
             if "conda-environment" in data and data["conda-environment"] != "":
                 environment = data["conda-environment"]
+            if not self.torch_managed and self.archive_storage:
+                if self._archive_up_to_date(environment):
+                    print(
+                        f"    The archive of the Conda environment '{environment}' "
+                        "is up to date (built from this environment file)."
+                    )
+                    return
+                self._archive(environment, "Updating")
+                self._register_conda(environment)
+                print("    Done!\n")
+                return
             if self._not_ours(environment):
                 print(
                     f"    The Conda environment '{environment}' named in "

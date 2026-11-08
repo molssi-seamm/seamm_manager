@@ -21,6 +21,19 @@ prefixed
 
 (The file is not ``<root>/seamm.ini``: seamm_util still moves an old
 ``~/SEAMM/seamm.ini`` into ``~/.seamm.d``.)
+
+Separately, an installation that manages its codes' environments (``own`` or
+``prefixed``) chooses how they are *stored*, with ``code-environment-storage``:
+
+directory
+    The usual conda environments, created and updated in place. The default.
+archive
+    Each environment is built on a compute node's local disk, packed with
+    conda-pack into one file, ``<root>/env-archives/<name>-<stamp>.tar``, and
+    ``<name>.tar`` is pointed at it. Jobs unpack it on their own node through the
+    ``<root>/bin/seamm-conda`` wrapper (see seamm_manager.archives). For clusters
+    whose shared file system creates files slowly: an environment of ~30,000 files
+    takes hours to create or update there, but minutes on local disk.
 """
 
 import configparser
@@ -31,6 +44,10 @@ POLICY_FILE = "installation.ini"
 SECTION = "installation"
 KEY = "code-environments"
 POLICIES = ("own", "shared", "prefixed")
+
+
+STORAGE_KEY = "code-environment-storage"
+STORAGES = ("directory", "archive")
 
 
 def is_default_root(root):
@@ -84,3 +101,32 @@ def prefixed_environment(name, tag):
     if name.startswith("seamm-"):
         return f"seamm-{tag}-{name[len('seamm-'):]}"
     return f"{tag}-{name}"
+
+
+def code_environment_storage(root):
+    """How the installation stores the codes' environments: directory or archive."""
+    path = Path(root).expanduser() / POLICY_FILE
+    if path.exists():
+        config = configparser.ConfigParser(interpolation=None)
+        config.read(path)
+        value = config.get(SECTION, STORAGE_KEY, fallback="").strip().lower()
+        if value in STORAGES:
+            return value
+    return "directory"
+
+
+def set_code_environment_storage(root, storage):
+    """Record how the installation stores the codes' environments."""
+    if storage not in STORAGES:
+        raise ValueError(f"The storage must be one of {', '.join(STORAGES)}.")
+    path = Path(root).expanduser() / POLICY_FILE
+    config = configparser.ConfigParser(interpolation=None)
+    if path.exists():
+        config.read(path)
+    if not config.has_section(SECTION):
+        config.add_section(SECTION)
+    config.set(SECTION, STORAGE_KEY, storage)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as fd:
+        config.write(fd)
+    return path

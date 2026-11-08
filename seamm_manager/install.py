@@ -93,6 +93,18 @@ def setup(parser):
         ),
     )
     subparser.add_argument(
+        "--code-environment-storage",
+        choices=("directory", "archive"),
+        default=None,
+        help=(
+            "How this installation stores the codes' conda environments it manages: "
+            "'directory' (the default) as usual; 'archive' builds each on a compute "
+            "node's local disk and keeps it as one file, which jobs unpack on their "
+            "own node (for clusters whose shared file system creates files slowly). "
+            "Archive builds must run inside a Slurm job."
+        ),
+    )
+    subparser.add_argument(
         "--rerun-installers",
         action="store_true",
         help=(
@@ -157,6 +169,11 @@ def install():
     except ValueError as e:
         print(e)
         return 1
+    storage = getattr(my.options, "code_environment_storage", None)
+    if storage is not None:
+        from .policy import set_code_environment_storage
+
+        set_code_environment_storage(my.root, storage)
     policy = code_environment_policy(my.root)
     if policy == "shared":
         print(
