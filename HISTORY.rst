@@ -1,6 +1,21 @@
 =======
 History
 =======
+2026.11.9 -- Updates no longer stall on Claude's MCP servers, and ask to switch anyway
+    * An update builds the new environment and then switches to it, but held back the
+      switch while any program started through ~/SEAMM/venv was running. The flowchart
+      MCP servers that Claude sessions start (seamm-flowchart mcp) are always running,
+      so on a machine with Claude open every update quietly did nothing. They no longer
+      hold back a switch: they keep what they loaded until reconnected (/mcp), and the
+      manager says how many there are.
+    * When a switch is still held back -- by other running programs, or because the
+      new environment would move a package backwards -- the manager now asks whether
+      to switch anyway: in the SEAMM-Manager app with a dialog listing the reasons, on
+      a terminal with a yes/no question. Scripts and services are not asked and are
+      refused as before; --force still switches without asking.
+    * The app now says when an update was built but not switched to, instead of
+      finishing as if it had worked.
+
 2026.11.8.2 -- The SEAMM environment can be kept as an archive, for slow shared file systems
     * New per-installation choice, seamm-environment-storage. 'seamm-manager
       environment archive' (inside a Slurm job) switches an installation to archive

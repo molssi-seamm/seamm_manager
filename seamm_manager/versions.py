@@ -12,9 +12,13 @@ old environment keep it until ``prune`` finds nothing using it.
 Processes that were started *through the link* (``<root>/venv/bin/...``) are
 the exception: CPython does not resolve the link when locating a venv, so
 they would follow it to the new environment. `unsafe_processes` finds them
-and `switch` refuses while any exist, unless forced. After the first
-migration every launcher embeds the real path, so this only matters for jobs
-that were already running then.
+and `switch` refuses while any exist, unless forced or the user agrees when
+asked (`confirm_switch`). After the first migration every launcher embeds the
+real path, so this only matters for jobs that were already running then -- and
+for servers that are always running, such as the flowchart MCP servers
+(``seamm-flowchart mcp``) of Claude sessions. Those import everything when they
+start and only pick up a new environment when restarted, so they do not block a
+switch.
 """
 
 from datetime import datetime, timedelta
@@ -23,6 +27,7 @@ import json
 import logging
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 
 from . import my
@@ -39,6 +44,13 @@ synced_manager = False
 # Set when a change was built but not switched to (a regression, or processes
 # started through the link), so install and update exit non-zero.
 refused = False
+# Asked whether to go ahead although a switch was refused:
+# ``confirm_switch(question, details) -> bool``, `details` being lines to show. The
+# GUI sets a dialog; without one a terminal user is asked, and anything else (a
+# script, a service) refuses, as before -- scripts use --force.
+confirm_switch = None
+#: Servers started through the link that do not block a switch: (program, argument).
+SWITCH_SAFE = (("seamm-flowchart", "mcp"),)
 
 
 # ---- processes --------------------------------------------------------------
@@ -68,16 +80,58 @@ def processes_using(prefix):
             candidates.append(info["exe"])
         matches = [t for t in candidates if t and t.startswith(prefix)]
         if matches:
-            # The last match is the most telling: the script, not the interpreter
-            result.append((info["pid"], f"{info.get('name') or '?'}: {matches[-1]}"))
+            # The last match is the most telling: the script, not the interpreter,
+            # with its arguments (e.g. "seamm-flowchart mcp")
+            text = matches[-1]
+            cmdline = list(info.get("cmdline") or [])
+            if text in cmdline:
+                rest = cmdline[cmdline.index(text) + 1 :]
+                text = " ".join([text] + rest)[:200]
+            result.append((info["pid"], f"{info.get('name') or '?'}: {text}"))
     return result
 
 
-def unsafe_processes():
+def is_switch_safe(description):
+    """Whether a process (as `processes_using` describes it) may run on while
+    the link is switched: a long-lived server that imported everything when it
+    started, e.g. the flowchart MCP server of a Claude session."""
+    words = description.split(": ", 1)[-1].split()
+    for i, word in enumerate(words):
+        for program, argument in SWITCH_SAFE:
+            if Path(word).name == program and argument in words[i + 1 :]:
+                return True
+    return False
+
+
+def linked_processes():
     """Processes started through the ``venv`` link rather than a real path."""
     if not my.uv.path.is_symlink():
         return []
     return processes_using(my.uv.path)
+
+
+def unsafe_processes():
+    """Processes started through the ``venv`` link that a switch would disturb:
+    all of them except the switch-safe servers (`is_switch_safe`)."""
+    return [p for p in linked_processes() if not is_switch_safe(p[1])]
+
+
+def ask(question, details=()):
+    """Ask whether to go ahead: through `confirm_switch` if set (the GUI), else
+    on a terminal; False when there is no one to ask."""
+    if confirm_switch is not None:
+        return bool(confirm_switch(question, list(details)))
+    try:
+        interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    except (AttributeError, ValueError):
+        interactive = False
+    if not interactive:
+        return False
+    try:
+        answer = input(f"{question} [y/N] ")
+    except EOFError:
+        return False
+    return answer.strip().lower() in ("y", "yes")
 
 
 def _print_processes(processes, heading):
@@ -230,19 +284,34 @@ def switch(new, force=False):
     """
     global switched
 
-    unsafe = unsafe_processes()
+    linked = linked_processes()
+    unsafe = [p for p in linked if not is_switch_safe(p[1])]
+    servers = [p for p in linked if is_switch_safe(p[1])]
     if unsafe and not force:
-        _print_processes(
-            unsafe,
+        heading = (
             f"These processes were started through {my.uv.path} and would see the "
-            "new environment if it were switched now:",
+            "new environment if it were switched now:"
         )
-        print(
-            f"The new environment is ready at {new.path}. Wait for them to finish, "
-            "then run 'seamm-manager environment switch', or use --force."
-        )
-        return False
+        _print_processes(unsafe, heading)
+        details = [heading] + [f"{pid}  {text}" for pid, text in unsafe]
+        if ask(
+            f"Switch to the new environment {new.path.name} anyway? It is usually "
+            "safe: running programs keep the code they have already loaded.",
+            details,
+        ):
+            print("Switching anyway, as asked.")
+        else:
+            print(
+                f"The new environment is ready at {new.path}. Wait for them to "
+                "finish, then run 'seamm-manager environment switch', or use --force."
+            )
+            return False
     my.uv.switch_to(new.real_path)
+    if servers:
+        print(
+            f"{len(servers)} flowchart MCP server(s) keep the previous environment "
+            "until they are restarted (in Claude Code: /mcp to reconnect)."
+        )
     switched = True
     print(f"{my.uv.path} now links to {new.path.name}")
     # With archive storage the jobs' archive follows (rollback, switch by hand)
@@ -308,8 +377,14 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
             "'--no-constraints'); to use the new environment anyway, 'seamm-manager "
             f"environment switch {new.path.name}'."
         )
-        refused = True
-        return False
+        if not ask(
+            f"The new environment {new.path.name} would make these changes, which "
+            "look like going backwards. Switch to it anyway?",
+            problems,
+        ):
+            refused = True
+            return False
+        print("Using the new environment anyway, as asked.")
     if not switch(new, force=bool(getattr(my.options, "force", False))):
         refused = True
         return False

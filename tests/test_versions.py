@@ -167,11 +167,20 @@ def test_processes_using_matches_cmdline_and_exe(root, monkeypatch):
         P(3, "orca", ["/opt/orca"], f"{venv}/bin/orca"),
         P(4, "other", ["/r/venvs/ab/bin/python"], None),  # a different version
         P(5, "none", None, None),
+        P(
+            6,
+            "python",
+            [f"{venv}/bin/python", f"{venv}/bin/seamm-flowchart", "mcp"],
+            None,
+        ),
     ]
     monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: procs)
     found = versions.processes_using(venv)
-    assert [pid for pid, _ in found] == [1, 2, 3]
+    assert [pid for pid, _ in found] == [1, 2, 3, 6]
     assert "run_from_jobserver" in found[0][1]
+    # the script's arguments are kept, so an MCP server is recognized
+    assert found[3][1].endswith("seamm-flowchart mcp")
+    assert versions.is_switch_safe(found[3][1])
 
 
 def test_unsafe_processes_only_when_linked(root, monkeypatch):
@@ -195,7 +204,7 @@ def test_switch_refuses_with_unsafe_processes_unless_forced(root, monkeypatch, c
     my.uv.migrate_to_versioned(name="a")
     new = Uv(root, name="venvs/b")
     make_venv(new.path)
-    monkeypatch.setattr(versions, "unsafe_processes", lambda: [(42, "python: x")])
+    monkeypatch.setattr(versions, "linked_processes", lambda: [(42, "python: x")])
 
     assert versions.switch(new) is False
     assert my.uv.current_version == "a"
@@ -277,7 +286,7 @@ def test_apply_change_syncs_manager_into_new_environment_only(root, monkeypatch)
     monkeypatch.setattr(Uv, "freeze", lambda self: "")
     monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "new"))
     # The switch is refused: the current environment must still be untouched
-    monkeypatch.setattr(versions, "unsafe_processes", lambda: [(1, "x")])
+    monkeypatch.setattr(versions, "linked_processes", lambda: [(1, "x")])
     monkeypatch.setattr(versions, "synced_manager", False)
 
     assert versions.apply_change(["seamm==2"], upgrade=True) is False
@@ -402,3 +411,126 @@ def test_pin_cli(root, capsys):
     my.options = SimpleNamespace(version="2026-09-01T00-00-00")
     assert environment.unpin() == 0
     assert versions.pin_info(root / "venvs" / "2026-09-01T00-00-00") is None
+
+
+# ---- servers that do not block a switch, and asking to switch anyway -------------
+
+MCP = "python: /root/venv/bin/seamm-flowchart mcp"
+
+
+def test_flowchart_mcp_servers_are_switch_safe(root, monkeypatch):
+    assert versions.is_switch_safe(MCP)
+    assert versions.is_switch_safe("Python: /r/venv/bin/seamm-flowchart --x mcp")
+    assert not versions.is_switch_safe("python: /r/venv/bin/seamm-flowchart show a")
+    assert not versions.is_switch_safe("python: /r/venv/bin/run_from_jobserver 12")
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="a")
+    monkeypatch.setattr(
+        versions, "processes_using", lambda p: [(1, MCP), (2, "python: job")]
+    )
+    assert versions.unsafe_processes() == [(2, "python: job")]
+
+
+def test_switch_ignores_mcp_servers(root, monkeypatch, capsys):
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="a")
+    new = Uv(root, name="venvs/b")
+    make_venv(new.path)
+    monkeypatch.setattr(versions, "linked_processes", lambda: [(7, MCP), (8, MCP)])
+    asked = []
+    monkeypatch.setattr(versions, "confirm_switch", lambda q, d: asked.append(q))
+
+    assert versions.switch(new) is True
+    assert my.uv.current_version == "b"
+    assert asked == []  # nothing to ask about
+    assert "2 flowchart MCP server(s)" in capsys.readouterr().out
+
+
+def test_switch_asks_and_goes_ahead_or_not(root, monkeypatch, capsys):
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="a")
+    new = Uv(root, name="venvs/b")
+    make_venv(new.path)
+    monkeypatch.setattr(versions, "linked_processes", lambda: [(42, "python: job")])
+    questions = []
+
+    monkeypatch.setattr(
+        versions, "confirm_switch", lambda q, d: questions.append((q, d)) or False
+    )
+    assert versions.switch(new) is False
+    assert my.uv.current_version == "a"
+    question, details = questions[-1]
+    assert "anyway" in question and any("42" in line for line in details)
+
+    monkeypatch.setattr(versions, "confirm_switch", lambda q, d: True)
+    assert versions.switch(new) is True
+    assert my.uv.current_version == "b"
+    assert "Switching anyway" in capsys.readouterr().out
+
+
+def test_no_one_to_ask_refuses(monkeypatch):
+    """Without a dialog or a terminal (a script, a service), ask() says no."""
+    monkeypatch.setattr(versions, "confirm_switch", None)
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
+    assert versions.ask("Go?") is False
+
+
+def test_regression_can_be_accepted_when_asked(root, monkeypatch):
+    import seamm_manager.util as util
+
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="old")
+    monkeypatch.setattr(util, "sync_manager", lambda: None)
+    monkeypatch.setattr(
+        Uv, "create", lambda self, python_version=None, seed=True: make_venv(self.path)
+    )
+    monkeypatch.setattr(Uv, "install", lambda self, *a, **k: None)
+    monkeypatch.setattr(Uv, "run", lambda self, *a, **k: None)
+    monkeypatch.setattr(Uv, "freeze", lambda self: "")
+    monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "new"))
+    monkeypatch.setattr(versions, "linked_processes", lambda: [])
+    monkeypatch.setattr(
+        versions, "regressions", lambda *a, **k: ["seamm 2026.11.6 -> 2026.10.1"]
+    )
+    monkeypatch.setattr(versions, "refused", False)
+
+    monkeypatch.setattr(versions, "confirm_switch", lambda q, d: False)
+    assert versions.apply_change(["seamm"], upgrade=True) is False
+    assert versions.refused is True and my.uv.current_version == "old"
+
+    monkeypatch.setattr(versions, "refused", False)
+    monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "newer"))
+    monkeypatch.setattr(versions, "confirm_switch", lambda q, d: True)
+    assert versions.apply_change(["seamm"], upgrade=True) is True
+    assert versions.refused is False and my.uv.current_version == "newer"
+
+
+def test_gui_dialog_asks_and_reports(monkeypatch):
+    """The app's dialog: the question, at most 15 lines of reasons, the answer."""
+    tk_messagebox = pytest.importorskip("tkinter.messagebox")
+    from seamm_manager.gui import GUI
+
+    gui = GUI.__new__(GUI)  # no window
+    gui.progress_dialog = None
+    gui._widget = {}
+    gui.root = None
+    seen = {}
+
+    def askyesno(**kwargs):
+        seen.update(kwargs)
+        return True
+
+    monkeypatch.setattr(tk_messagebox, "askyesno", askyesno)
+    details = [f"line {i}" for i in range(20)]
+    assert gui._confirm_switch("Switch anyway?", details) is True
+    assert seen["message"] == "Switch anyway?"
+    assert seen["detail"].count("line") == 15 and "5 more" in seen["detail"]
+
+    shown = []
+    monkeypatch.setattr(tk_messagebox, "showinfo", lambda **k: shown.append(k))
+    monkeypatch.setattr(versions, "refused", False)
+    gui._report_refused()
+    assert shown == []
+    monkeypatch.setattr(versions, "refused", True)
+    gui._report_refused()
+    assert "not in use" in shown[0]["message"]
