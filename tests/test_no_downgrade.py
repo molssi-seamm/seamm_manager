@@ -125,11 +125,15 @@ def test_apply_change_does_not_switch_to_a_regressed_build(monkeypatch, capsys):
     switched = []
     monkeypatch.setattr(versions, "switch", lambda *a, **k: switched.append(1) or True)
 
+    discarded = []
+    monkeypatch.setattr(versions, "discard", lambda n: discarded.append(n))
     assert versions.apply_change(["mbe-step"]) is False
     assert switched == []
     out = capsys.readouterr().out
-    assert "NOT switched" in out and "seamm-exec would go back" in out
-    assert "environment switch 2026-10-06T14-00-00" in out
+    assert "going backwards" in out and "seamm-exec would go back" in out
+    # Declined (no one to ask): the build is removed, and nothing has changed
+    assert discarded == [new] and "Nothing has changed" in out
+    assert "update --latest" in out
 
 
 def test_a_taken_version_name_moves_to_the_next_second(tmp_path):

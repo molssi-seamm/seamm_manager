@@ -157,7 +157,7 @@ def test_recreate_latest_pins_pypi_releases(monkeypatch, tmp_path):
         return SimpleNamespace()
 
     monkeypatch.setattr(versions_module, "build_version", build_version)
-    monkeypatch.setattr(versions_module, "switch", lambda new, force=False: False)
+    monkeypatch.setattr(versions_module, "switch", lambda new, **k: False)
     environment_module.recreate()
     assert sorted(built["specs"]) == ["loop-step", "seamm==2026.10.5"]
     assert built["constraints"] is None

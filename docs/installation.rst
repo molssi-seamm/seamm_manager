@@ -118,10 +118,12 @@ while jobs run.
 younger than a day, anything pinned, and anything a running process on this machine
 uses. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
 version that such jobs name directly (``environment pin <version> --reason ...``,
-undone by ``environment unpin``), and ``environment versions`` shows the pins. A switch is refused, and the
-new version left ready for ``environment switch``, if a process started *through* the
-link, for example a job begun before the environment was versioned, is still running;
-``--force`` switches anyway. ``update --in-place`` and ``install --in-place`` change
+undone by ``environment unpin``), and ``environment versions`` shows the pins. If a
+process started *through* the link, for example a job begun before the environment was
+versioned, or SEAMM started from a terminal, is still running, the manager asks
+before building anything whether to go ahead anyway (see :doc:`usage`); if not, nothing
+changes, and ``--force`` goes ahead without asking. Claude's flowchart MCP servers do
+not hold back an update. ``update --in-place`` and ``install --in-place`` change
 the current environment directly, as earlier versions of the manager did; do that only
 when no jobs are running.
 

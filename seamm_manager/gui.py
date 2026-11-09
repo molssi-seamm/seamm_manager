@@ -6,6 +6,7 @@ from pathlib import Path
 import platform
 import sys
 import tkinter as tk
+import tkinter.messagebox
 import tkinter.ttk as ttk
 
 from packaging.version import Version
@@ -14,6 +15,7 @@ import seamm_widgets as sw
 
 from . import apps
 from . import my
+from . import versions
 from .util import (
     find_packages,
     get_metadata,
@@ -128,6 +130,10 @@ class GUI(collections.abc.MutableMapping):
         self.description_width = 0
 
         self.root = self.setup()
+
+        # A refused switch to a newly built environment asks here, in a dialog,
+        # rather than on a terminal the app does not have
+        versions.confirm_switch = self._confirm_switch
 
     # Provide dict like access to the widgets to make
     # the code cleaner
@@ -672,6 +678,7 @@ class GUI(collections.abc.MutableMapping):
         self.progress_text.configure(text=f"Installing/updating {n} packages")
         self.progress_dialog.deiconify()
         self.root.update()
+        versions.refused = False
 
         install_packages(
             to_install,
@@ -696,6 +703,42 @@ class GUI(collections.abc.MutableMapping):
 
         # self.progress_bar.stop()
         self.progress_dialog.withdraw()
+        self._report_refused()
+
+    def _confirm_switch(self, question, details):
+        """Ask whether to switch to a new environment although the switch was
+        refused (processes would see it, or it looks like going backwards)."""
+        shown = list(details)[:15]
+        if len(details) > len(shown):
+            shown.append(f"... and {len(details) - len(shown)} more")
+        if self.progress_dialog is not None:
+            self.progress_dialog.withdraw()
+        answer = tkinter.messagebox.askyesno(
+            title="Update anyway?",
+            message=question,
+            detail="\n".join(shown),
+            icon=tkinter.messagebox.WARNING,
+            parent=self.root,
+        )
+        if self.progress_dialog is not None and answer:
+            self.progress_dialog.deiconify()
+            self.root.update()
+        return answer
+
+    def _report_refused(self):
+        """Say so when a change was built but not switched to, rather than
+        finishing as if it had worked."""
+        if not versions.refused:
+            return
+        tkinter.messagebox.showinfo(
+            title="Nothing changed",
+            message="The update was not made, so nothing has changed.",
+            detail=(
+                "Close the programs that were listed (for example SEAMM) and update "
+                "again, or update again and choose to go ahead anyway."
+            ),
+            parent=self.root,
+        )
 
     def _update_progress_step(self):
         self.progress_bar.step()
@@ -740,6 +783,7 @@ class GUI(collections.abc.MutableMapping):
         self.progress_text.configure(text=f"Updating {n} packages")
         self.progress_dialog.deiconify()
         self.root.update()
+        versions.refused = False
 
         update_packages(
             to_update,
@@ -766,6 +810,7 @@ class GUI(collections.abc.MutableMapping):
         self._refresh_cache()
 
         self.progress_dialog.withdraw()
+        self._report_refused()
 
     def _create_apps(self, all_users=False):
         installed_apps = apps.get_apps()
