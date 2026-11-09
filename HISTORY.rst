@@ -1,20 +1,28 @@
 =======
 History
 =======
-2026.11.9 -- Updates no longer stall on Claude's MCP servers, and ask to switch anyway
+2026.11.9 -- Updates check first and ask, and no longer stall on Claude's MCP servers
     * An update builds the new environment and then switches to it, but held back the
       switch while any program started through ~/SEAMM/venv was running. The flowchart
       MCP servers that Claude sessions start (seamm-flowchart mcp) are always running,
       so on a machine with Claude open every update quietly did nothing. They no longer
       hold back a switch: they keep what they loaded until reconnected (/mcp), and the
       manager says how many there are.
-    * When a switch is still held back -- by other running programs, or because the
-      new environment would move a package backwards -- the manager now asks whether
-      to switch anyway: in the SEAMM-Manager app with a dialog listing the reasons, on
-      a terminal with a yes/no question. Scripts and services are not asked and are
-      refused as before; --force still switches without asking.
-    * The app now says when an update was built but not switched to, instead of
-      finishing as if it had worked.
+    * The check now comes first: before building anything, the manager looks for
+      programs that would hold the switch back and asks whether to go ahead anyway --
+      in the SEAMM-Manager app with a dialog, on a terminal with a yes/no question. If
+      SEAMM itself is open (started from a terminal), it says so, so you can close it
+      and update again. If you say no, nothing is built and nothing changes. Scripts
+      and services are not asked and change nothing; --force goes ahead without
+      asking.
+    * If the new environment would move a package backwards, the manager asks too;
+      if you say no, the new environment is removed again, so no unused copy is left
+      on disk. The same if a program started during the build and you decline then.
+    * A SEAMM window opened from the SEAMM app never holds an update back; the manager
+      says that it keeps the previous version until it is closed and opened again.
+    * The manager no longer counts itself among the programs holding a switch back.
+    * The app now says when an update was not made, instead of finishing as if it had
+      worked.
 
 2026.11.8.2 -- The SEAMM environment can be kept as an archive, for slow shared file systems
     * New per-installation choice, seamm-environment-storage. 'seamm-manager

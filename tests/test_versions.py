@@ -157,18 +157,23 @@ def test_processes_using_matches_cmdline_and_exe(root, monkeypatch):
 
     venv = "/r/venvs/a"
     procs = [
-        P(1, "python", [f"{venv}/bin/python", f"{venv}/bin/run_from_jobserver"], None),
         P(
-            2,
+            9001,
+            "python",
+            [f"{venv}/bin/python", f"{venv}/bin/run_from_jobserver"],
+            None,
+        ),
+        P(
+            9002,
             "SEAMM-JobServer",
             ["/r/services/X.app/Contents/MacOS/X", f"{venv}/bin/seamm-jobserver"],
             "/uv/python",
         ),
-        P(3, "orca", ["/opt/orca"], f"{venv}/bin/orca"),
-        P(4, "other", ["/r/venvs/ab/bin/python"], None),  # a different version
-        P(5, "none", None, None),
+        P(9003, "orca", ["/opt/orca"], f"{venv}/bin/orca"),
+        P(9004, "other", ["/r/venvs/ab/bin/python"], None),  # a different version
+        P(9005, "none", None, None),
         P(
-            6,
+            9006,
             "python",
             [f"{venv}/bin/python", f"{venv}/bin/seamm-flowchart", "mcp"],
             None,
@@ -176,7 +181,7 @@ def test_processes_using_matches_cmdline_and_exe(root, monkeypatch):
     ]
     monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: procs)
     found = versions.processes_using(venv)
-    assert [pid for pid, _ in found] == [1, 2, 3, 6]
+    assert [pid for pid, _ in found] == [9001, 9002, 9003, 9006]
     assert "run_from_jobserver" in found[0][1]
     # the script's arguments are kept, so an MCP server is recognized
     assert found[3][1].endswith("seamm-flowchart mcp")
@@ -285,14 +290,45 @@ def test_apply_change_syncs_manager_into_new_environment_only(root, monkeypatch)
     monkeypatch.setattr(Uv, "run", lambda self, *a, **k: None)
     monkeypatch.setattr(Uv, "freeze", lambda self: "")
     monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "new"))
-    # The switch is refused: the current environment must still be untouched
-    monkeypatch.setattr(versions, "linked_processes", lambda: [(1, "x")])
+    # A program started through the link while the new version was built: the
+    # check before building passed, the switch is refused, and the build removed
+    calls = []
+    monkeypatch.setattr(
+        versions,
+        "linked_processes",
+        lambda: [] if not calls.append(1) and len(calls) == 1 else [(1, "x")],
+    )
     monkeypatch.setattr(versions, "synced_manager", False)
 
     assert versions.apply_change(["seamm==2"], upgrade=True) is False
     assert synced == ["new"]
     assert versions.synced_manager is True
     assert my.uv.current_version == "old"
+    assert not (root / "venvs" / "new").exists()
+
+
+def test_apply_change_asks_before_building(root, monkeypatch, capsys):
+    """Held back before anything is built: no new version is made at all, and the
+    question names SEAMM when it is the GUI that is open."""
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name="old")
+    built = []
+    monkeypatch.setattr(versions, "build_version", lambda *a, **k: built.append(1))
+    monkeypatch.setattr(
+        versions,
+        "linked_processes",
+        lambda: [(5, f"python: {root}/venv/bin/seamm"), (6, MCP)],
+    )
+    questions = []
+    monkeypatch.setattr(
+        versions, "confirm_switch", lambda q, d: questions.append(q) or False
+    )
+
+    assert versions.apply_change(["seamm"], upgrade=True) is False
+    assert built == []
+    assert my.uv.current_version == "old"
+    assert "SEAMM is open" in questions[0] and "Close" in questions[0]
+    assert "Nothing was changed" in capsys.readouterr().out
 
 
 def test_recreate_style_build_from_scratch(root, monkeypatch):
@@ -465,7 +501,7 @@ def test_switch_asks_and_goes_ahead_or_not(root, monkeypatch, capsys):
     monkeypatch.setattr(versions, "confirm_switch", lambda q, d: True)
     assert versions.switch(new) is True
     assert my.uv.current_version == "b"
-    assert "Switching anyway" in capsys.readouterr().out
+    assert "Going ahead anyway" in capsys.readouterr().out
 
 
 def test_no_one_to_ask_refuses(monkeypatch):
@@ -497,6 +533,7 @@ def test_regression_can_be_accepted_when_asked(root, monkeypatch):
     monkeypatch.setattr(versions, "confirm_switch", lambda q, d: False)
     assert versions.apply_change(["seamm"], upgrade=True) is False
     assert versions.refused is True and my.uv.current_version == "old"
+    assert not (root / "venvs" / "new").exists()  # declined: nothing left behind
 
     monkeypatch.setattr(versions, "refused", False)
     monkeypatch.setattr(Uv, "new_version_name", staticmethod(lambda now=None: "newer"))
@@ -533,4 +570,31 @@ def test_gui_dialog_asks_and_reports(monkeypatch):
     assert shown == []
     monkeypatch.setattr(versions, "refused", True)
     gui._report_refused()
-    assert "not in use" in shown[0]["message"]
+    assert "nothing has changed" in shown[0]["message"]
+
+
+def test_gui_is_recognized():
+    assert versions.is_gui("python: /r/venv/bin/seamm")
+    assert versions.is_gui("SEAMM: /r/venvs/a/bin/seamm --flag")
+    assert not versions.is_gui("python: /r/venv/bin/seamm-flowchart mcp")
+    assert not versions.is_gui("python: /r/venv/bin/seamm-jobserver")
+
+
+def test_manager_does_not_block_itself(root, monkeypatch):
+    monkeypatch.undo()  # the real processes_using
+    import os
+    import psutil
+
+    class P:
+        def __init__(self, pid):
+            self.info = {
+                "pid": pid,
+                "name": "python",
+                "cmdline": ["/r/venv/bin/python", "/r/venv/bin/seamm-manager"],
+                "exe": None,
+            }
+
+    monkeypatch.setattr(
+        psutil, "process_iter", lambda attrs=None: [P(os.getpid()), P(999999)]
+    )
+    assert [pid for pid, _ in versions.processes_using("/r/venv")] == [999999]

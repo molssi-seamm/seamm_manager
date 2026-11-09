@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 import getpass
 import json
 import logging
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -51,6 +52,8 @@ refused = False
 confirm_switch = None
 #: Servers started through the link that do not block a switch: (program, argument).
 SWITCH_SAFE = (("seamm-flowchart", "mcp"),)
+#: The SEAMM GUI (the flowchart editor), so the user can be told to close it.
+GUI_PROGRAMS = ("seamm", "SEAMM")
 
 
 # ---- processes --------------------------------------------------------------
@@ -72,9 +75,18 @@ def processes_using(prefix):
     import psutil
 
     prefix = str(prefix).rstrip("/") + "/"
+    # Never this process or what started it (the manager itself, run as
+    # <root>/venv/bin/seamm-manager, would otherwise block its own switch)
+    me = {os.getpid()}
+    try:
+        me.update(parent.pid for parent in psutil.Process().parents())
+    except Exception:
+        pass
     result = []
     for process in psutil.process_iter(attrs=["pid", "name", "cmdline", "exe"]):
         info = process.info
+        if info.get("pid") in me:
+            continue
         candidates = list(info.get("cmdline") or [])
         if info.get("exe"):
             candidates.append(info["exe"])
@@ -103,11 +115,18 @@ def is_switch_safe(description):
     return False
 
 
+def is_gui(description):
+    """Whether a process (as `processes_using` describes it) is the SEAMM GUI."""
+    words = description.split(": ", 1)[-1].split()
+    return bool(words) and Path(words[0]).name in GUI_PROGRAMS
+
+
 def linked_processes():
     """Processes started through the ``venv`` link rather than a real path."""
-    if not my.uv.path.is_symlink():
+    path = getattr(my.uv, "path", None)
+    if path is None or not Path(path).is_symlink():
         return []
-    return processes_using(my.uv.path)
+    return processes_using(path)
 
 
 def unsafe_processes():
@@ -276,44 +295,81 @@ def build_version(
     return new
 
 
-def switch(new, force=False):
+def blocking_question(unsafe, action="update"):
+    """The heading, the question and the lines to show for processes that hold
+    back a switch, naming the SEAMM GUI when it is one of them."""
+    heading = (
+        f"These programs were started through {my.uv.path} and would see the new "
+        "environment if it were switched now:"
+    )
+    details = [heading] + [f"{pid}  {text}" for pid, text in unsafe]
+    if any(is_gui(text) for _, text in unsafe):
+        question = (
+            f"SEAMM is open (started from a terminal through {my.uv.path}). Close "
+            f"SEAMM and {action} again, or {action} anyway? Going ahead is usually "
+            "safe: running programs keep the code they have already loaded, and pick "
+            "up the new version when restarted."
+        )
+    else:
+        question = (
+            f"{action.capitalize()} anyway? It is usually safe: running programs keep "
+            "the code they have already loaded, and pick up the new version when "
+            "restarted."
+        )
+    return heading, question, details
+
+
+def check_switch(force=False, already=(), action="update"):
+    """Whether the link may be switched now: no program started through it
+    would see the change, or the user agrees (`ask`), or `force`.
+
+    Returns (ok, agreed): `agreed` are the pids already accepted, so a second
+    check (at the switch, after a build) asks only about new ones.
+    """
+    agreed = set(already)
+    unsafe = [p for p in unsafe_processes() if p[0] not in agreed]
+    if not unsafe or force:
+        return True, agreed | {pid for pid, _ in unsafe}
+    heading, question, details = blocking_question(unsafe, action)
+    _print_processes(unsafe, heading)
+    if ask(question, details):
+        print("Going ahead anyway, as asked.")
+        return True, agreed | {pid for pid, _ in unsafe}
+    return False, agreed
+
+
+def switch(new, force=False, agreed=()):
     """Make `new` the current environment and relink the launchers.
 
     Refuses if processes started through the link exist (see the module
-    docstring), unless `force`. Returns True if switched.
+    docstring), unless `force` or the user agrees when asked; `agreed` are pids
+    already accepted. Returns True if switched.
     """
     global switched
 
-    linked = linked_processes()
-    unsafe = [p for p in linked if not is_switch_safe(p[1])]
-    servers = [p for p in linked if is_switch_safe(p[1])]
-    if unsafe and not force:
-        heading = (
-            f"These processes were started through {my.uv.path} and would see the "
-            "new environment if it were switched now:"
+    ok, _ = check_switch(force, already=agreed, action="switch")
+    if not ok:
+        print(
+            f"The new environment is ready at {new.path}. Close or wait for those "
+            "programs, then run 'seamm-manager environment switch', or use --force."
         )
-        _print_processes(unsafe, heading)
-        details = [heading] + [f"{pid}  {text}" for pid, text in unsafe]
-        if ask(
-            f"Switch to the new environment {new.path.name} anyway? It is usually "
-            "safe: running programs keep the code they have already loaded.",
-            details,
-        ):
-            print("Switching anyway, as asked.")
-        else:
-            print(
-                f"The new environment is ready at {new.path}. Wait for them to "
-                "finish, then run 'seamm-manager environment switch', or use --force."
-            )
-            return False
+        return False
+    old = my.uv.real_path
+    servers = safe_servers()
     my.uv.switch_to(new.real_path)
+    switched = True
+    print(f"{my.uv.path} now links to {new.path.name}")
     if servers:
         print(
             f"{len(servers)} flowchart MCP server(s) keep the previous environment "
             "until they are restarted (in Claude Code: /mcp to reconnect)."
         )
-    switched = True
-    print(f"{my.uv.path} now links to {new.path.name}")
+    guis = [p for p in processes_using(old) if is_gui(p[1])]
+    if guis:
+        print(
+            "SEAMM is open and keeps the previous version until it is closed and "
+            "opened again."
+        )
     # With archive storage the jobs' archive follows (rollback, switch by hand)
     from . import venv_archives
 
@@ -321,6 +377,26 @@ def switch(new, force=False):
         venv_archives.follow(new.real_path.name)
     relink_launchers()
     return True
+
+
+def safe_servers():
+    """The switch-safe servers started through the ``venv`` link."""
+    return [p for p in linked_processes() if is_switch_safe(p[1])]
+
+
+def discard(new):
+    """Remove a version that was built but will not be used, so nothing unused
+    is left behind."""
+    try:
+        path = Path(new.path)
+        if path.resolve() == Path(my.uv.real_path).resolve():
+            return
+        if path.parent.resolve() != Path(my.uv.versions_dir).resolve():
+            return
+    except (AttributeError, TypeError):
+        return  # not a real environment version
+    shutil.rmtree(path, ignore_errors=True)
+    print(f"Removed the unused new environment {path.name}.")
 
 
 def apply_change(specs, constraints=None, upgrade=False, in_place=None):
@@ -352,6 +428,19 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
         return True
 
     global synced_manager
+    global refused
+
+    # Before building anything: would the switch be held back? If the user does
+    # not want to go ahead, nothing is built and nothing changes.
+    force = bool(getattr(my.options, "force", False))
+    ok, agreed = check_switch(force)
+    if not ok:
+        print(
+            "Nothing was changed. Close those programs or wait for them to finish, "
+            "then run the command again (or use --force)."
+        )
+        refused = True
+        return False
 
     ensure_versioned()
     new = build_version(specs, constraints=constraints, upgrade=upgrade)
@@ -365,27 +454,25 @@ def apply_change(specs, constraints=None, upgrade=False, in_place=None):
     finally:
         my.uv = saved
     synced_manager = True
-    global refused
 
     problems = regressions(my.uv, new, specs)
     if problems:
         print(
-            f"The new environment {new.path.name} was built but NOT switched to:\n"
-            + "\n".join(f"    {line}" for line in problems)
-            + "\nNothing has changed in the current environment. To take the newest "
-            "releases instead, use 'seamm-manager update --latest <packages>' (or "
-            "'--no-constraints'); to use the new environment anyway, 'seamm-manager "
-            f"environment switch {new.path.name}'."
+            "The new environment would make these changes, which look like going "
+            "backwards:\n" + "\n".join(f"    {line}" for line in problems)
         )
-        if not ask(
-            f"The new environment {new.path.name} would make these changes, which "
-            "look like going backwards. Switch to it anyway?",
-            problems,
-        ):
+        if not ask("Use the new environment anyway?", problems):
+            discard(new)
+            print(
+                "Nothing has changed. To take the newest releases instead, use "
+                "'seamm-manager update --latest <packages>' (or '--no-constraints')."
+            )
             refused = True
             return False
         print("Using the new environment anyway, as asked.")
-    if not switch(new, force=bool(getattr(my.options, "force", False))):
+    if not switch(new, force=force, agreed=agreed):
+        discard(new)
+        print("Nothing has changed.")
         refused = True
         return False
     return True

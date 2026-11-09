@@ -297,6 +297,12 @@ def recreate():
             install_packages(installed, update=True)
             return 0
         return 1
+    # Ask before building, so a "no" leaves nothing behind
+    force = bool(getattr(my.options, "force", False))
+    ok, agreed = _versions.check_switch(force, action="recreate")
+    if not ok:
+        print("Nothing was changed.")
+        return 1
     new = _versions.build_version(specs, constraints=lock, from_freeze=False)
     saved, my.uv = my.uv, new
     try:
@@ -304,12 +310,14 @@ def recreate():
     finally:
         my.uv = saved
     print(f"built; the environment is recorded in {path.name}")
-    if _versions.switch(new, force=getattr(my.options, "force", False)):
+    if _versions.switch(new, force=force, agreed=agreed):
         from .install import install_packages
 
         # The plug-ins' own installers, for the codes, run against the new environment
         install_packages(installed, update=True)
         return 0
+    _versions.discard(new)
+    print("Nothing was changed.")
     return 1
 
 

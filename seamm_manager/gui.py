@@ -714,7 +714,7 @@ class GUI(collections.abc.MutableMapping):
         if self.progress_dialog is not None:
             self.progress_dialog.withdraw()
         answer = tkinter.messagebox.askyesno(
-            title="Switch to the new environment?",
+            title="Update anyway?",
             message=question,
             detail="\n".join(shown),
             icon=tkinter.messagebox.WARNING,
@@ -731,14 +731,11 @@ class GUI(collections.abc.MutableMapping):
         if not versions.refused:
             return
         tkinter.messagebox.showinfo(
-            title="Not switched",
-            message=(
-                "The new environment was built but is not in use, so nothing "
-                "has changed yet."
-            ),
+            title="Nothing changed",
+            message="The update was not made, so nothing has changed.",
             detail=(
-                "Run the update again and choose to switch anyway, or switch later "
-                "with 'seamm-manager environment switch'."
+                "Close the programs that were listed (for example SEAMM) and update "
+                "again, or update again and choose to go ahead anyway."
             ),
             parent=self.root,
         )
