@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=66d827f0"></script>
+    <script src="../_static/documentation_options.js?v=3789d4b4"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -3287,9 +3287,19 @@ old environment keep it until <code class="docutils literal notranslate"><span c
 <p>Processes that were started <em>through the link</em> (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv/bin/...</span></code>) are
 the exception: CPython does not resolve the link when locating a venv, so
 they would follow it to the new environment. <cite>unsafe_processes</cite> finds them
-and <cite>switch</cite> refuses while any exist, unless forced. After the first
-migration every launcher embeds the real path, so this only matters for jobs
-that were already running then.</p>
+and <cite>switch</cite> refuses while any exist, unless forced or the user agrees when
+asked (<cite>confirm_switch</cite>). After the first migration every launcher embeds the
+real path, so this only matters for jobs that were already running then – and
+for servers that are always running, such as the flowchart MCP servers
+(<code class="docutils literal notranslate"><span class="pre">seamm-flowchart</span> <span class="pre">mcp</span></code>) of Claude sessions. Those import everything when they
+start and only pick up a new environment when restarted, so they do not block a
+switch.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.versions.GUI_PROGRAMS">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">GUI_PROGRAMS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('seamm',</span> <span class="pre">'SEAMM')</span></span><a class="headerlink" href="#seamm_manager.versions.GUI_PROGRAMS" title="Link to this definition">¶</a></dt>
+<dd><p>The SEAMM GUI (the flowchart editor), so the user can be told to close it.</p>
+</dd></dl>
+
 <dl class="py data">
 <dt class="sig sig-object py" id="seamm_manager.versions.PIN_FILE">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">PIN_FILE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.seamm-pin'</span></span><a class="headerlink" href="#seamm_manager.versions.PIN_FILE" title="Link to this definition">¶</a></dt>
@@ -3297,6 +3307,17 @@ that were already running then.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The file that pins a version</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.versions.SWITCH_SAFE">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">SWITCH_SAFE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('seamm-flowchart',</span> <span class="pre">'mcp'),)</span></span><a class="headerlink" href="#seamm_manager.versions.SWITCH_SAFE" title="Link to this definition">¶</a></dt>
+<dd><p>(program, argument).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Servers started through the link that do not block a switch</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3311,6 +3332,20 @@ fresh install, installs into the environment directly.</p>
 <p>Returns True if the change is now in the current environment (installed in
 place, or built and switched), False if it was built but the switch was
 refused (see <cite>switch</cite>). The caller records the snapshot afterwards.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.ask">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">ask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">details</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#ask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.ask" title="Link to this definition">¶</a></dt>
+<dd><p>Ask whether to go ahead: through <cite>confirm_switch</cite> if set (the GUI), else
+on a terminal; False when there is no one to ask.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.blocking_question">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">blocking_question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unsafe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'update'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#blocking_question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.blocking_question" title="Link to this definition">¶</a></dt>
+<dd><p>The heading, the question and the lines to show for processes that hold
+back a switch, naming the SEAMM GUI when it is one of them.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -3337,12 +3372,48 @@ default <code class="docutils literal notranslate"><span class="pre">&lt;root&gt
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.check_switch">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">check_switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">already</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'update'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#check_switch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.check_switch" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the link may be switched now: no program started through it
+would see the change, or the user agrees (<cite>ask</cite>), or <cite>force</cite>.</p>
+<p>Returns (ok, agreed): <cite>agreed</cite> are the pids already accepted, so a second
+check (at the switch, after a build) asks only about new ones.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.discard">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">discard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#discard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.discard" title="Link to this definition">¶</a></dt>
+<dd><p>Remove a version that was built but will not be used, so nothing unused
+is left behind.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.versions.ensure_versioned">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">ensure_versioned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relink</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#ensure_versioned"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.ensure_versioned" title="Link to this definition">¶</a></dt>
 <dd><p>Make the installation versioned if it is not yet. Returns True if migrated.</p>
 <p>Renaming the directory is safe while jobs run (the inodes do not change). The
 launchers are then rewritten to the real path and running services
 restarted, so that from here on nothing new is started through the link.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.is_gui">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">is_gui</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#is_gui"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.is_gui" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a process (as <cite>processes_using</cite> describes it) is the SEAMM GUI.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.is_switch_safe">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">is_switch_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#is_switch_safe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.is_switch_safe" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a process (as <cite>processes_using</cite> describes it) may run on while
+the link is switched: a long-lived server that imported everything when it
+started, e.g. the flowchart MCP server of a Claude session.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.linked_processes">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">linked_processes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#linked_processes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.linked_processes" title="Link to this definition">¶</a></dt>
+<dd><p>Processes started through the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link rather than a real path.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -3426,11 +3497,18 @@ version is allowed.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.versions.safe_servers">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">safe_servers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#safe_servers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.safe_servers" title="Link to this definition">¶</a></dt>
+<dd><p>The switch-safe servers started through the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.versions.switch">
-<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#switch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.switch" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agreed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#switch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.switch" title="Link to this definition">¶</a></dt>
 <dd><p>Make <cite>new</cite> the current environment and relink the launchers.</p>
 <p>Refuses if processes started through the link exist (see the module
-docstring), unless <cite>force</cite>. Returns True if switched.</p>
+docstring), unless <cite>force</cite> or the user agrees when asked; <cite>agreed</cite> are pids
+already accepted. Returns True if switched.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -3442,7 +3520,8 @@ docstring), unless <cite>force</cite>. Returns True if switched.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.versions.unsafe_processes">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.versions.</span></span><span class="sig-name descname"><span class="pre">unsafe_processes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/versions.html#unsafe_processes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.versions.unsafe_processes" title="Link to this definition">¶</a></dt>
-<dd><p>Processes started through the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link rather than a real path.</p>
+<dd><p>Processes started through the <code class="docutils literal notranslate"><span class="pre">venv</span></code> link that a switch would disturb:
+all of them except the switch-safe servers (<cite>is_switch_safe</cite>).</p>
 </dd></dl>
 
 </section>
@@ -3891,10 +3970,19 @@ The installer/updater for SEAMM.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.versions">seamm_manager.versions module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.versions.GUI_PROGRAMS"><code class="docutils literal notranslate"><span class="pre">GUI_PROGRAMS</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.PIN_FILE"><code class="docutils literal notranslate"><span class="pre">PIN_FILE</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.SWITCH_SAFE"><code class="docutils literal notranslate"><span class="pre">SWITCH_SAFE</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.apply_change"><code class="docutils literal notranslate"><span class="pre">apply_change()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.ask"><code class="docutils literal notranslate"><span class="pre">ask()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.blocking_question"><code class="docutils literal notranslate"><span class="pre">blocking_question()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.build_version"><code class="docutils literal notranslate"><span class="pre">build_version()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.check_switch"><code class="docutils literal notranslate"><span class="pre">check_switch()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.discard"><code class="docutils literal notranslate"><span class="pre">discard()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.ensure_versioned"><code class="docutils literal notranslate"><span class="pre">ensure_versioned()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.is_gui"><code class="docutils literal notranslate"><span class="pre">is_gui()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.is_switch_safe"><code class="docutils literal notranslate"><span class="pre">is_switch_safe()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.linked_processes"><code class="docutils literal notranslate"><span class="pre">linked_processes()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.pin"><code class="docutils literal notranslate"><span class="pre">pin()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.pin_info"><code class="docutils literal notranslate"><span class="pre">pin_info()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.processes_using"><code class="docutils literal notranslate"><span class="pre">processes_using()</span></code></a></li>
@@ -3902,6 +3990,7 @@ The installer/updater for SEAMM.</p>
 <li><a class="reference internal" href="#seamm_manager.versions.regressions"><code class="docutils literal notranslate"><span class="pre">regressions()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.relink_launchers"><code class="docutils literal notranslate"><span class="pre">relink_launchers()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.rollback"><code class="docutils literal notranslate"><span class="pre">rollback()</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.versions.safe_servers"><code class="docutils literal notranslate"><span class="pre">safe_servers()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.switch"><code class="docutils literal notranslate"><span class="pre">switch()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.unpin"><code class="docutils literal notranslate"><span class="pre">unpin()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.versions.unsafe_processes"><code class="docutils literal notranslate"><span class="pre">unsafe_processes()</span></code></a></li>
@@ -3959,7 +4048,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

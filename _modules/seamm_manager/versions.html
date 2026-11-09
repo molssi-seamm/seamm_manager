@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>seamm_manager.versions &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
+    <script src="../../_static/documentation_options.js?v=3789d4b4"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>
@@ -50,17 +50,23 @@
 <span class="sd">Processes that were started *through the link* (``&lt;root&gt;/venv/bin/...``) are</span>
 <span class="sd">the exception: CPython does not resolve the link when locating a venv, so</span>
 <span class="sd">they would follow it to the new environment. `unsafe_processes` finds them</span>
-<span class="sd">and `switch` refuses while any exist, unless forced. After the first</span>
-<span class="sd">migration every launcher embeds the real path, so this only matters for jobs</span>
-<span class="sd">that were already running then.</span>
+<span class="sd">and `switch` refuses while any exist, unless forced or the user agrees when</span>
+<span class="sd">asked (`confirm_switch`). After the first migration every launcher embeds the</span>
+<span class="sd">real path, so this only matters for jobs that were already running then -- and</span>
+<span class="sd">for servers that are always running, such as the flowchart MCP servers</span>
+<span class="sd">(``seamm-flowchart mcp``) of Claude sessions. Those import everything when they</span>
+<span class="sd">start and only pick up a new environment when restarted, so they do not block a</span>
+<span class="sd">switch.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">getpass</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
@@ -77,6 +83,15 @@
 <span class="c1"># Set when a change was built but not switched to (a regression, or processes</span>
 <span class="c1"># started through the link), so install and update exit non-zero.</span>
 <span class="n">refused</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># Asked whether to go ahead although a switch was refused:</span>
+<span class="c1"># ``confirm_switch(question, details) -&gt; bool``, `details` being lines to show. The</span>
+<span class="c1"># GUI sets a dialog; without one a terminal user is asked, and anything else (a</span>
+<span class="c1"># script, a service) refuses, as before -- scripts use --force.</span>
+<span class="n">confirm_switch</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="c1">#: Servers started through the link that do not block a switch: (program, argument).</span>
+<span class="n">SWITCH_SAFE</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"seamm-flowchart"</span><span class="p">,</span> <span class="s2">"mcp"</span><span class="p">),)</span>
+<span class="c1">#: The SEAMM GUI (the flowchart editor), so the user can be told to close it.</span>
+<span class="n">GUI_PROGRAMS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"seamm"</span><span class="p">,</span> <span class="s2">"SEAMM"</span><span class="p">)</span>
 
 
 <span class="c1"># ---- processes --------------------------------------------------------------</span>
@@ -100,27 +115,97 @@
     <span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
 
     <span class="n">prefix</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/"</span>
+    <span class="c1"># Never this process or what started it (the manager itself, run as</span>
+    <span class="c1"># &lt;root&gt;/venv/bin/seamm-manager, would otherwise block its own switch)</span>
+    <span class="n">me</span> <span class="o">=</span> <span class="p">{</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">me</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">pid</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">process</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span><span class="s2">"pid"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"cmdline"</span><span class="p">,</span> <span class="s2">"exe"</span><span class="p">]):</span>
         <span class="n">info</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">info</span>
+        <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pid"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">me</span><span class="p">:</span>
+            <span class="k">continue</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cmdline"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"exe"</span><span class="p">):</span>
             <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">"exe"</span><span class="p">])</span>
         <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="c1"># The last match is the most telling: the script, not the interpreter</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">info</span><span class="p">[</span><span class="s2">"pid"</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'?'</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">matches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+            <span class="c1"># The last match is the most telling: the script, not the interpreter,</span>
+            <span class="c1"># with its arguments (e.g. "seamm-flowchart mcp")</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">cmdline</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cmdline"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">cmdline</span><span class="p">:</span>
+                <span class="n">rest</span> <span class="o">=</span> <span class="n">cmdline</span><span class="p">[</span><span class="n">cmdline</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">text</span><span class="p">]</span> <span class="o">+</span> <span class="n">rest</span><span class="p">)[:</span><span class="mi">200</span><span class="p">]</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">info</span><span class="p">[</span><span class="s2">"pid"</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'?'</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="is_switch_safe">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.is_switch_safe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_switch_safe</span><span class="p">(</span><span class="n">description</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a process (as `processes_using` describes it) may run on while</span>
+<span class="sd">    the link is switched: a long-lived server that imported everything when it</span>
+<span class="sd">    started, e.g. the flowchart MCP server of a Claude session."""</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="n">description</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">": "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">word</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">words</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">program</span><span class="p">,</span> <span class="n">argument</span> <span class="ow">in</span> <span class="n">SWITCH_SAFE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">word</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">program</span> <span class="ow">and</span> <span class="n">argument</span> <span class="ow">in</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="is_gui">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.is_gui">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_gui</span><span class="p">(</span><span class="n">description</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a process (as `processes_using` describes it) is the SEAMM GUI."""</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="n">description</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">": "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">GUI_PROGRAMS</span></div>
+
+
+
+<div class="viewcode-block" id="linked_processes">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.linked_processes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">linked_processes</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Processes started through the ``venv`` link rather than a real path."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="unsafe_processes">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.unsafe_processes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">unsafe_processes</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Processes started through the ``venv`` link rather than a real path."""</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">return</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+<span class="w">    </span><span class="sd">"""Processes started through the ``venv`` link that a switch would disturb:</span>
+<span class="sd">    all of them except the switch-safe servers (`is_switch_safe`)."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">linked_processes</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_switch_safe</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span></div>
+
+
+
+<div class="viewcode-block" id="ask">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.ask">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ask</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Ask whether to go ahead: through `confirm_switch` if set (the GUI), else</span>
+<span class="sd">    on a terminal; False when there is no one to ask."""</span>
+    <span class="k">if</span> <span class="n">confirm_switch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">confirm_switch</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">details</span><span class="p">)))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">interactive</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">isatty</span><span class="p">()</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">isatty</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">interactive</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">interactive</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2"> [y/N] "</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">answer</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">)</span></div>
 
 
 
@@ -275,31 +360,89 @@
 
 
 
+<div class="viewcode-block" id="blocking_question">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.blocking_question">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">blocking_question</span><span class="p">(</span><span class="n">unsafe</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"update"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The heading, the question and the lines to show for processes that hold</span>
+<span class="sd">    back a switch, naming the SEAMM GUI when it is one of them."""</span>
+    <span class="n">heading</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"These programs were started through </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> and would see the new "</span>
+        <span class="s2">"environment if it were switched now:"</span>
+    <span class="p">)</span>
+    <span class="n">details</span> <span class="o">=</span> <span class="p">[</span><span class="n">heading</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">unsafe</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_gui</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">unsafe</span><span class="p">):</span>
+        <span class="n">question</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"SEAMM is open (started from a terminal through </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">). Close "</span>
+            <span class="sa">f</span><span class="s2">"SEAMM and </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2"> again, or </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2"> anyway? Going ahead is usually "</span>
+            <span class="s2">"safe: running programs keep the code they have already loaded, and pick "</span>
+            <span class="s2">"up the new version when restarted."</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">question</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">action</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2"> anyway? It is usually safe: running programs keep "</span>
+            <span class="s2">"the code they have already loaded, and pick up the new version when "</span>
+            <span class="s2">"restarted."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">heading</span><span class="p">,</span> <span class="n">question</span><span class="p">,</span> <span class="n">details</span></div>
+
+
+
+<div class="viewcode-block" id="check_switch">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.check_switch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_switch</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">already</span><span class="o">=</span><span class="p">(),</span> <span class="n">action</span><span class="o">=</span><span class="s2">"update"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether the link may be switched now: no program started through it</span>
+<span class="sd">    would see the change, or the user agrees (`ask`), or `force`.</span>
+
+<span class="sd">    Returns (ok, agreed): `agreed` are the pids already accepted, so a second</span>
+<span class="sd">    check (at the switch, after a build) asks only about new ones.</span>
+<span class="sd">    """</span>
+    <span class="n">agreed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">already</span><span class="p">)</span>
+    <span class="n">unsafe</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">unsafe_processes</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">agreed</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">unsafe</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">agreed</span> <span class="o">|</span> <span class="p">{</span><span class="n">pid</span> <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">unsafe</span><span class="p">}</span>
+    <span class="n">heading</span><span class="p">,</span> <span class="n">question</span><span class="p">,</span> <span class="n">details</span> <span class="o">=</span> <span class="n">blocking_question</span><span class="p">(</span><span class="n">unsafe</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+    <span class="n">_print_processes</span><span class="p">(</span><span class="n">unsafe</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ask</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">details</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Going ahead anyway, as asked."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">agreed</span> <span class="o">|</span> <span class="p">{</span><span class="n">pid</span> <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">unsafe</span><span class="p">}</span>
+    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">agreed</span></div>
+
+
+
 <div class="viewcode-block" id="switch">
 <a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.switch">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">agreed</span><span class="o">=</span><span class="p">()):</span>
 <span class="w">    </span><span class="sd">"""Make `new` the current environment and relink the launchers.</span>
 
 <span class="sd">    Refuses if processes started through the link exist (see the module</span>
-<span class="sd">    docstring), unless `force`. Returns True if switched.</span>
+<span class="sd">    docstring), unless `force` or the user agrees when asked; `agreed` are pids</span>
+<span class="sd">    already accepted. Returns True if switched.</span>
 <span class="sd">    """</span>
     <span class="k">global</span> <span class="n">switched</span>
 
-    <span class="n">unsafe</span> <span class="o">=</span> <span class="n">unsafe_processes</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">unsafe</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
-        <span class="n">_print_processes</span><span class="p">(</span>
-            <span class="n">unsafe</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s2">"These processes were started through </span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> and would see the "</span>
-            <span class="s2">"new environment if it were switched now:"</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">ok</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">check_switch</span><span class="p">(</span><span class="n">force</span><span class="p">,</span> <span class="n">already</span><span class="o">=</span><span class="n">agreed</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"switch"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"The new environment is ready at </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">. Wait for them to finish, "</span>
-            <span class="s2">"then run 'seamm-manager environment switch', or use --force."</span>
+            <span class="sa">f</span><span class="s2">"The new environment is ready at </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">. Close or wait for those "</span>
+            <span class="s2">"programs, then run 'seamm-manager environment switch', or use --force."</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span>
+    <span class="n">servers</span> <span class="o">=</span> <span class="n">safe_servers</span><span class="p">()</span>
     <span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">switch_to</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">real_path</span><span class="p">)</span>
     <span class="n">switched</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> now links to </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">servers</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">servers</span><span class="p">)</span><span class="si">}</span><span class="s2"> flowchart MCP server(s) keep the previous environment "</span>
+            <span class="s2">"until they are restarted (in Claude Code: /mcp to reconnect)."</span>
+        <span class="p">)</span>
+    <span class="n">guis</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">processes_using</span><span class="p">(</span><span class="n">old</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_gui</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">if</span> <span class="n">guis</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"SEAMM is open and keeps the previous version until it is closed and "</span>
+            <span class="s2">"opened again."</span>
+        <span class="p">)</span>
     <span class="c1"># With archive storage the jobs' archive follows (rollback, switch by hand)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">venv_archives</span>
 
@@ -307,6 +450,32 @@
         <span class="n">venv_archives</span><span class="o">.</span><span class="n">follow</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">real_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="n">relink_launchers</span><span class="p">()</span>
     <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="safe_servers">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.safe_servers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_servers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The switch-safe servers started through the ``venv`` link."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">linked_processes</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_switch_safe</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span></div>
+
+
+
+<div class="viewcode-block" id="discard">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.versions.discard">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">discard</span><span class="p">(</span><span class="n">new</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remove a version that was built but will not be used, so nothing unused</span>
+<span class="sd">    is left behind."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">==</span> <span class="n">Path</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">real_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">Path</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="o">.</span><span class="n">versions_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
+            <span class="k">return</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">return</span>  <span class="c1"># not a real environment version</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removed the unused new environment </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span></div>
 
 
 
@@ -341,6 +510,19 @@
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">global</span> <span class="n">synced_manager</span>
+    <span class="k">global</span> <span class="n">refused</span>
+
+    <span class="c1"># Before building anything: would the switch be held back? If the user does</span>
+    <span class="c1"># not want to go ahead, nothing is built and nothing changes.</span>
+    <span class="n">force</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">ok</span><span class="p">,</span> <span class="n">agreed</span> <span class="o">=</span> <span class="n">check_switch</span><span class="p">(</span><span class="n">force</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">"Nothing was changed. Close those programs or wait for them to finish, "</span>
+            <span class="s2">"then run the command again (or use --force)."</span>
+        <span class="p">)</span>
+        <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="n">ensure_versioned</span><span class="p">()</span>
     <span class="n">new</span> <span class="o">=</span> <span class="n">build_version</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="n">upgrade</span><span class="p">)</span>
@@ -354,21 +536,25 @@
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">my</span><span class="o">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">saved</span>
     <span class="n">synced_manager</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">global</span> <span class="n">refused</span>
 
     <span class="n">problems</span> <span class="o">=</span> <span class="n">regressions</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">uv</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">problems</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"The new environment </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> was built but NOT switched to:</span><span class="se">\n</span><span class="s2">"</span>
-            <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">)</span>
-            <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">Nothing has changed in the current environment. To take the newest "</span>
-            <span class="s2">"releases instead, use 'seamm-manager update --latest &lt;packages&gt;' (or "</span>
-            <span class="s2">"'--no-constraints'); to use the new environment anyway, 'seamm-manager "</span>
-            <span class="sa">f</span><span class="s2">"environment switch </span><span class="si">{</span><span class="n">new</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'."</span>
+            <span class="s2">"The new environment would make these changes, which look like going "</span>
+            <span class="s2">"backwards:</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ask</span><span class="p">(</span><span class="s2">"Use the new environment anyway?"</span><span class="p">,</span> <span class="n">problems</span><span class="p">):</span>
+            <span class="n">discard</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"Nothing has changed. To take the newest releases instead, use "</span>
+                <span class="s2">"'seamm-manager update --latest &lt;packages&gt;' (or '--no-constraints')."</span>
+            <span class="p">)</span>
+            <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Using the new environment anyway, as asked."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">switch</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span> <span class="n">agreed</span><span class="o">=</span><span class="n">agreed</span><span class="p">):</span>
+        <span class="n">discard</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Nothing has changed."</span><span class="p">)</span>
         <span class="n">refused</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span></div>
@@ -611,7 +797,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.versions</a></li> 
       </ul>

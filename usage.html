@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=66d827f0"></script>
+    <script src="_static/documentation_options.js?v=3789d4b4"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -149,8 +149,23 @@ follow the link when it starts (<code class="docutils literal notranslate"><span
 directly instead, which is only safe with no jobs running). <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code>
 lists the versions and the processes using each; <code class="docutils literal notranslate"><span class="pre">rollback</span></code> and <code class="docutils literal notranslate"><span class="pre">switch</span></code> move
 the link; <code class="docutils literal notranslate"><span class="pre">prune</span></code> removes versions that are old, unused, unpinned and not among
-the newest two. A switch is refused while a process started through the link is running (a job
-begun before the first versioned update), and <code class="docutils literal notranslate"><span class="pre">--force</span></code> overrides that.</p>
+the newest two.</p>
+<p>A process started <em>through</em> the link (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv/bin/...</span></code>) would see the new
+version if the link moved under it, so while one is running the switch is held back.
+The flowchart MCP servers of Claude sessions (<code class="docutils literal notranslate"><span class="pre">seamm-flowchart</span> <span class="pre">mcp</span></code>) are the
+exception: they load everything when they start and keep it until restarted, so they
+never hold back a switch; the manager says how many there are, and a <code class="docutils literal notranslate"><span class="pre">/mcp</span></code>
+reconnect in each Claude session moves it to the new version. For any other such
+process the manager asks <em>before building anything</em> whether to go ahead anyway – in
+the SEAMM-Manager app with a dialog, on a terminal with a yes/no question – and names
+SEAMM when it is the SEAMM window that is open, so you can close it and update again.
+Going ahead is usually safe, since a running program keeps the code it has already
+loaded. If you say no, or there is no one to ask (a script or a service), nothing is
+built and nothing changes; <code class="docutils literal notranslate"><span class="pre">--force</span></code> goes ahead without asking. The manager checks
+again just before switching, in case something started during the build, and a SEAMM
+window opened from the SEAMM app (which uses the real path) never holds an update
+back: it keeps the previous version until it is closed and opened again, and the
+manager says so.</p>
 </section>
 <section id="versions-and-the-lock-file">
 <h2>Versions and the lock file<a class="headerlink" href="#versions-and-the-lock-file" title="Link to this heading">¶</a></h2>
@@ -172,10 +187,12 @@ build), that version is the floor instead, and the manager says which packages i
 Before switching to a new version of the environment the manager compares it with the
 current one; if a package would go back to an older version you did not ask for, a
 package would be removed, or an installed package’s requirements would newly be unmet,
-the new version is left built but not switched to, and the manager says why and what to
-run instead (<code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code>, or <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code> to use it anyway). The
-command then exits with status 1, as it does when a switch is refused because processes
-started through the link are running, so scripts can tell that nothing changed.
+the manager says why and asks whether to use the new version anyway (in the app, with a
+dialog). If not, or with no one to ask, the new version is removed again and nothing
+changes, and the manager says what to run instead (<code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--latest</span></code>). The command
+then exits with status 1, as it does when an update is held back because processes
+started through the link are running, so scripts can tell that nothing changed; the app
+says so in a message.
 <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span></code> is the exception: it is a deliberate clean rebuild at the
 lock’s versions, so it is not checked this way and may move packages back; use
 <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">recreate</span> <span class="pre">--latest</span></code> to keep today’s releases. After any install
@@ -459,7 +476,7 @@ Queues” describe the keys.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>

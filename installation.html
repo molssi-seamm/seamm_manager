@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>Installation &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=66d827f0"></script>
+    <script src="_static/documentation_options.js?v=3789d4b4"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>  
@@ -141,10 +141,12 @@ while jobs run.</p>
 younger than a day, anything pinned, and anything a running process on this machine
 uses. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
 version that such jobs name directly (<code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">pin</span> <span class="pre">&lt;version&gt;</span> <span class="pre">--reason</span> <span class="pre">...</span></code>,
-undone by <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">unpin</span></code>), and <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code> shows the pins. A switch is refused, and the
-new version left ready for <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">switch</span></code>, if a process started <em>through</em> the
-link, for example a job begun before the environment was versioned, is still running;
-<code class="docutils literal notranslate"><span class="pre">--force</span></code> switches anyway. <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--in-place</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">--in-place</span></code> change
+undone by <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">unpin</span></code>), and <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code> shows the pins. If a
+process started <em>through</em> the link, for example a job begun before the environment was
+versioned, or SEAMM started from a terminal, is still running, the manager asks
+before building anything whether to go ahead anyway (see <a class="reference internal" href="usage.html"><span class="doc">Usage</span></a>); if not, nothing
+changes, and <code class="docutils literal notranslate"><span class="pre">--force</span></code> goes ahead without asking. Claude’s flowchart MCP servers do
+not hold back an update. <code class="docutils literal notranslate"><span class="pre">update</span> <span class="pre">--in-place</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span> <span class="pre">--in-place</span></code> change
 the current environment directly, as earlier versions of the manager did; do that only
 when no jobs are running.</p>
 <p>If the environment is ever damaged,</p>
@@ -293,7 +295,7 @@ the package’s <code class="docutils literal notranslate"><span class="pre">mak
         <li class="right" >
           <a href="readme.html" title="SEAMM Manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>

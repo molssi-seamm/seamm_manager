@@ -70,8 +70,24 @@ follow the link when it starts (``--in-place`` changes the current environment
 directly instead, which is only safe with no jobs running). ``environment versions``
 lists the versions and the processes using each; ``rollback`` and ``switch`` move
 the link; ``prune`` removes versions that are old, unused, unpinned and not among
-the newest two. A switch is refused while a process started through the link is running (a job
-begun before the first versioned update), and ``--force`` overrides that.
+the newest two.
+
+A process started *through* the link (``<root>/venv/bin/...``) would see the new
+version if the link moved under it, so while one is running the switch is held back.
+The flowchart MCP servers of Claude sessions (``seamm-flowchart mcp``) are the
+exception: they load everything when they start and keep it until restarted, so they
+never hold back a switch; the manager says how many there are, and a ``/mcp``
+reconnect in each Claude session moves it to the new version. For any other such
+process the manager asks *before building anything* whether to go ahead anyway -- in
+the SEAMM-Manager app with a dialog, on a terminal with a yes/no question -- and names
+SEAMM when it is the SEAMM window that is open, so you can close it and update again.
+Going ahead is usually safe, since a running program keeps the code it has already
+loaded. If you say no, or there is no one to ask (a script or a service), nothing is
+built and nothing changes; ``--force`` goes ahead without asking. The manager checks
+again just before switching, in case something started during the build, and a SEAMM
+window opened from the SEAMM app (which uses the real path) never holds an update
+back: it keeps the previous version until it is closed and opened again, and the
+manager says so.
 
 Versions and the lock file
 --------------------------
@@ -94,10 +110,12 @@ build), that version is the floor instead, and the manager says which packages i
 Before switching to a new version of the environment the manager compares it with the
 current one; if a package would go back to an older version you did not ask for, a
 package would be removed, or an installed package's requirements would newly be unmet,
-the new version is left built but not switched to, and the manager says why and what to
-run instead (``update --latest``, or ``environment switch`` to use it anyway). The
-command then exits with status 1, as it does when a switch is refused because processes
-started through the link are running, so scripts can tell that nothing changed.
+the manager says why and asks whether to use the new version anyway (in the app, with a
+dialog). If not, or with no one to ask, the new version is removed again and nothing
+changes, and the manager says what to run instead (``update --latest``). The command
+then exits with status 1, as it does when an update is held back because processes
+started through the link are running, so scripts can tell that nothing changed; the app
+says so in a message.
 ``environment recreate`` is the exception: it is a deliberate clean rebuild at the
 lock's versions, so it is not checked this way and may move packages back; use
 ``environment recreate --latest`` to keep today's releases. After any install

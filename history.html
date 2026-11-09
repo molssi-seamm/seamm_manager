@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>History &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>History &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=66d827f0"></script>
+    <script src="_static/documentation_options.js?v=3789d4b4"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>  
@@ -42,6 +42,30 @@
   <section id="history">
 <h1>History<a class="headerlink" href="#history" title="Link to this heading">¶</a></h1>
 <dl class="simple">
+<dt>2026.11.9 – Updates check first and ask, and no longer stall on Claude’s MCP servers</dt><dd><ul class="simple">
+<li><p>An update builds the new environment and then switches to it, but held back the
+switch while any program started through ~/SEAMM/venv was running. The flowchart
+MCP servers that Claude sessions start (seamm-flowchart mcp) are always running,
+so on a machine with Claude open every update quietly did nothing. They no longer
+hold back a switch: they keep what they loaded until reconnected (/mcp), and the
+manager says how many there are.</p></li>
+<li><p>The check now comes first: before building anything, the manager looks for
+programs that would hold the switch back and asks whether to go ahead anyway –
+in the SEAMM-Manager app with a dialog, on a terminal with a yes/no question. If
+SEAMM itself is open (started from a terminal), it says so, so you can close it
+and update again. If you say no, nothing is built and nothing changes. Scripts
+and services are not asked and change nothing; –force goes ahead without
+asking.</p></li>
+<li><p>If the new environment would move a package backwards, the manager asks too;
+if you say no, the new environment is removed again, so no unused copy is left
+on disk. The same if a program started during the build and you decline then.</p></li>
+<li><p>A SEAMM window opened from the SEAMM app never holds an update back; the manager
+says that it keeps the previous version until it is closed and opened again.</p></li>
+<li><p>The manager no longer counts itself among the programs holding a switch back.</p></li>
+<li><p>The app now says when an update was not made, instead of finishing as if it had
+worked.</p></li>
+</ul>
+</dd>
 <dt>2026.11.8.2 – The SEAMM environment can be kept as an archive, for slow shared file systems</dt><dd><ul class="simple">
 <li><p>New per-installation choice, seamm-environment-storage. ‘seamm-manager
 environment archive’ (inside a Slurm job) switches an installation to archive
@@ -581,7 +605,7 @@ plug-ins’ own installers working inside the new environment.</p></li>
         <li class="right" >
           <a href="developer_guide/campaigns/2026-09-27/index.html" title="2026-09-27 – Several SEAMM installations side by side"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">History</a></li> 
       </ul>
     </div>

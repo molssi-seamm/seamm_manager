@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.gui &#8212; SEAMM Manager Step 2026.11.8.2 documentation</title>
+    <title>seamm_manager.gui &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=66d827f0"></script>
+    <script src="../../_static/documentation_options.js?v=3789d4b4"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.gui</a></li> 
       </ul>
@@ -44,6 +44,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tk</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tkinter.messagebox</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tkinter.ttk</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ttk</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
@@ -52,6 +53,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">my</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">find_packages</span><span class="p">,</span>
     <span class="n">get_metadata</span><span class="p">,</span>
@@ -168,6 +170,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">description_width</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+        <span class="c1"># A refused switch to a newly built environment asks here, in a dialog,</span>
+        <span class="c1"># rather than on a terminal the app does not have</span>
+        <span class="n">versions</span><span class="o">.</span><span class="n">confirm_switch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_confirm_switch</span>
 
     <span class="c1"># Provide dict like access to the widgets to make</span>
     <span class="c1"># the code cleaner</span>
@@ -736,6 +742,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_text</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Installing/updating </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> packages"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">deiconify</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">versions</span><span class="o">.</span><span class="n">refused</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="n">install_packages</span><span class="p">(</span>
             <span class="n">to_install</span><span class="p">,</span>
@@ -760,6 +767,42 @@
 
         <span class="c1"># self.progress_bar.stop()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_report_refused</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_confirm_switch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">,</span> <span class="n">details</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Ask whether to switch to a new environment although the switch was</span>
+<span class="sd">        refused (processes would see it, or it looks like going backwards)."""</span>
+        <span class="n">shown</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">details</span><span class="p">)[:</span><span class="mi">15</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">details</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">shown</span><span class="p">):</span>
+            <span class="n">shown</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"... and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">details</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">shown</span><span class="p">)</span><span class="si">}</span><span class="s2"> more"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="n">tkinter</span><span class="o">.</span><span class="n">messagebox</span><span class="o">.</span><span class="n">askyesno</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Update anyway?"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shown</span><span class="p">),</span>
+            <span class="n">icon</span><span class="o">=</span><span class="n">tkinter</span><span class="o">.</span><span class="n">messagebox</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+            <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">answer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">deiconify</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">answer</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_report_refused</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Say so when a change was built but not switched to, rather than</span>
+<span class="sd">        finishing as if it had worked."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">versions</span><span class="o">.</span><span class="n">refused</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">tkinter</span><span class="o">.</span><span class="n">messagebox</span><span class="o">.</span><span class="n">showinfo</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Nothing changed"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"The update was not made, so nothing has changed."</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">"Close the programs that were listed (for example SEAMM) and update "</span>
+                <span class="s2">"again, or update again and choose to go ahead anyway."</span>
+            <span class="p">),</span>
+            <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update_progress_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
@@ -804,6 +847,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_text</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Updating </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> packages"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">deiconify</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">versions</span><span class="o">.</span><span class="n">refused</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="n">update_packages</span><span class="p">(</span>
             <span class="n">to_update</span><span class="p">,</span>
@@ -830,6 +874,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_cache</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_dialog</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_report_refused</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_apps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_users</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">installed_apps</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_apps</span><span class="p">()</span>
@@ -1221,7 +1266,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.8.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.gui</a></li> 
       </ul>
