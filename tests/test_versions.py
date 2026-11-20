@@ -598,3 +598,65 @@ def test_manager_does_not_block_itself(root, monkeypatch):
         psutil, "process_iter", lambda attrs=None: [P(os.getpid()), P(999999)]
     )
     assert [pid for pid, _ in versions.processes_using("/r/venv")] == [999999]
+
+
+def _versions_made(root, names):
+    make_venv(root / "venv")
+    my.uv.migrate_to_versioned(name=names[0])
+    for name in names[1:]:
+        make_venv(root / "venvs" / name)
+    my.uv.switch_to(root / "venvs" / names[-1])
+
+
+def test_update_prunes_after_a_switch(root, monkeypatch):
+    """An update that switched keeps the newest three (ARC had 47 by 2026-11-20)."""
+    from seamm_manager import update as update_module
+
+    names = [f"2026-09-0{i}T00-00-00" for i in range(1, 7)]
+    _versions_made(root, names)
+    monkeypatch.setattr(versions, "processes_using", lambda p: [])
+    monkeypatch.setattr(versions, "switched", True)
+    monkeypatch.setattr(my, "options", SimpleNamespace(keep_versions=3), raising=False)
+    removed = update_module.prune_old_versions()
+    assert sorted(p.name for p in removed) == names[:3]
+    assert sorted(p.name for p in (root / "venvs").iterdir()) == names[3:]
+
+
+def test_update_does_not_prune_without_a_switch_or_with_zero(root, monkeypatch):
+    from seamm_manager import update as update_module
+
+    names = [f"2026-09-0{i}T00-00-00" for i in range(1, 6)]
+    _versions_made(root, names)
+    monkeypatch.setattr(versions, "processes_using", lambda p: [])
+    monkeypatch.setattr(my, "options", SimpleNamespace(keep_versions=3), raising=False)
+    monkeypatch.setattr(versions, "switched", False)
+    assert update_module.prune_old_versions() == []
+    monkeypatch.setattr(versions, "switched", True)
+    monkeypatch.setattr(my, "options", SimpleNamespace(keep_versions=0), raising=False)
+    assert update_module.prune_old_versions() == []
+    assert len(list((root / "venvs").iterdir())) == 5
+
+
+def test_update_prune_keeps_young_and_pinned_versions(root, monkeypatch):
+    """A version less than a day old may still be used by jobs on compute nodes."""
+    from datetime import datetime, timedelta
+
+    from seamm_manager import update as update_module
+
+    now = datetime.now()
+    young = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H-%M-%S")
+    names = [
+        "2026-09-01T00-00-00",
+        "2026-09-02T00-00-00",
+        young,
+        (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H-%M-%S"),
+        now.strftime("%Y-%m-%dT%H-%M-%S"),
+    ]
+    _versions_made(root, names)
+    versions.pin(root / "venvs" / "2026-09-01T00-00-00", "rollback")
+    monkeypatch.setattr(versions, "processes_using", lambda p: [])
+    monkeypatch.setattr(versions, "switched", True)
+    monkeypatch.setattr(my, "options", SimpleNamespace(keep_versions=2), raising=False)
+    removed = update_module.prune_old_versions()
+    assert [p.name for p in removed] == ["2026-09-02T00-00-00"]
+    assert (root / "venvs" / young).exists()

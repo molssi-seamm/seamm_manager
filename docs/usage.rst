@@ -70,7 +70,8 @@ follow the link when it starts (``--in-place`` changes the current environment
 directly instead, which is only safe with no jobs running). ``environment versions``
 lists the versions and the processes using each; ``rollback`` and ``switch`` move
 the link; ``prune`` removes versions that are old, unused, unpinned and not among
-the newest two.
+the newest two. ``update`` prunes too after switching, keeping the newest three
+(``--keep-versions``).
 
 A process started *through* the link (``<root>/venv/bin/...``) would see the new
 version if the link moved under it, so while one is running the switch is held back.
@@ -282,7 +283,7 @@ The archive and the directory hold the same files, and share the version's name,
 directory's. ``--in-place`` has no effect with archive storage. If the job ends
 after publishing but before switching, ``environment unpack`` (in a Slurm job)
 finishes the unpacking and the switch. Old archives are pruned like the codes';
-old directories with ``environment prune``.
+old directories by each update, as for any installation (or ``environment prune``).
 
 Trying a new release beside production
 --------------------------------------

@@ -1,6 +1,15 @@
 =======
 History
 =======
+2026.11.20 -- Updates remove old environment versions
+    * Each update builds a new version of the environment beside the current one,
+      and nothing removed the old ones: 47 had piled up on ARC by 2026-11-20, 2.15
+      million files and most of the project's file quota. An update that switches to
+      a new version now prunes the old ones, keeping the newest three, and, as
+      ``environment prune`` does, any less than a day old, pinned, or in use by a
+      process on this machine. ``--keep-versions N`` changes how many; ``0`` keeps
+      them all.
+
 2026.11.9 -- Updates check first and ask, and no longer stall on Claude's MCP servers
     * An update builds the new environment and then switches to it, but held back the
       switch while any program started through ~/SEAMM/venv was running. The flowchart

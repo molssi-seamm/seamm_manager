@@ -116,7 +116,9 @@ while jobs run.
 
 ``prune`` keeps the current version, the newest two for ``rollback``, anything
 younger than a day, anything pinned, and anything a running process on this machine
-uses. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
+uses. Each ``update`` that switches to a new version also prunes, keeping the newest
+three (``--keep-versions N`` changes that; ``0`` keeps every version), so that old
+versions do not pile up: each holds tens of thousands of files. On a cluster, jobs on the compute nodes are not seen from the login node: pin a
 version that such jobs name directly (``environment pin <version> --reason ...``,
 undone by ``environment unpin``), and ``environment versions`` shows the pins. If a
 process started *through* the link, for example a job begun before the environment was
