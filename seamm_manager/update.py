@@ -37,6 +37,10 @@ else:
     raise NotImplementedError(f"SEAMM does not support services on {system} yet.")
 
 
+#: Environment versions an update keeps: the current one and the two before it.
+KEEP_VERSIONS = 3
+
+
 def setup(parser):
     """Define the command-line interface for updating SEAMM components.
 
@@ -99,6 +103,17 @@ def setup(parser):
         help=(
             "Switch to the new environment even if processes started through "
             "<root>/venv (jobs begun before the environment was versioned) exist."
+        ),
+    )
+    subparser.add_argument(
+        "--keep-versions",
+        type=int,
+        default=KEEP_VERSIONS,
+        metavar="N",
+        help=(
+            "After switching to a new environment version, remove the old versions "
+            "beyond the newest N (the current one included) that are older than a "
+            f"day, unused and not pinned. Default {KEEP_VERSIONS}; 0 keeps them all."
         ),
     )
     subparser.add_argument(
@@ -213,8 +228,32 @@ def update():
 
     from . import versions as _versions
 
+    prune_old_versions()
+
     # Non-zero if a change was built but not switched to, so scripts notice
     return 1 if _versions.refused else 0
+
+
+def prune_old_versions():
+    """After a switch to a new environment version, remove the old ones.
+
+    Each update builds a new version beside the current one, and nothing removed
+    them: 47 had piled up on ARC by 2026-11-20 (2.15 million files, most of the
+    project's file quota). Keeps the newest ``--keep-versions`` (3 by default), and,
+    as ``environment prune`` does, anything younger than a day, pinned, or used by
+    a process on this machine: jobs on a cluster's compute nodes are not seen from
+    the login node, and a job started from a version keeps using it.
+    """
+    from . import versions as _versions
+
+    keep = getattr(my.options, "keep_versions", KEEP_VERSIONS)
+    if not _versions.switched or keep is None or keep <= 0:
+        return []
+    try:
+        return _versions.prune(keep=keep, min_age_days=1.0)
+    except Exception as e:
+        print(f"Could not prune the old environment versions: {e}")
+        return []
 
 
 def update_webui():
