@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
+    <title>seamm_manager package &#8212; SEAMM Manager Step 2026.11.20 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../_static/documentation_options.js?v=3789d4b4"></script>
+    <script src="../_static/documentation_options.js?v=8ac94872"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>
@@ -2555,6 +2555,29 @@ uninstallers (for the external codes) have run.</p>
 <section id="module-seamm_manager.update">
 <span id="seamm-manager-update-module"></span><h2>seamm_manager.update module<a class="headerlink" href="#module-seamm_manager.update" title="Link to this heading">¶</a></h2>
 <p>Update requested components of SEAMM.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="seamm_manager.update.KEEP_VERSIONS">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">KEEP_VERSIONS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#seamm_manager.update.KEEP_VERSIONS" title="Link to this definition">¶</a></dt>
+<dd><p>the current one and the two before it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Environment versions an update keeps</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seamm_manager.update.prune_old_versions">
+<span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">prune_old_versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#prune_old_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.prune_old_versions" title="Link to this definition">¶</a></dt>
+<dd><p>After a switch to a new environment version, remove the old ones.</p>
+<p>Each update builds a new version beside the current one, and nothing removed
+them: 47 had piled up on ARC by 2026-11-20 (2.15 million files, most of the
+project’s file quota). Keeps the newest <code class="docutils literal notranslate"><span class="pre">--keep-versions</span></code> (3 by default), and,
+as <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">prune</span></code> does, anything younger than a day, pinned, or used by
+a process on this machine: jobs on a cluster’s compute nodes are not seen from
+the login node, and a job started from a version keeps using it.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="seamm_manager.update.setup">
 <span class="sig-prename descclassname"><span class="pre">seamm_manager.update.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seamm_manager/update.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seamm_manager.update.setup" title="Link to this definition">¶</a></dt>
@@ -3878,6 +3901,8 @@ The installer/updater for SEAMM.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-seamm_manager.update">seamm_manager.update module</a><ul>
+<li><a class="reference internal" href="#seamm_manager.update.KEEP_VERSIONS"><code class="docutils literal notranslate"><span class="pre">KEEP_VERSIONS</span></code></a></li>
+<li><a class="reference internal" href="#seamm_manager.update.prune_old_versions"><code class="docutils literal notranslate"><span class="pre">prune_old_versions()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.update.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.update.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
 <li><a class="reference internal" href="#seamm_manager.update.update_development_environment"><code class="docutils literal notranslate"><span class="pre">update_development_environment()</span></code></a></li>
@@ -4048,7 +4073,7 @@ The installer/updater for SEAMM.</p>
         <li class="right" >
           <a href="modules.html" title="seamm_manager"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="modules.html" >seamm_manager</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager package</a></li> 
       </ul>

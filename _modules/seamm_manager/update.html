@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
+    <title>seamm_manager.update &#8212; SEAMM Manager Step 2026.11.20 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
     
-    <script src="../../_static/documentation_options.js?v=3789d4b4"></script>
+    <script src="../../_static/documentation_options.js?v=8ac94872"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>
@@ -73,6 +73,10 @@
     <span class="n">mgr</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"org.molssi.seamm"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SEAMM does not support services on </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2"> yet."</span><span class="p">)</span>
+
+
+<span class="c1">#: Environment versions an update keeps: the current one and the two before it.</span>
+<span class="n">KEEP_VERSIONS</span> <span class="o">=</span> <span class="mi">3</span>
 
 
 <div class="viewcode-block" id="setup">
@@ -139,6 +143,17 @@
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">"Switch to the new environment even if processes started through "</span>
             <span class="s2">"&lt;root&gt;/venv (jobs begun before the environment was versioned) exist."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--keep-versions"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">KEEP_VERSIONS</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"N"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"After switching to a new environment version, remove the old versions "</span>
+            <span class="s2">"beyond the newest N (the current one included) that are older than a "</span>
+            <span class="sa">f</span><span class="s2">"day, unused and not pinned. Default </span><span class="si">{</span><span class="n">KEEP_VERSIONS</span><span class="si">}</span><span class="s2">; 0 keeps them all."</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">subparser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -256,8 +271,35 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
 
+    <span class="n">prune_old_versions</span><span class="p">()</span>
+
     <span class="c1"># Non-zero if a change was built but not switched to, so scripts notice</span>
     <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">_versions</span><span class="o">.</span><span class="n">refused</span> <span class="k">else</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="prune_old_versions">
+<a class="viewcode-back" href="../../api/seamm_manager.html#seamm_manager.update.prune_old_versions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prune_old_versions</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""After a switch to a new environment version, remove the old ones.</span>
+
+<span class="sd">    Each update builds a new version beside the current one, and nothing removed</span>
+<span class="sd">    them: 47 had piled up on ARC by 2026-11-20 (2.15 million files, most of the</span>
+<span class="sd">    project's file quota). Keeps the newest ``--keep-versions`` (3 by default), and,</span>
+<span class="sd">    as ``environment prune`` does, anything younger than a day, pinned, or used by</span>
+<span class="sd">    a process on this machine: jobs on a cluster's compute nodes are not seen from</span>
+<span class="sd">    the login node, and a job started from a version keeps using it.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">versions</span> <span class="k">as</span> <span class="n">_versions</span>
+
+    <span class="n">keep</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">my</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s2">"keep_versions"</span><span class="p">,</span> <span class="n">KEEP_VERSIONS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_versions</span><span class="o">.</span><span class="n">switched</span> <span class="ow">or</span> <span class="n">keep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">keep</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_versions</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="n">keep</span><span class="p">,</span> <span class="n">min_age_days</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not prune the old environment versions: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
 
 
 
@@ -486,7 +528,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">seamm_manager.update</a></li> 
       </ul>

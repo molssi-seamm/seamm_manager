@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; SEAMM Manager Step 2026.11.9 documentation</title>
+    <title>Usage &#8212; SEAMM Manager Step 2026.11.20 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
     
-    <script src="_static/documentation_options.js?v=3789d4b4"></script>
+    <script src="_static/documentation_options.js?v=8ac94872"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -149,7 +149,8 @@ follow the link when it starts (<code class="docutils literal notranslate"><span
 directly instead, which is only safe with no jobs running). <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">versions</span></code>
 lists the versions and the processes using each; <code class="docutils literal notranslate"><span class="pre">rollback</span></code> and <code class="docutils literal notranslate"><span class="pre">switch</span></code> move
 the link; <code class="docutils literal notranslate"><span class="pre">prune</span></code> removes versions that are old, unused, unpinned and not among
-the newest two.</p>
+the newest two. <code class="docutils literal notranslate"><span class="pre">update</span></code> prunes too after switching, keeping the newest three
+(<code class="docutils literal notranslate"><span class="pre">--keep-versions</span></code>).</p>
 <p>A process started <em>through</em> the link (<code class="docutils literal notranslate"><span class="pre">&lt;root&gt;/venv/bin/...</span></code>) would see the new
 version if the link moved under it, so while one is running the switch is held back.
 The flowchart MCP servers of Claude sessions (<code class="docutils literal notranslate"><span class="pre">seamm-flowchart</span> <span class="pre">mcp</span></code>) are the
@@ -348,7 +349,7 @@ the <code class="docutils literal notranslate"><span class="pre">tasks</span> <s
 directory’s. <code class="docutils literal notranslate"><span class="pre">--in-place</span></code> has no effect with archive storage. If the job ends
 after publishing but before switching, <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">unpack</span></code> (in a Slurm job)
 finishes the unpacking and the switch. Old archives are pruned like the codes’;
-old directories with <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">prune</span></code>.</p>
+old directories by each update, as for any installation (or <code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">prune</span></code>).</p>
 </section>
 <section id="trying-a-new-release-beside-production">
 <h2>Trying a new release beside production<a class="headerlink" href="#trying-a-new-release-beside-production" title="Link to this heading">¶</a></h2>
@@ -476,7 +477,7 @@ Queues” describe the keys.</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SEAMM Manager Step 2026.11.20 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
